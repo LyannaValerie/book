@@ -1,0 +1,11 @@
+{
+  "case_id": "B-PJU4U69TX75S",
+  "domain": "Book",
+  "synthetic": false,
+  "updated_at": "2026-08-25T02:52:42Z",
+  "views": [
+    "Book/Authoring",
+    "Book/Facets",
+    "Book/Provenance"
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não aplique reconciliadores que comparam cada base encadeada diretamente ao catálogo corrente.",
+    "Se a mudança altera legitimamente o próprio marco histórico, a receita current-to-historical pode não ser o local correto."
+  ],
+  "cues": [
+    "Pinker-First",
+    "projection-drift",
+    "navigation-catalog",
+    "normalization-recipe",
+    "frozen-snapshot"
+  ],
+  "discriminating_probe": {
+    "action": "comparar o padrão histórico de manutenção, separar transformação current-to-historical de regras próprias dos snapshots e verificar todas as projeções",
+    "observable": "uma única regra compartilhada restaura MATCH sem alterar medidas históricas"
+  },
+  "environment": {
+    "head": "4a70d9b7f815136af653c61851ab9a5eccb6c10f",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Commit mínimo de normalização e verificação MATCH de todas as projeções.",
+      "source": "git:4a70d9b7f815136af653c61851ab9a5eccb6c10f"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Quando uma região atual desloca muitas projeções, normalize-a uma vez na receita compartilhada antes das regras específicas. Não aceite uma atualização em massa de contagens ou hashes até provar que a reconstrução histórica está correta."
+  },
+  "id": "B-GLJZSQ39GD56",
+  "observed_at": "2026-08-25T08:27:07Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "A alteração parcial do snapshot foi revertida mecanicamente e a receita normalizacao-corrente-para-historico recebeu um override-region de f2e45da4 para 3b904e88. Todas as projeções passaram MATCH e pink verificar ficou READY."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A mudança em union.unioes.canonicalizacao tornou todas as projeções stale. Um helper reancorou um único snapshot e parou fail-closed; outro propôs 73 alterações porque comparava bases encadeadas diretamente com o catálogo atual."
+  },
+  "references": [
+    "file:/pinker/worktrees/tasks/issue-514-module-composition/.pinker/projections/recipes/normalizacao-corrente-para-historico.toml"
+  ],
+  "revision": {
+    "hash": "54675ac0f2e77217c9113abe98f810f3edc5cc5043c813618f11e791a755967c",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T08:43:44Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "pink-nav",
+      "frozen-projections",
+      "normalizacao-corrente-para-historico"
+    ],
+    "conditions": [
+      "uma região atual mudou e várias projeções congeladas dependem dela"
+    ]
+  },
+  "status": "candidate",
+  "title": "Corrija a receita antes de alterar snapshots históricos em cascata"
+}

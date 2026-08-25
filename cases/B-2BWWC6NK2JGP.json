@@ -1,0 +1,70 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não copiar automaticamente todas as dependências de LLDB ou libc++ quando esses componentes não pertencem ao contrato.",
+    "Não reutilizar pacotes binários sem revalidar arquitetura, origem assinada, versão e compatibilidade atuais.",
+    "Não exportar LD_LIBRARY_PATH globalmente para a sessão."
+  ],
+  "cues": [
+    "LLVM 22.1.8",
+    "ld.lld",
+    "libxml2.so.2",
+    "ldd",
+    "not found",
+    "Forja"
+  ],
+  "discriminating_probe": {
+    "action": "Executar ldd nos executáveis contratuais da toolchain, começando pelo binário real do LLD.",
+    "observable": "Cada dependência compartilhada aparece resolvida para um caminho ou marcada como not found."
+  },
+  "environment": {
+    "platform": "Forja",
+    "toolchain": "LLVM 22.1.8 amd64"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Registro legado identifica a falha libxml2.so.2, a varredura por ldd, as bibliotecas incorporadas e a validação de 51 ELFs.",
+      "source": "file:/pinker/msg/amara/dificuldades/2026-08-08-llvm-oficial-exige-libxml2.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Faça ldd cedo nos executáveis realmente contratuais; se a dependência for legítima, prefira bibliotecas verificadas e privadas à toolchain com escopo de loader limitado à própria invocação."
+  },
+  "id": "B-2BWWC6NK2JGP",
+  "observed_at": "2026-08-08T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Após incorporar somente libxml2, libicuuc e libicudata em lib/ privado e usar wrapper com LD_LIBRARY_PATH restrito à invocação, 51 ELFs do payload final ficaram sem dependências ausentes e o wrapper realizou link real com LLD 22.1.8."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Clang do asset oficial executou, mas ld.lld --version falhou porque libxml2.so.2 não existia no ambiente."
+  },
+  "references": [
+    "file:/pinker/msg/amara/dificuldades/2026-08-08-llvm-oficial-exige-libxml2.md"
+  ],
+  "revision": {
+    "hash": "06175928db669fe7c9640487280a2d65edb4ca347d086f2b20af7df957bb06f6",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T02:34:17Z",
+    "updated_by": "legacy-memory"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "LLVM",
+      "LLD",
+      "toolchain",
+      "dynamic-linking"
+    ],
+    "conditions": [
+      "asset binário oficial amd64 executado em ambiente sem libxml2 do sistema"
+    ]
+  },
+  "status": "candidate",
+  "title": "Binário oficial de LLVM pode falhar por dependência compartilhada transitiva ausente"
+}

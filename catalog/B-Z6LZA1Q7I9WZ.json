@@ -1,0 +1,11 @@
+{
+  "case_id": "B-Z6LZA1Q7I9WZ",
+  "domain": "Book",
+  "synthetic": false,
+  "updated_at": "2026-08-25T02:52:24Z",
+  "views": [
+    "Book/Tasks",
+    "Book/Metadata",
+    "Book/Maintenance"
+  ]
+}

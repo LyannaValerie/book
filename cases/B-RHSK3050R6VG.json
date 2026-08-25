@@ -1,0 +1,112 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não substituir a ajuda da versão instalada por este registro; a árvore é volátil.",
+    "Não executar sincronizar, importar-pr mutante ou projeções autorizadas apenas para explorar.",
+    "Não tratar o Book como autoridade atual; fonte, testes, binário e Trama atuais decidem.",
+    "Não confundir pink verificar com suíte completa nem pink agente com sandbox de SO."
+  ],
+  "cues": [
+    "pink",
+    "pink --help",
+    "pink --version-json",
+    "pink build",
+    "pink doc",
+    "pink nav",
+    "pink agente",
+    "pink estado",
+    "pink doctor",
+    "pink verificar",
+    "compilador Pinker",
+    "Trama Pinker"
+  ],
+  "discriminating_probe": {
+    "action": "Resolver `pink`, consultar a identidade e ajuda de cada domínio; em checkout no commit retornado, executar doctor, consultas doc/nav, projeções, estado, verificar e um programa mínimo por modo não interativo.",
+    "observable": "Identidade coincide com o checkout; formas de uso, JSON, artefatos, efeitos de escrita e exits observados correspondem à ajuda e ao roteamento da CLI."
+  },
+  "environment": {
+    "binary_commit": "5e37268c3aefe43f5104a4a6bc9ac706c4802a40",
+    "binary_path": "/opt/pinker/releases/pink/5e37268c3aefe43f5104a4a6bc9ac706c4802a40/bin/pink",
+    "binary_resolution": "/opt/pinker/bin/pink",
+    "binary_version": "0.1.0",
+    "platform": "Linux",
+    "repository": "LyannaValerie/pinker-v0",
+    "verification": "ajuda, fonte/testes no commit, checkout temporário e probes não interativos"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Identidade e ajuda integral do binário provisionado.",
+      "source": "file:/opt/pinker/releases/pink/5e37268c3aefe43f5104a4a6bc9ac706c4802a40/bin/pink"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Roteamento, flags, exits e implementações conferidos no commit instalado.",
+      "source": "git:5e37268c3aefe43f5104a4a6bc9ac706c4802a40"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Formas de ajuda e comportamento de execução conferidos nos testes versionados.",
+      "source": "git:5e37268c3aefe43f5104a4a6bc9ac706c4802a40"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Contrato e limitações do runner agente conferidos em docs/development/pink-agent.md.",
+      "source": "git:5e37268c3aefe43f5104a4a6bc9ac706c4802a40"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Checkout temporário e probes read-only confirmaram o binário instalado.",
+      "source": "event:E-7F9F761B6558EB6A4DE9"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Identidade e descoberta\n- `command -v pink`; `pink --version`; `pink --version-json` (path, versão e commit).\n- Ajuda: `pink --help`, `pink help COMANDO`, `pink COMANDO --help` ou `-h`. A ajuda prevalece sobre argumentos operacionais e não executa o comando. Confirme-a antes de automatizar: a árvore é volátil.\n\nArquivo Pinker — `pink [OPÇÕES] ARQUIVO [-- ARGS...]`\n- Sem flag de saída: léxico, parsing/importações e semântica; informa sucesso.\n- `--check`: somente validação semântica e suprime as demais saídas.\n- Inspeção: `--tokens`, `--ast`, `--json-ast`, `--ir`, `--cfg-ir`, `--selected`, `--machine`, `--pseudo-asm`, `--asm-s`. Neste commit, `--asm` e `--s` são aliases não anunciados de `--asm-s`.\n- `--run`: interpreta a machine validada. stdout contém apenas saída explícita; o retorno de `principal` vira exit status módulo 256.\n- A cauda após `--` exige `--run` e é repassada ao runtime: `pink --run app.pink -- valor nome=valor`. Flags de impressão podem ser combinadas; só as fases necessárias são calculadas.\n\nDesenvolvimento\n- `pink build [--out-dir DIR] [--nativo] ARQUIVO`: grava `<DIR>/<stem>.s` (padrão `build`). `--nativo` também monta/liga `<DIR>/<stem>` por driver C; requer `libpinker_rt.a` ao lado do binário ou em `PINKER_RT_LIB` e libs do sistema. Falha de link preserva o `.s`.\n- `pink editor ARQUIVO`: TUI interativa; `pink repl`: REPL interativo. Falhas saem 1.\n\n`pink doc SUBCOMANDO [--repo DIR] [ARGS...]`\n- `marco`: política de `.pinker/doc.toml`.\n- `importar-pr N`: aplica o marco. `--corpo` importa `pinker-change`; `--check` valida sem escrever. `--freeze` exige `--corpo`+`--artifact`, preserva evidência e não muda docs canônicas; é incompatível com `--check`.\n- Leitura: `mostrar ID`, `listar TERRITÓRIO`, `buscar CONSULTA`, `rota CONSULTA`; `--json` estável e `--limite` 1..20 (rota 5, buscar 10).\n- `sincronizar` escreve `docs/navigation.jsonl`; `verificar` valida sem corrigir.\n- Exits: 0 sucesso, 2 uso, 3 catálogo, 4 sem resultado, 5 fonte/âncora divergente.\n\n`pink nav SUBCOMANDO [--repo DIR] [ARGS...]`\n- `mostrar CHAVE`, `buscar CONSULTA`, `localizar SÍMBOLO`, `listar SELETOR`, `mapa [FILTRO]`.\n- `cobertura-diff` lê unified diff de stdin; `impacto --diff REF` coleta o diff Git e calcula superfícies/projeções afetadas sem mutação.\n- `sincronizar` escreve `src/navigation.jsonl`; `verificar` valida sem corrigir.\n- `--json` estável para mostrar/buscar/localizar/cobertura-diff/impacto/listar/mapa; `--limite` 1..20 onde aceito. Exits adicionais: 6 harness, 7 política, 8 plano obsoleto.\n\n`pink nav projecao`\n- Leitura: `listar`, `mostrar ID [--observado]`, `verificar [ID]`.\n- Dois passos: `preparar ID --justificativa TEXTO --predecessor ID [--autorizar DIGEST]` e `aceitar ID [--autorizar DIGEST]`. Sem `--autorizar`, exibem plano/digest; o digest exato autoriza escrita. Verifique após aplicar.\n\n`pink agente <operação> <spec>`\n- Operações: `iniciar`, `executar`, `verificar`, `sensibilidade`, `publicar`, `retomar`, `status [--json]`, `relatorio`.\n- Agent-spec-v1: line-oriented `chave = valor`, `schema = 1`; raízes confinadas ao repo, mudanças relativas ao worktree e escritas ao diretório delegado.\n- `iniciar` cria READY; `executar` captura streams/duração/exit e gera logs, eventos, snapshots, `resultado.json`, `RELATORIO.md` e manifesto SHA-256.\n- Shell é off por padrão (`PINKER_AGENT_ALLOW_SHELL`); outros executáveis exigem `PINKER_AGENT_EXECUTABLE_ALLOWLIST`. Estados: ACCEPTED=0, BLOCKED=1, NEEDS_HUMAN_DECISION=2 (reservado). Não há sandbox de SO. O V1-A documentado não publica PR, gerencia checks/merge nem implementa retomada apesar da operação exposta.\n\nEstado, diagnóstico e preflight\n- `pink estado [--repo DIR] [--agente-spec ARQUIVO] [--json]`: consolida autoridades locais sem escrita/rede. Exits 0 relatório, 1 interna, 2 uso, 3 root/autoridade ausente.\n- `pink doctor [--repo DIR] [--json]`: identidade binário/repo, compatibilidade, catálogo, projeções, comandos e próxima ação; 0 apenas se utilizável.\n- `pink verificar --diff REF [--repo DIR] [--documentation-frozen] [--corpo ARQUIVO] --json`: compõe doctor, impacto, projeções, pinker-change e estado documental. WARNING pode sair 0; leia `blocking`, `warnings`, `expected_deferred`, `recommended_actions`.\n\nRegras práticas\n- Em automação, passe `--repo` explícito, prefira JSON anunciado e valide `schema`.\n- Separe leituras de escritores: doc/nav `sincronizar`, `importar-pr` mutante e projeções com digest alteram arquivos.\n- Sequência Pinker First: identidade → doctor → doc/nav → impacto → verificar → suíte completa quando aplicável.\n- Este registro é histórico: confirme sempre a instalação, a ajuda, o código e os testes atuais."
+  },
+  "id": "B-RHSK3050R6VG",
+  "observed_at": "2026-08-25T04:23:57Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O launcher resolveu para `pink` 0.1.0 no commit 5e37268c3aefe43f5104a4a6bc9ac706c4802a40. Doctor confirmou compatibilidade com checkout no mesmo commit. Modos de análise, build textual, execução, doc/nav, projeções, estado e preflight passaram. `build --nativo` preservou o `.s`, mas não linkou neste provisionamento porque `libpinker_rt.a` não estava disponível e `PINKER_RT_LIB` não foi definido."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A CLI `pink` reúne compilação, inspeção do pipeline, execução, build, TUI/REPL, cartografia da Trama e automação operacional. Sem um mapa único, é fácil confundir comandos somente leitura com escritores, esquecer requisitos como `--diff`, `--corpo`, `--artifact` ou `--autorizar`, ou interpretar incorretamente seus códigos de saída."
+  },
+  "references": [
+    "git:5e37268c3aefe43f5104a4a6bc9ac706c4802a40",
+    "trama:cli.ajuda.usage",
+    "trama:cli.parsing.roteamento",
+    "trama:cli.analise.pipeline",
+    "trama:cli.build.nativo",
+    "trama:development.pink-agent.contract"
+  ],
+  "revision": {
+    "hash": "8d99424cde30317f9c761d24cf395cb567dd5eb56c787f0540b433cf3895931e",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T04:28:21Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "CLI pink",
+      "pipeline do compilador",
+      "build nativo",
+      "Trama documental",
+      "navegação semântica",
+      "runner agente",
+      "estado e preflight"
+    ],
+    "conditions": [
+      "binário 0.1.0 no commit 5e37268c3aefe43f5104a4a6bc9ac706c4802a40",
+      "Linux",
+      "comandos e flags devem ser reconfirmados na versão instalada"
+    ]
+  },
+  "status": "candidate",
+  "title": "Guia operacional do binário pink e seus subcomandos"
+}

@@ -1,0 +1,72 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "A estimativa de 35 GiB era específica ao contrato e à receita observados; recalcule requisitos atuais.",
+    "Espaço livre em outro filesystem não conta automaticamente quando ele não é território de trabalho autorizado.",
+    "Não apagar trabalho de outros namespaces ou campanhas apenas para atravessar o gate."
+  ],
+  "cues": [
+    "LLVM 22.1.8",
+    "sem espaço",
+    "7.109 GB livres",
+    "27.7 GB",
+    "35 GiB",
+    "F2",
+    "df -B1"
+  ],
+  "discriminating_probe": {
+    "action": "Antes de baixar fontes, medir o filesystem de trabalho com df -B1 e comparar o disponível com a estimativa atual de build, testes, stagings, evidência e margem.",
+    "observable": "A comparação produz capacidade suficiente ou um déficit explícito antes de qualquer aquisição."
+  },
+  "environment": {
+    "filesystem": "/pinker",
+    "toolchain": "LLVM 22.1.8",
+    "workflow": "F2 com testes upstream"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Registro legado contém df, estimativas de build/testes, cálculo do déficit e a decisão de interromper antes do download.",
+      "source": "file:/pinker/msg/amara/dificuldades/2026-08-08-f2-llvm-sem-espaco-para-testes.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Trate capacidade como gate de preflight: se o volume autorizado não comporta o ciclo completo, pare antes da aquisição e provisione espaço em vez de transformar dados históricos em orçamento implícito."
+  },
+  "id": "B-120HNOHU8H9M",
+  "observed_at": "2026-08-08T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O déficit calculado em /pinker era 20.591 GB antes da margem; a execução foi interrompida antes do download e nenhum dado de campanhas anteriores foi removido."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A F2 encontrou 7.109 GB livres em /pinker, enquanto build e testes de LLVM 22.1.8 exigiam pelo menos 27.7 GB antes de somar segundo staging, evidência e margem."
+  },
+  "references": [
+    "file:/pinker/msg/amara/dificuldades/2026-08-08-f2-llvm-sem-espaco-para-testes.md"
+  ],
+  "revision": {
+    "hash": "2dfc72263df6ac019028118f8e51da8e06c32a8425a89db40e1965cd3f7c6848",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T02:35:09Z",
+    "updated_by": "legacy-memory"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "LLVM",
+      "F2",
+      "storage",
+      "preflight"
+    ],
+    "conditions": [
+      "build com suítes upstream, staging separado e evidência no filesystem /pinker"
+    ]
+  },
+  "status": "candidate",
+  "title": "Capacity gate deve interromper build de LLVM antes da aquisição quando o volume é insuficiente"
+}

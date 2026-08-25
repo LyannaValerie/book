@@ -1,0 +1,68 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não usar a meta de espaço como autorização para apagar namespaces, estado UNKNOWN ou trabalho COMPLETE.",
+    "Os 35 GiB pertenciam à F2 observada; requisitos atuais devem ser recalculados antes de reutilizar o número."
+  ],
+  "cues": [
+    "forja-gc",
+    "reclaimable_bytes=0",
+    "35 GiB",
+    "BLOCKED_RESUMABLE",
+    "armazenamento",
+    "coleta segura"
+  ],
+  "discriminating_probe": {
+    "action": "Executar forja-gc plan e conferir reclaimable_bytes junto de df -B1 /pinker.",
+    "observable": "O plano informa se ainda existem bytes autorizados para recuperação e o df informa o espaço livre resultante."
+  },
+  "environment": {
+    "filesystem": "/pinker",
+    "workflow": "F2 LLVM 22.1.8"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Registro legado contém os valores de df, o resultado reclaimable_bytes=0 e a decisão fail-closed.",
+      "source": "file:/pinker/msg/amara/dificuldades/2026-08-08-gc-seguro-nao-alcanca-35-gib.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Quando o plano seguro chega a zero antes da meta, preserve UNKNOWN e trabalhos protegidos, mantenha a operação bloqueada e trate a insuficiência como problema de provisionamento."
+  },
+  "id": "B-2TGUGN97M7CX",
+  "observed_at": "2026-08-08T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O segundo plano retornou reclaimable_bytes=0 enquanto targets preservados, trabalhos COMPLETE e árvores UNKNOWN continuavam ocupando espaço."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Após uma limpeza auditada elevar o espaço livre de 7.108.575.232 para 20.672.864.256 bytes, a F2 ainda exigia 35 GiB e o segundo plano informou reclaimable_bytes=0."
+  },
+  "references": [
+    "file:/pinker/msg/amara/dificuldades/2026-08-08-gc-seguro-nao-alcanca-35-gib.md"
+  ],
+  "revision": {
+    "hash": "8b44bfdf370c7d29b3656db70c251a941362c54e29ebbcd5661284a1bbb1e1d2",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T02:33:51Z",
+    "updated_by": "legacy-memory"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "forja-gc",
+      "storage",
+      "F2"
+    ],
+    "conditions": [
+      "volume /pinker abaixo da capacidade exigida após esgotar candidatos autorizados pela coleta"
+    ]
+  },
+  "status": "candidate",
+  "title": "Coleta conservadora deve parar quando não restam bytes recuperáveis autorizados"
+}

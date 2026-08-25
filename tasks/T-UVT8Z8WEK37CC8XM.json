@@ -1,0 +1,47 @@
+{
+  "domain": "Pinker",
+  "external_task_ref": "pinker:issue-514-module-composition",
+  "finished_at": "2026-08-25T08:45:47Z",
+  "followed_refs": [
+    "file:/pinker/state/tasks/issue-514-module-composition/checkpoint.yaml",
+    "git:e8022ac0af4ccbff708963367eda51198f7cc262"
+  ],
+  "goal": "reter dificuldades e soluções do takeover da issue 514 e PR 519",
+  "hypotheses": [],
+  "known": [
+    "A Task Pinker issue-514-module-composition terminou no SHA 4a70d9b com I1-I8, gates locais e CI remoto verdes.",
+    "As dificuldades reutilizáveis foram recuperação de checkpoint stale, preservação de commits não publicados, identidade estrutural sem digest probabilístico, normalização correta de projeções, recuperação de gates após timeout de transporte e autoridade separada do Book."
+  ],
+  "loaded_refs": [
+    "B-KNHXWR2TRL3T",
+    "B-Z6LZA1Q7I9WZ",
+    "B-GDCKPRJE5VZX",
+    "B-LQ3ROLGYV9YL",
+    "B-GLJZSQ39GD56"
+  ],
+  "missing": [
+    "Quais dificuldades já possuem caso semanticamente equivalente no Book e quais justificam novos itens?"
+  ],
+  "next_probe": {
+    "action": "emitir e inspecionar o ContextReceipt e registrar seu caminho no checkpoint Pinker",
+    "authorized": true,
+    "bounded": true,
+    "discriminative": true,
+    "no_known_high_risk_gap": true,
+    "observable": "receipt referencia a Book Task, seis retenções e validação passada",
+    "oracle": "book:task-receipt:T-UVT8Z8WEK37CC8XM",
+    "recorded_at": "2026-08-25T08:45:40Z"
+  },
+  "outcome": "seis dificuldades e respectivas soluções retidas na hierarquia Pinker solicitada; referências e índice verificados",
+  "project": "LyannaValerie/pinker-v0",
+  "started_at": "2026-08-25T08:40:09Z",
+  "state": "finished",
+  "task_id": "T-UVT8Z8WEK37CC8XM",
+  "validation": {
+    "oracle": "book:view:Pinker/issue-514-module-composition/Recuperacao-e-fechamento-confiavel",
+    "outcome": "seis itens listados e reencontráveis; verify READY com 17 casos válidos",
+    "passed": true,
+    "summary": "hierarquia solicitada contém os seis casos e o índice derivado foi reconstruído",
+    "validated_at": "2026-08-25T08:45:27Z"
+  }
+}

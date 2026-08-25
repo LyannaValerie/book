@@ -1,0 +1,67 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não use --allow-similar rotineiramente para silenciar o mecanismo de retenção.",
+    "Vocabulário diferente não prova que dois casos sejam distintos; a comparação continua semântica."
+  ],
+  "cues": [
+    "near-match",
+    "allow-similar",
+    "CASE_SIMILAR_CANDIDATES",
+    "duplicate detection",
+    "retention"
+  ],
+  "discriminating_probe": {
+    "action": "Executar search/show sobre cada candidato e comparar problema, probe discriminativo, resultado observado, guidance, escopo e contraindicações.",
+    "observable": "Se a informação reutilizável ou o probe forem distintos, a criação pode prosseguir conscientemente com --allow-similar; se forem equivalentes, deve-se revisar ou desafiar o caso existente."
+  },
+  "environment": {
+    "repository": "LyannaValerie/book",
+    "workflow": "ingestão de três dificuldades legadas"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "O primeiro add-case foi bloqueado e a segunda tentativa explicitamente autorizada só ocorreu após inspeção.",
+      "source": "event:E-F2B38F55D5B4B861A868"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Trate CASE_SIMILAR_CANDIDATES como stop gate, não como erro de classificação automática. Inspecione os candidatos. Escolha entre revise, challenge, no-op ou nova criação; use --allow-similar somente quando essa decisão semântica já foi tomada."
+  },
+  "id": "B-DPR90JZJB8XO",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Após inspeção, o capacity gate foi considerado distinto do esgotamento de candidatos do GC e add-case --allow-similar criou um novo ID sem sobrescrever o caso anterior."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "O caso de capacity gate para LLVM foi bloqueado como candidato semelhante a outro caso de armazenamento. A similaridade lexical não decidiu equivalência semântica e interrompeu a criação até uma decisão explícita."
+  },
+  "references": [
+    "event:E-F2B38F55D5B4B861A868"
+  ],
+  "revision": {
+    "hash": "b2928732c6bc4dcfb086f74faef461787472d0452cb2b4321fd6b32957d1c65f",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T02:52:25Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "add-case",
+      "retention",
+      "lexical similarity"
+    ],
+    "conditions": [
+      "novo caso compartilha vocabulário operacional com casos existentes, mas representa probe ou decisão diferente"
+    ]
+  },
+  "status": "candidate",
+  "title": "Near-match lexical exige decisão explícita antes de criar caso distinto"
+}

@@ -1,0 +1,68 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não reutilize um artifact sem confirmar comando, Task, workdir e subject SHA.",
+    "Se não existe processo vivo nem resultado terminal durável, classifique a execução como inconclusiva."
+  ],
+  "cues": [
+    "context-mode",
+    "rpc-timeout",
+    "pinker-run",
+    "durable-evidence",
+    "recover-before-rerun"
+  ],
+  "discriminating_probe": {
+    "action": "localizar o artifact mais recente, verificar result.txt e o processo do runner, e acompanhar logs apenas por resumo de falhas e progresso",
+    "observable": "o processo continua vivo ou result.txt contém a saída terminal verificável"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0",
+    "runner": "/opt/pinker/bin/pinker-run"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Artifacts finais do runner com exit_code 0.",
+      "source": "file:/pinker/artifacts/agents/velina/pinker-run/issue-514-module-composition-2026-08-25_07-39-03"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Separe falha do coletor de falha do gate. Quando o executor contido oferece processo identificável e artifact terminal, recupere o resultado existente antes de rerodar."
+  },
+  "id": "B-L321TGXIJNRL",
+  "observed_at": "2026-08-25T08:27:07Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Os runners continuaram depois do timeout do MCP e produziram resultados duráveis: full suite PASS em 612 s, make ci PASS em 575 s e CI nativo PASS em 572 s. Nenhum gate foi repetido por causa do transporte."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A chamada do coletor expirou em 300 segundos durante make test e make ci, embora o processo contido continuasse executando. Interpretar o timeout de transporte como falha teria duplicado gates caros e aumentado risco de flake."
+  },
+  "references": [
+    "file:/pinker/artifacts/agents/velina/pinker-run/issue-514-module-composition-2026-08-25_07-49-24",
+    "file:/pinker/artifacts/agents/velina/pinker-run/issue-514-module-composition-2026-08-25_07-59-40"
+  ],
+  "revision": {
+    "hash": "c6968e50599680f96e6359b92c04e8cf259bd4545544eb2cfc0894a5b057025d",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T08:43:49Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "Forja",
+      "pinker-run",
+      "test-gates"
+    ],
+    "conditions": [
+      "o transporte expira antes de uma suíte longa, mas o runner possui lifecycle e artifact próprios"
+    ]
+  },
+  "status": "candidate",
+  "title": "Timeout do coletor não invalida um gate ainda vivo no runner contido"
+}

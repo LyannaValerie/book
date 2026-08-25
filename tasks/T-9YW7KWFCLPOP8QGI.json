@@ -1,0 +1,24 @@
+{
+  "domain": "Pinker",
+  "external_task_ref": null,
+  "finished_at": "2026-08-25T04:28:47Z",
+  "followed_refs": [],
+  "goal": "Levantar o uso do binário pink e registrar um guia operacional recuperável",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "Guia operacional do pink registrado e validado em Pinker/CLI",
+  "project": "LyannaValerie/pinker-v0",
+  "started_at": "2026-08-25T04:23:34Z",
+  "state": "finished",
+  "task_id": "T-9YW7KWFCLPOP8QGI",
+  "validation": {
+    "oracle": "book verify + list Pinker/CLI + busca lexical no domínio Pinker",
+    "outcome": "caso válido, recuperável e facetado em Pinker/CLI",
+    "passed": true,
+    "summary": "B-RHSK3050R6VG passou nas três verificações",
+    "validated_at": "2026-08-25T04:28:46Z"
+  }
+}

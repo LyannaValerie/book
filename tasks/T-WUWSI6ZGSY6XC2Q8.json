@@ -1,0 +1,38 @@
+{
+  "domain": "Pinker",
+  "finished_at": "2026-08-25T02:37:35Z",
+  "followed_refs": [
+    "file:/pinker/msg/amara/dificuldades/2026-08-08-llvm-oficial-exige-libxml2.md"
+  ],
+  "goal": "diagnosticar ld.lld que falha por biblioteca compartilhada ausente",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [
+    "B-2BWWC6NK2JGP"
+  ],
+  "missing": [
+    "qual executável contratual ainda apresenta dependência not found no ambiente atual?"
+  ],
+  "next_probe": {
+    "action": "executar ldd no binário real do LLD atual",
+    "authorized": true,
+    "bounded": true,
+    "discriminative": true,
+    "no_known_high_risk_gap": true,
+    "observable": "dependências resolvidas ou marcadas not found",
+    "oracle": "saída atual de ldd",
+    "recorded_at": "2026-08-25T02:37:24Z"
+  },
+  "outcome": "demonstração de reutilização concluída sem executar orientação histórica",
+  "project": "LyannaValerie/pinker-v0",
+  "started_at": "2026-08-25T02:37:07Z",
+  "state": "finished",
+  "task_id": "T-WUWSI6ZGSY6XC2Q8",
+  "validation": {
+    "oracle": "Book search/show/references após reindex",
+    "outcome": "PASS: caso recuperado sem ID prévio e próximo ldd discriminativo preparado",
+    "passed": true,
+    "summary": "validação limitada à recuperação; aplicabilidade atual não foi afirmada",
+    "validated_at": "2026-08-25T02:37:35Z"
+  }
+}

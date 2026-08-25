@@ -1,0 +1,12 @@
+{
+  "case_id": "B-KNHXWR2TRL3T",
+  "domain": "Book",
+  "synthetic": false,
+  "updated_at": "2026-08-25T03:00:18Z",
+  "views": [
+    "Book/Tasks",
+    "Book/ContextReceipt",
+    "Book/StopGate",
+    "Book/Maintenance"
+  ]
+}

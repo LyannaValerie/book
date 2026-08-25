@@ -1,0 +1,47 @@
+{
+  "domain": "Pinker",
+  "finished_at": "2026-08-25T02:36:58Z",
+  "followed_refs": [
+    "file:/pinker/msg/amara/dificuldades/2026-08-08-gc-seguro-nao-alcanca-35-gib.md",
+    "file:/pinker/msg/amara/dificuldades/2026-08-08-llvm-oficial-exige-libxml2.md",
+    "file:/pinker/msg/amara/dificuldades/2026-08-08-f2-llvm-sem-espaco-para-testes.md"
+  ],
+  "goal": "incorporar três memórias operacionais legadas da Pinker",
+  "hypotheses": [],
+  "known": [
+    "os três registros contêm sintoma, probe ou cálculo discriminativo, resultado observado, orientação reutilizável e proveniência identificável"
+  ],
+  "loaded_refs": [
+    "B-2TGUGN97M7CX",
+    "B-120HNOHU8H9M",
+    "B-2BWWC6NK2JGP",
+    "B-3N8C5W2H9J6X"
+  ],
+  "missing": [
+    "verificar se o registro de GC conservador contém conhecimento reutilizável suficiente",
+    "verificar se o registro de dependência libxml2 contém conhecimento reutilizável suficiente",
+    "verificar se o capacity gate de LLVM contém conhecimento reutilizável suficiente"
+  ],
+  "next_probe": {
+    "action": "navegar sem IDs e buscar pelos sintomas originais",
+    "authorized": true,
+    "bounded": true,
+    "discriminative": true,
+    "no_known_high_risk_gap": true,
+    "observable": "os três casos reaparecem por view ou busca lexical com proveniência preservada",
+    "oracle": "book list, book search, book show, book references e book verify",
+    "recorded_at": "2026-08-25T02:35:31Z"
+  },
+  "outcome": "três memórias legadas retidas e recuperadas por navegação/sintoma",
+  "project": "LyannaValerie/pinker-v0",
+  "started_at": "2026-08-25T02:33:12Z",
+  "state": "finished",
+  "task_id": "T-ZHIR8SE6DZYNG91Z",
+  "validation": {
+    "oracle": "book verify + search/show/references executados",
+    "outcome": "PASS: 6 casos válidos, 3 relações e os três casos legados recuperáveis sem ID prévio",
+    "passed": true,
+    "summary": "protocolo de aceitação da incorporação legado→Book satisfeito",
+    "validated_at": "2026-08-25T02:36:58Z"
+  }
+}

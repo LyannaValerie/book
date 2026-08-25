@@ -1,0 +1,44 @@
+{
+  "domain": "Book",
+  "finished_at": "2026-08-25T02:59:25Z",
+  "followed_refs": [
+    "event:E-6B8BA832BB66254D773F",
+    "event:E-FE71E8C0AC65E4B54D10",
+    "event:E-F2B38F55D5B4B861A868"
+  ],
+  "goal": "registrar problemas observados no dogfooding e produzir guia operacional completo",
+  "hypotheses": [],
+  "known": [
+    "três problemas observados foram retidos como casos no domínio Book"
+  ],
+  "loaded_refs": [
+    "B-PJU4U69TX75S",
+    "B-Z6LZA1Q7I9WZ",
+    "B-DPR90JZJB8XO"
+  ],
+  "missing": [
+    "quais dificuldades observadas merecem retenção como conhecimento reutilizável?"
+  ],
+  "next_probe": {
+    "action": "reindexar, reencontrar os três casos por sintomas, validar o guia contra a CLI e executar verify mais regressão completa",
+    "authorized": true,
+    "bounded": true,
+    "discriminative": true,
+    "no_known_high_risk_gap": true,
+    "observable": "três buscas retornam os IDs esperados, documentação existe, verify e testes passam",
+    "oracle": "file:docs/user-guide.md",
+    "recorded_at": "2026-08-25T02:58:15Z"
+  },
+  "outcome": "problemas observados retidos no Book e guia operacional completo publicado localmente",
+  "project": "LyannaValerie/book",
+  "started_at": "2026-08-25T02:51:24Z",
+  "state": "finished",
+  "task_id": "T-DUTAZBMHU10YFTF4",
+  "validation": {
+    "oracle": "file:docs/user-guide.md",
+    "outcome": "três casos recuperados por sintoma; guia ligado no README; 9/9 casos válidos; 62 testes aprovados",
+    "passed": true,
+    "summary": "dogfooding e documentação validados",
+    "validated_at": "2026-08-25T02:59:25Z"
+  }
+}

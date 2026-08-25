@@ -1,0 +1,11 @@
+{
+  "case_id": "B-120HNOHU8H9M",
+  "domain": "Forja",
+  "synthetic": false,
+  "updated_at": "2026-08-25T02:43:12Z",
+  "views": [
+    "Forja/Preflight",
+    "Forja/Storage",
+    "Forja/Toolchains"
+  ]
+}

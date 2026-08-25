@@ -1,0 +1,70 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não eleve o HEAD live a autoridade quando a branch, a identidade da Task ou a ancestralidade não conferem.",
+    "Se a árvore estiver dirty, preserve e inventarie as mudanças antes de decidir a recuperação."
+  ],
+  "cues": [
+    "takeover",
+    "checkpoint-stale",
+    "live-head",
+    "commits-nao-publicados",
+    "recovery"
+  ],
+  "discriminating_probe": {
+    "action": "confirmar task_id, self_path, branch, limpeza e ancestralidade; depois comparar checkpoint..HEAD e origin/branch..HEAD",
+    "observable": "o HEAD live é descendente legítimo e os commits locais ausentes do remoto ficam enumerados"
+  },
+  "environment": {
+    "branch": "issue-514-module-composition",
+    "repository": "LyannaValerie/pinker-v0",
+    "task": "issue-514-module-composition"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Checkpoint anterior preservado e checkpoint final canônico.",
+      "source": "file:/pinker/state/tasks/issue-514-module-composition/checkpoint.before-takeover-20260825T070731Z.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Em takeover, recupere antes de recomputar. Um workspace limpo, com identidade correta e HEAD ancestralmente legítimo, prevalece sobre checkpoint comprovadamente stale; inventarie commits e arquivos antes de qualquer mutação."
+  },
+  "id": "B-GDCKPRJE5VZX",
+  "observed_at": "2026-08-25T08:27:07Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O HEAD e8022ac foi confirmado como autoridade de recuperação, o commit local foi preservado e o checkpoint foi refeito com uma única chave canônica por estado, sem rewind."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "O checkpoint apontava para 48ade28 e continha gates duplicados e contraditórios, enquanto o worktree correto estava limpo em e8022ac e a PR remota ainda estava em 3311acb. Tratar o checkpoint como autoridade superior apagaria trabalho legítimo."
+  },
+  "references": [
+    "file:/pinker/state/tasks/issue-514-module-composition/checkpoint.yaml",
+    "git:e8022ac0af4ccbff708963367eda51198f7cc262"
+  ],
+  "revision": {
+    "hash": "e8d4241147570578b509a364a957d8ee87e9acbed5ff3a4ac73e2a3ae48b1026",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T08:43:35Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "Forja",
+      "Git",
+      "task-recovery"
+    ],
+    "conditions": [
+      "Task interrompida com worktree existente",
+      "checkpoint atrás do HEAD live"
+    ]
+  },
+  "status": "candidate",
+  "title": "Checkpoint stale não autoriza rewind de um workspace legítimo"
+}

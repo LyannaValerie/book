@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-08-25T02:35:15Z",
+  "created_by": "legacy-memory",
+  "epistemic": "OBSERVED",
+  "from": "B-120HNOHU8H9M",
+  "id": "R-561884E3895CDE3F",
+  "oracle": null,
+  "to": "file:/pinker/msg/amara/dificuldades/2026-08-08-f2-llvm-sem-espaco-para-testes.md",
+  "type": "learned_from"
+}

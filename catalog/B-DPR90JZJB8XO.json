@@ -1,0 +1,11 @@
+{
+  "case_id": "B-DPR90JZJB8XO",
+  "domain": "Book",
+  "synthetic": false,
+  "updated_at": "2026-08-25T02:52:25Z",
+  "views": [
+    "Book/Authoring",
+    "Book/Retention",
+    "Book/Search"
+  ]
+}
