@@ -1,0 +1,62 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não generalizar para shells interativos com startup controlado."
+  ],
+  "cues": [
+    "bash",
+    "non-interactive",
+    "alias",
+    "shell"
+  ],
+  "discriminating_probe": {
+    "action": "Executar type sobre o nome em bash --noprofile --norc.",
+    "observable": "O nome resolve como executável, função, alias ou não encontrado."
+  },
+  "environment": {
+    "shell": "bash"
+  },
+  "evidence": [
+    {
+      "class": "ASSERTED",
+      "description": "Fixture sintética para provar universalidade do modelo.",
+      "source": "file:docs/data-model.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Prefira executáveis e argumentos explícitos em automação não interativa."
+  },
+  "id": "B-SXUS0H59Y1SB",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Na fixture sintética, o resultado declarado separa dependência de startup de ausência do executável."
+  },
+  "problem": {
+    "class": "ASSERTED",
+    "text": "Um comando que depende de alias pode falhar em shell não interativo."
+  },
+  "references": [
+    "file:docs/data-model.md"
+  ],
+  "revision": {
+    "hash": "27045aa893f29021893fb7dbcc7aba96ca08b1c3b6ce39fbc36cc43147d6ba6a",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T01:58:25Z",
+    "updated_by": "fixture"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "shell-startup"
+    ],
+    "conditions": [
+      "bash executado sem terminal interativo"
+    ]
+  },
+  "status": "candidate",
+  "title": "Shell não interativo pode omitir aliases e funções"
+}
