@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import tempfile
 import unicodedata
 from contextlib import contextmanager
@@ -22,6 +23,14 @@ from typing import Any
 TOOL_VERSION = "0.1.0"
 SCHEMA_VERSION = 1
 CONTENT_TRUST = "UNTRUSTED_DATA"
+
+
+def grant_shared_group_access(fd: int) -> None:
+    """Preserve owner/other bits while granting group read/write access."""
+    mode = stat.S_IMODE(os.fstat(fd).st_mode)
+    required = stat.S_IRGRP | stat.S_IWGRP
+    if mode & required != required:
+        os.fchmod(fd, mode | required)
 
 STATUSES = {"candidate", "verified", "challenged", "superseded", "historical"}
 EPISTEMIC_CLASSES = {"OBSERVED", "ASSERTED", "VALIDATED"}
@@ -505,6 +514,7 @@ def atomic_write(path: Path, value: dict[str, Any]) -> None:
     data = json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
     descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     try:
+        grant_shared_group_access(descriptor)
         with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as stream:
             stream.write(data)
             stream.flush()

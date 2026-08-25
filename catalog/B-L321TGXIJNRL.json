@@ -1,0 +1,9 @@
+{
+  "case_id": "B-L321TGXIJNRL",
+  "domain": "Pinker",
+  "synthetic": false,
+  "updated_at": "2026-08-25T08:43:49Z",
+  "views": [
+    "Pinker/issue-514-module-composition/Recuperacao-e-fechamento-confiavel"
+  ]
+}

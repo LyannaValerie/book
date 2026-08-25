@@ -9,7 +9,7 @@ import string
 from pathlib import Path
 from typing import Any
 
-from .core import BookError, canonical_bytes, digest, loads_json, lock, utc_now
+from .core import BookError, canonical_bytes, digest, grant_shared_group_access, loads_json, lock, utc_now
 from .security import redact_summary, reject_sensitive
 
 EVENT_KINDS = {
@@ -89,8 +89,9 @@ def append_event(root: Path, kind: str, *, task_id: str | None = None, summary: 
         base = {"event_id": event_id, "seq": len(events) + 1, "timestamp": timestamp or utc_now(), "kind": kind, "task_id": task_id, "summary": clean_summary, "data": safe_data, "previous_hash": events[-1]["hash"] if events else None}
         event = {**base, "hash": digest(base)}
         path.parent.mkdir(parents=True, exist_ok=True)
-        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o660)
         try:
+            grant_shared_group_access(fd)
             os.write(fd, canonical_bytes(event) + b"\n"); os.fsync(fd)
         finally:
             os.close(fd)

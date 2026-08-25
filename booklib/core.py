@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import secrets
+import stat
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -20,6 +21,18 @@ class BookError(Exception):
         self.code = code
         self.message = message
         self.details = details
+
+
+def grant_shared_group_access(fd: int) -> None:
+    """Make a writable Book data file accessible to ``pinker-agents``.
+
+    The containing setgid directory supplies the group identity. Preserve the
+    owner and other bits while adding only group read/write access.
+    """
+    mode = stat.S_IMODE(os.fstat(fd).st_mode)
+    required = stat.S_IRGRP | stat.S_IWGRP
+    if mode & required != required:
+        os.fchmod(fd, mode | required)
 
 
 def utc_now() -> str:
@@ -72,6 +85,7 @@ def atomic_write(path: Path, value: Any) -> None:
     payload = json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
     fd, name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent, text=True)
     try:
+        grant_shared_group_access(fd)
         with os.fdopen(fd, "w", encoding="utf-8") as stream:
             stream.write(payload)
             stream.flush()

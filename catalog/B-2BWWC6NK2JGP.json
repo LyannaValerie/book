@@ -1,0 +1,11 @@
+{
+  "case_id": "B-2BWWC6NK2JGP",
+  "domain": "Forja",
+  "synthetic": false,
+  "updated_at": "2026-08-25T02:43:12Z",
+  "views": [
+    "Forja/DynamicLinking",
+    "Forja/LLVM",
+    "Forja/Toolchains"
+  ]
+}

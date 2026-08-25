@@ -1,0 +1,28 @@
+{
+  "domain": "Book",
+  "finished_at": "2026-08-25T03:00:51Z",
+  "followed_refs": [
+    "event:E-AAFF29C1A7D4259469BB"
+  ],
+  "goal": "registrar lacuna de lifecycle de missing observada no ContextReceipt",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [
+    "B-Z6LZA1Q7I9WZ",
+    "B-KNHXWR2TRL3T"
+  ],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "finding de missing persistente retido e documentado",
+  "project": "LyannaValerie/book",
+  "started_at": "2026-08-25T02:59:55Z",
+  "state": "finished",
+  "task_id": "T-SVBKJM4BOBRGX1S2",
+  "validation": {
+    "oracle": "event:E-AAFF29C1A7D4259469BB",
+    "outcome": "limitação reproduzida, caso recuperável e corpus válido",
+    "passed": true,
+    "summary": "lifecycle de missing registrado",
+    "validated_at": "2026-08-25T03:00:51Z"
+  }
+}

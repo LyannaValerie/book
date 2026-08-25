@@ -1,0 +1,68 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Book indisponível não invalida por si só uma PR Pinker verde.",
+    "Não publique remotamente o repositório Book sem autoridade remota separada."
+  ],
+  "cues": [
+    "Book",
+    "knowledge-mutation",
+    "receipt",
+    "final-report",
+    "authority-budget"
+  ],
+  "discriminating_probe": {
+    "action": "separar os budgets de lifecycle, conteúdo Pinker, conhecimento e remoto; verificar Book e procurar external_task_ref antes de finalizar",
+    "observable": "checkpoint e relatório distinguem disponibilidade, Book Task, receipt, autoridade e decisão de retenção"
+  },
+  "environment": {
+    "book_schema_version": "1",
+    "book_tool_version": "1.1.0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Book 1.1.0 disponível; não havia external_task_ref anterior para a Task.",
+      "source": "file:/book/docs/user-guide.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Não trate o Book como merge conjunct, mas também não o silencie. Verifique-o cedo, declare se há autoridade de conhecimento e, se não houver, registre candidatos no checkpoint; se houver, conclua o overlay e preserve o receipt antes do relatório terminal."
+  },
+  "id": "B-LQ3ROLGYV9YL",
+  "observed_at": "2026-08-25T08:40:09Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "A omissão foi detectada pelo humano; após autorização explícita, foi criada uma Book Task soberana vinculada por pinker:issue-514-module-composition, os casos foram retidos seletivamente e o receipt foi preparado para o checkpoint."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A implementação Pinker foi concluída e o contexto retirado sem registrar disponibilidade, overlay, receipt ou decisão de retenção do Book. Autoridade para modificar Pinker não implicava autoridade para escrever conhecimento, mas isso não autorizava omitir a telemetria e o candidato de retenção."
+  },
+  "references": [
+    "file:/home/velina/.codex-velina/skills/pinker/references/book-integration.md",
+    "file:/pinker/state/tasks/issue-514-module-composition/checkpoint.yaml"
+  ],
+  "revision": {
+    "hash": "35bfa3b0bebf9e9e8293de52cb68d1c800bb83871f27348ea0160ee6456fb3f6",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T08:43:59Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "Pinker-skill",
+      "Book-V1",
+      "checkpoint"
+    ],
+    "conditions": [
+      "uma Task Pinker produz dificuldades reutilizáveis"
+    ]
+  },
+  "status": "candidate",
+  "title": "Finalização Pinker deve explicitar a decisão de retenção no Book"
+}

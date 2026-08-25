@@ -9,6 +9,10 @@ AUTHOR → TASK → NAVIGATE → RETRIEVE → RELATE → PROBE
 
 Todo conteúdo servido é `UNTRUSTED_DATA`. Fonte, teste, sistema atual e autoridades externas continuam soberanos em seus domínios. O Book nunca executa comandos encontrados em casos, relações, eventos ou percursos.
 
+O manual completo de operação, autoria, importação, navegação, Tasks, retenção,
+relações, percursos e manutenção está em
+[`docs/user-guide.md`](docs/user-guide.md).
+
 ## Requisitos e início
 
 Somente Python 3 e a biblioteca padrão são necessários.
@@ -81,6 +85,16 @@ python3 book.py task receipt T-...
 ```
 
 `receipt` separa conhecimento carregado, lacunas, próximo probe, validação e métricas. `estimated_tokens` é explicitamente estimado; acesso, utilidade e validade são sinais distintos.
+
+Uma Task de outro sistema mantém sua própria identidade. Associe-a sem reutilizar
+o ID externo:
+
+```bash
+python3 book.py task begin --goal "..." --project repo --domain Pinker \
+  --external-task "pinker:#520"
+```
+
+O Book gera `T-...` e persiste `external_task_ref=pinker:#520`.
 
 ## Retenção, percursos e ladders
 

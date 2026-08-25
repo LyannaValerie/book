@@ -1,0 +1,67 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não incremente geração antes de confirmar a identidade e o workspace recuperados.",
+    "Read-only audit não deve reivindicar ownership mutante sem exigência explícita."
+  ],
+  "cues": [
+    "active-context",
+    "generation",
+    "takeover",
+    "lifecycle",
+    "single-mutating-owner"
+  ],
+  "discriminating_probe": {
+    "action": "observar o contexto pelo tooling canônico, retirar o contexto anterior, publicar a mesma Task com geração incrementada e observar novamente",
+    "observable": "existe exatamente um owner ativo com a mesma task_id e a nova geração"
+  },
+  "environment": {
+    "generation": "2",
+    "task": "issue-514-module-composition"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Checkpoint final registra geração 2 e active_context RETIRED_AND_VERIFIED.",
+      "source": "file:/pinker/state/tasks/issue-514-module-composition/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Em takeover, identidade do agente é efêmera e identidade da Task é persistente. Reconcile ownership pelo lifecycle canônico; nunca crie uma Task substituta nem edite arquivos de active context manualmente."
+  },
+  "id": "B-JPDXDAT88X5I",
+  "observed_at": "2026-08-25T08:27:07Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O contexto geração 1 foi retirado pelo lifecycle canônico, a mesma Task foi publicada como geração 2 e, após o CI verde e fl CLEAN_NOOP, o contexto foi retirado e a ausência verificada."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "O contexto ativo antigo ainda estava publicado após a interrupção humana. Criar outra Task ou editar state manualmente quebraria a identidade persistente e poderia produzir dois donos mutantes."
+  },
+  "references": [
+    "file:/pinker/state/tasks/issue-514-module-composition/checkpoint.yaml"
+  ],
+  "revision": {
+    "hash": "d89f50f40b8a6374fa84502c2bdc55e12a6b17dc1feefee2a2527526fa834185",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T08:43:54Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "Forja-lifecycle",
+      "active-context",
+      "task-identity"
+    ],
+    "conditions": [
+      "executor anterior foi interrompido e a mesma Task precisa continuar"
+    ]
+  },
+  "status": "candidate",
+  "title": "Takeover preserva a identidade da Task e troca somente o executor"
+}

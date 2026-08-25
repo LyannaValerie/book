@@ -208,6 +208,34 @@ class BookV1CliTests(unittest.TestCase):
         self.cli("task", "finish", task, "--outcome", "validated")
         _, result = self.cli("task", "receipt", task); self.assertTrue(result["ready"]); self.assertTrue(result["validation"]["passed"]); self.assertEqual(result["task"]["state"], "finished")
 
+    def test_external_task_ref_links_without_sharing_identity(self) -> None:
+        code, started = self.cli("task", "begin", "--goal", "linked investigation", "--project", "repo", "--domain", "Pinker", "--external-task", "pinker:#520")
+        self.assertEqual(code, 0)
+        task = started["task"]
+        self.assertRegex(task["task_id"], r"^T-[A-Z0-9]{16}$")
+        self.assertNotEqual(task["task_id"], "#520")
+        self.assertEqual(task["external_task_ref"], "pinker:#520")
+        _, receipt_result = self.cli("task", "receipt", task["task_id"])
+        self.assertEqual(receipt_result["task"]["external_task_ref"], "pinker:#520")
+        code, verified = self.cli("verify")
+        self.assertEqual((code, verified["ok"]), (0, True))
+
+        code, invalid = self.cli("task", "begin", "--goal", "bad link", "--project", "repo", "--external-task", "book:T-OTHER")
+        self.assertEqual((code, invalid["error"]), (2, "EXTERNAL_TASK_REF_INVALID"))
+        code, invalid = self.cli("task", "begin", "--goal", "path-like link", "--project", "repo", "--external-task", "pinker:../../520")
+        self.assertEqual((code, invalid["error"]), (2, "EXTERNAL_TASK_REF_INVALID"))
+
+    def test_legacy_task_without_external_ref_remains_readable(self) -> None:
+        _, started = self.cli("task", "begin", "--goal", "legacy", "--project", "repo")
+        task_id = started["task"]["task_id"]
+        path = self.root / "tasks" / f"{task_id}.json"
+        legacy = json.loads(path.read_text()); legacy.pop("external_task_ref")
+        atomic_write(path, legacy)
+        code, verified = self.cli("verify")
+        self.assertEqual((code, verified["ok"]), (0, True))
+        _, receipt_result = self.cli("task", "receipt", task_id)
+        self.assertIsNone(receipt_result["task"]["external_task_ref"])
+
     def test_task_access_metrics_and_utility_are_distinct(self) -> None:
         case = self.add(); _, started = self.cli("task", "begin", "--goal", "runtime", "--project", "repo"); task = started["task"]["task_id"]
         self.cli("--task", task, "search", "runtime"); self.cli("--task", task, "show", case["id"]); self.cli("use", case["id"], "--as", "support", "--task", task)

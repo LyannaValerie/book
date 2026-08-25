@@ -1,0 +1,70 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "O projeto de origem pode coincidir legitimamente com o domínio; a distinção não obriga que sejam sempre diferentes.",
+    "Facetas continuam sendo afirmações editoriais e não provam aplicabilidade do caso."
+  ],
+  "cues": [
+    "proveniência",
+    "domínio",
+    "faceta",
+    "source-domain",
+    "pinker-msg",
+    "Forja",
+    "Pinker"
+  ],
+  "discriminating_probe": {
+    "action": "Comparar o sistema descrito por problem, scope, probe e guidance com o namespace da referência de origem, e listar separadamente os territórios candidatos.",
+    "observable": "A classificação baseada no assunto coloca os casos operacionais em Forja, enquanto file:/pinker/msg permanece apenas como proveniência."
+  },
+  "environment": {
+    "repository": "LyannaValerie/book",
+    "workflow": "dogfooding de /pinker/msg"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "O dogfooding registrou a classificação inicial incorreta e a correção mecânica das facetas.",
+      "source": "event:E-6B8BA832BB66254D773F"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Classifique domain e views pelo sistema ou assunto ao qual o conhecimento se aplica. Preserve onde a memória foi encontrada em evidence, references ou relação learned_from. Não derive automaticamente o domínio do path, repositório ou proprietário da fonte."
+  },
+  "id": "B-PJU4U69TX75S",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Após book facet set, os três IDs passaram a aparecer em Forja e deixaram de aparecer em buscas --within Pinker; IDs, revisões canônicas e relações learned_from permaneceram intactos."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Durante a ingestão, três casos sobre operação da Forja foram inicialmente classificados no domínio Pinker porque os arquivos de origem estavam sob /pinker/msg. Isso misturou o local histórico da evidência com o assunto do conhecimento."
+  },
+  "references": [
+    "event:E-6B8BA832BB66254D773F"
+  ],
+  "revision": {
+    "hash": "599c26c5aa5dd4b4c21e6a8fac128848786107591a4ce9fcd1aca496c0bd6c24",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T02:52:42Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "authoring",
+      "facets",
+      "views",
+      "legacy ingestion"
+    ],
+    "conditions": [
+      "memória externa vem de um projeto ou diretório diferente do sistema sobre o qual ela fala"
+    ]
+  },
+  "status": "candidate",
+  "title": "Proveniência de uma memória não determina seu domínio de conhecimento"
+}

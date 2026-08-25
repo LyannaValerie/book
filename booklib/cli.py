@@ -72,7 +72,7 @@ def build_parser() -> argparse.ArgumentParser:
     refs = commands.add_parser("references"); refs.add_argument("id"); refs.add_argument("--depth", type=int, default=1)
     resolver = commands.add_parser("resolve"); resolver.add_argument("reference")
     task = commands.add_parser("task"); ts = task.add_subparsers(dest="task_command", required=True)
-    tb = ts.add_parser("begin"); tb.add_argument("--goal", required=True); tb.add_argument("--project", required=True); tb.add_argument("--domain"); tb.add_argument("--id")
+    tb = ts.add_parser("begin"); tb.add_argument("--goal", required=True); tb.add_argument("--project", required=True); tb.add_argument("--domain"); tb.add_argument("--id"); tb.add_argument("--external-task", dest="external_task")
     for name in ("status", "receipt"): sub = ts.add_parser(name); sub.add_argument("id")
     tm = ts.add_parser("missing"); tm.add_argument("id"); tm.add_argument("question")
     for name in ("known", "hypothesis"):
@@ -139,7 +139,7 @@ def dispatch(args: argparse.Namespace) -> tuple[Any, int]:
     if args.command == "resolve":
         result=resolve(root,args.reference); _record_access(root,args.task,"REFERENCE_FOLLOW",result,{"reference":args.reference},args.reference); note_loaded(root,args.task,[args.reference],followed=True); return result,0
     if args.command == "task":
-        if args.task_command=="begin": return begin(root,args.goal,args.project,domain=args.domain,task_id=args.id),0
+        if args.task_command=="begin": return begin(root,args.goal,args.project,domain=args.domain,task_id=args.id,external_task_ref=args.external_task),0
         if args.task_command=="status": return {"ok":True,"operation":"task status","task":load_task(root,args.id)},0
         if args.task_command=="missing": return add_missing(root,args.id,args.question),0
         if args.task_command=="known": return add_state(root,args.id,"known",args.statement),0

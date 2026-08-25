@@ -1,0 +1,10 @@
+{
+  "case_id": "B-4Y18BOYQEE0T",
+  "domain": "Book",
+  "synthetic": false,
+  "updated_at": "2026-08-25T09:23:12Z",
+  "views": [
+    "Book/Maintenance/SharedOwnership",
+    "Book/Storage/Permissions"
+  ]
+}

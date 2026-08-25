@@ -1,0 +1,9 @@
+{
+  "case_id": "B-RHSK3050R6VG",
+  "domain": "Pinker",
+  "synthetic": false,
+  "updated_at": "2026-08-25T04:28:21Z",
+  "views": [
+    "Pinker/CLI"
+  ]
+}

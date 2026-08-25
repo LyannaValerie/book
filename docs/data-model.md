@@ -24,7 +24,16 @@ Estados de resolver: `RESOLVED`, `UNRESOLVABLE`, `UNAVAILABLE`, `UNKNOWN`. Falha
 
 ## Task e ContextReceipt
 
-Task armazena somente goal, domínio/projeto, estados curtos `known/hypotheses/missing`, próximo probe, refs carregadas/seguidas, validação e outcome. Não armazena transcript ou chain-of-thought.
+Task armazena somente goal, domínio/projeto, `external_task_ref` opcional,
+estados curtos `known/hypotheses/missing`, próximo probe, refs
+carregadas/seguidas, validação e outcome. Não armazena transcript ou
+chain-of-thought.
+
+`external_task_ref` liga a sessão epistemológica a uma Task soberana de outro
+sistema sem compartilhar identidade. Na V1, a forma suportada é
+`pinker:<task-id>`. O Book continua gerando seu próprio `T-...`; a referência
+não concede autoridade nem permite ao Book governar a Task Pinker. Tasks V1
+anteriores sem o campo continuam legíveis como `external_task_ref=null`.
 
 `Ready(probe)` requer flags registradas de autorização, limite, observabilidade, poder discriminativo e ausência de gap de alto risco conhecido. O receipt projeta esses dados e métricas.
 

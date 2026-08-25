@@ -1,0 +1,11 @@
+{
+  "case_id": "B-2TGUGN97M7CX",
+  "domain": "Forja",
+  "synthetic": false,
+  "updated_at": "2026-08-25T02:43:11Z",
+  "views": [
+    "Forja/GC",
+    "Forja/Storage",
+    "Forja/Tooling"
+  ]
+}

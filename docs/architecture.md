@@ -12,7 +12,9 @@ Book é experiência, evidência e orientação histórica. Não é autoridade f
 - `v0.py`: Case Store schema 1 preservado, CAS, validação e escrita atômica.
 - `views.py` e `search.py`: navegação por facetas e busca lexical determinística.
 - `relations.py` e `references.py`: grafo tipado e resolvers por namespace.
-- `tasks.py`, `events.py` e `metrics.py`: contexto operacional curto, fatos append-only e projeções de custo.
+- `tasks.py`, `events.py` e `metrics.py`: contexto operacional curto, vínculo
+  opcional `external_task_ref`, fatos append-only e projeções de custo. O vínculo
+  não compartilha identidade ou autoridade com a Task externa.
 - `retention.py`: decisão explícita entre criar, revisar, desafiar ou não escrever.
 - `paths.py`: projeções derivadas de traces; nunca execução.
 - `ladders.py`: procedimentos ramificados explicitamente promovidos.

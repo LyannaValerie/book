@@ -1,0 +1,68 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não trate toda entrada histórica em missing como blocker atual após finish.",
+    "Esta limitação é distinta de corrigir project/domain: ela afeta o lifecycle de uma lacuna operacional."
+  ],
+  "cues": [
+    "missing",
+    "resolve gap",
+    "ContextReceipt",
+    "task finish",
+    "stale missing",
+    "lifecycle"
+  ],
+  "discriminating_probe": {
+    "action": "Registrar missing, validar e finalizar a Task, consultar o receipt e enumerar book task --help.",
+    "observable": "A pergunta permanece em missing e não existe subcomando resolve/remove para alterar seu lifecycle."
+  },
+  "environment": {
+    "repository": "LyannaValerie/book",
+    "tool_version": "1.0.0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "O receipt final mostrou simultaneamente validation passed, outcome concluído e a pergunta ainda em missing.",
+      "source": "event:E-AAFF29C1A7D4259469BB"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Registre em missing somente lacunas realmente abertas e formule-as de modo estável. Ao ler um receipt V1, confronte missing com validation e outcome; uma entrada presente pode estar historicamente superada. Não edite o Task JSON manualmente para limpar a lista."
+  },
+  "id": "B-KNHXWR2TRL3T",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "A Task T-DUTAZBMHU10YFTF4 terminou com validation.passed=true, mas seu receipt continuou listando a pergunta inicial em missing."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "O modelo de Task V1 permite adicionar perguntas a missing, mas não oferece operação para marcá-las resolvidas, substituídas ou removidas. Assim, um receipt finalizado e validado pode continuar exibindo uma lacuna que já foi respondida."
+  },
+  "references": [
+    "event:E-AAFF29C1A7D4259469BB"
+  ],
+  "revision": {
+    "hash": "3fb17ab01becedda27ffd151c62f7b0f6c875f66cf757b80636c15f1a3e02736",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T03:00:18Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "tasks",
+      "ContextReceipt",
+      "stop gate"
+    ],
+    "conditions": [
+      "uma pergunta registrada como missing foi respondida ou tornou-se irrelevante antes do encerramento"
+    ]
+  },
+  "status": "candidate",
+  "title": "Lacunas missing permanecem abertas no receipt após validação da Task"
+}

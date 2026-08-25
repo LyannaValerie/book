@@ -1,0 +1,68 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Ciclos de alias inválidos podem usar sentinela de ciclo porque estão fora do domínio semântico admissível; documente esse limite.",
+    "Não invente um programa-fonte de regressão se a forma de tipo é rejeitada antes do caminho testado; use o oracle direto da autoridade e prove o consumidor."
+  ],
+  "cues": [
+    "module-composition",
+    "type-identity",
+    "dag",
+    "union-canonicalization",
+    "hash-collision"
+  ],
+  "discriminating_probe": {
+    "action": "comparar diretamente a autoridade estrutural com união invertida, aninhada, duplicada, membro distinto e alias transparente; provar que o consumidor não usa digest",
+    "observable": "formas semanticamente iguais produzem a mesma chave completa, formas distintas produzem chaves distintas e module_resolve consome a autoridade única"
+  },
+  "environment": {
+    "head": "4a70d9b7f815136af653c61851ab9a5eccb6c10f",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Revisão adversarial terminal e teste direcionado 53/53.",
+      "source": "file:/pinker/artifacts/tasks/issue-514-module-composition/revisao/takeover-final-4a70d9b.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Quando igualdade estrutural decide identidade, deduplicação ou colisão nominal, use uma representação canônica completa. Hash pode indexar ou acelerar, mas não deve ser a prova final de igualdade."
+  },
+  "id": "B-A2L9OZH9Q96L",
+  "observed_at": "2026-08-25T08:27:07Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "canonical_type_graph_key passou a internar o DAG, expandir aliases, canonicalizar uniões e serializar todos os bytes com enquadramento estável; digest_de_tipo foi removido. O teste direcionado terminou 53/53 e a re-revisão passou I1-I8."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A revisão adversarial encontrou duas autoridades divergentes: a chave de composição não canonicalizava uniões como union_canon e reduzia a estrutura a um digest FNV u64, usando colisão possível como igualdade exata."
+  },
+  "references": [
+    "git:c334c65559002515edd67886e92d70c5d236924a",
+    "file:/pinker/artifacts/agents/velina/pinker-run/issue-514-module-composition-2026-08-25_07-38-03"
+  ],
+  "revision": {
+    "hash": "98d121091045519b3fc8f4fda82e1ebd57501fca04989f20f364b934dcca1488",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T08:43:40Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "module_resolve",
+      "union_canon",
+      "semantic-identity"
+    ],
+    "conditions": [
+      "deduplicação usa identidade estrutural como prova de equivalência"
+    ]
+  },
+  "status": "candidate",
+  "title": "Digest probabilístico não prova igualdade estrutural de tipos"
+}

@@ -1,0 +1,81 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não ignore a falha quando os bits de grupo realmente estiverem ausentes; nesse caso a migração de ownership e modo ainda é necessária.",
+    "Não amplie permissões de caminhos que não sejam compartilhados ou não pertençam ao escopo autorizado.",
+    "Não adicione execute a arquivos comuns."
+  ],
+  "cues": [
+    "fchmod",
+    "operation-not-permitted",
+    "pinker-agents",
+    "shared-ownership",
+    "group-write",
+    "setgid"
+  ],
+  "discriminating_probe": {
+    "action": "executar uma gravação como membro do grupo sobre arquivo 0660 pertencente a outro agente e separar open/write de fchmod",
+    "observable": "open e write são autorizados pelo grupo, enquanto fchmod do não proprietário falha com EPERM"
+  },
+  "environment": {
+    "actor": "velina",
+    "repository": "LyannaValerie/book",
+    "shared_group": "pinker-agents"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "A Book Task falhou em os.fchmod depois de abrir o events.jsonl compartilhado.",
+      "source": "file:/book/booklib/core.py"
+    },
+    {
+      "class": "VALIDATED",
+      "description": "O teste prova acesso g+rw sob umask 077 e ausência de fchmod quando um arquivo 0660 já está compartilhado.",
+      "oracle": "python3 -m unittest tests.test_shared_permissions -v",
+      "source": "file:/book/tests/test_shared_permissions.py"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Migre diretórios compartilhados para grupo pinker-agents com setgid e arquivos graváveis para g+rw. Nos escritores, consulte o modo atual e chame fchmod somente quando faltarem bits de grupo; arquivos temporários pertencentes ao executor ainda recebem g+rw, enquanto arquivos existentes e já corretos não exigem poder de proprietário."
+  },
+  "id": "B-4Y18BOYQEE0T",
+  "observed_at": "2026-08-25T09:21:10Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "A criação da Book Task falhou em grant_shared_group_access com Operation not permitted; após tornar o helper idempotente, ele não chama fchmod quando os bits de grupo já existem e a operação conclui sem sudo."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A abertura do log compartilhado teve sucesso, mas o helper executou fchmod incondicionalmente. Como somente o proprietário ou root pode alterar o modo, a operação falhou com PermissionError mesmo quando o arquivo já estava corretamente em 0660."
+  },
+  "references": [
+    "file:/book/booklib/core.py",
+    "file:/book/booklib/events.py",
+    "file:/book/tests/test_shared_permissions.py",
+    "file:/pinker-skill/references/privilege-and-ownership.md"
+  ],
+  "revision": {
+    "hash": "cad9f139e14d9020f3e8897c5e3ec80bae0c24d8f58dd344cb15be7bca266ce9",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T09:23:12Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "Book event log",
+      "atomic writers",
+      "shared filesystem state"
+    ],
+    "conditions": [
+      "o arquivo existente pertence a outro agente",
+      "o grupo pinker-agents já possui leitura e escrita",
+      "o processo atual abre o arquivo pelo acesso de grupo"
+    ]
+  },
+  "status": "candidate",
+  "title": "Arquivo compartilhado gravável pelo grupo não deve exigir fchmod do não proprietário"
+}

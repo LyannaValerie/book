@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import secrets
 import string
+import re
 from pathlib import Path
 from typing import Any
 
 from .core import BookError, atomic_write, lock, read_json, require_text, utc_now
 from .events import append_event
 from .security import reject_sensitive
+
+
+EXTERNAL_TASK_REF_RE = re.compile(r"pinker:[A-Za-z0-9#][A-Za-z0-9._#-]{0,248}\Z")
 
 
 def new_task_id() -> str:
@@ -24,19 +28,31 @@ def load_task(root: Path, task_id: str) -> dict[str, Any]:
     path = task_path(root, task_id)
     if not path.exists():
         raise BookError("TASK_NOT_FOUND", f"task {task_id} not found")
-    return read_json(path)
+    task = read_json(path)
+    # Task V1 files created before external linkage remain readable without an
+    # eager canonical rewrite.  The field is persisted on the next legitimate
+    # active-Task update.
+    task.setdefault("external_task_ref", None)
+    return task
 
 
-def begin(root: Path, goal: str, project: str, *, domain: str | None = None, task_id: str | None = None, now: str | None = None) -> dict[str, Any]:
+def begin(root: Path, goal: str, project: str, *, domain: str | None = None, task_id: str | None = None, external_task_ref: str | None = None, now: str | None = None) -> dict[str, Any]:
     require_text(goal, "goal", maximum=2048); require_text(project, "project", maximum=256)
-    reject_sensitive({"goal": goal, "project": project, "domain": domain})
+    if external_task_ref is not None:
+        require_text(external_task_ref, "external_task_ref", maximum=256)
+        if not EXTERNAL_TASK_REF_RE.fullmatch(external_task_ref):
+            raise BookError("EXTERNAL_TASK_REF_INVALID", "external task reference must use pinker:<task-id>")
+    reject_sensitive({"goal": goal, "project": project, "domain": domain, "external_task_ref": external_task_ref})
     identifier = task_id or new_task_id(); timestamp = now or utc_now()
-    task = {"task_id": identifier, "goal": goal, "project": project, "domain": domain, "started_at": timestamp, "finished_at": None, "state": "active", "known": [], "hypotheses": [], "missing": [], "next_probe": None, "loaded_refs": [], "followed_refs": [], "validation": None, "outcome": None}
+    task = {"task_id": identifier, "external_task_ref": external_task_ref, "goal": goal, "project": project, "domain": domain, "started_at": timestamp, "finished_at": None, "state": "active", "known": [], "hypotheses": [], "missing": [], "next_probe": None, "loaded_refs": [], "followed_refs": [], "validation": None, "outcome": None}
     with lock(root, f"task-{identifier}"):
         if task_path(root, identifier).exists():
             raise BookError("TASK_ID_DUPLICATE", f"task {identifier} already exists")
         atomic_write(task_path(root, identifier), task)
-    append_event(root, "TASK_BEGIN", task_id=identifier, summary=goal, data={"signature": f"{domain or 'UNKNOWN'}:{project}"}, idempotency_key="begin", timestamp=timestamp)
+    signature = f"{domain or 'UNKNOWN'}:{project}"
+    if external_task_ref:
+        signature = f"{signature}:{external_task_ref}"
+    append_event(root, "TASK_BEGIN", task_id=identifier, summary=goal, data={"signature": signature}, idempotency_key="begin", timestamp=timestamp)
     return {"ok": True, "operation": "task begin", "task": task}
 
 
@@ -103,4 +119,4 @@ def receipt(root: Path, task_id: str) -> dict[str, Any]:
     from .metrics import task_metrics
     task = load_task(root, task_id); probe = task.get("next_probe") or {}
     ready = bool(probe) and all(probe.get(key) for key in ("authorized", "bounded", "observable", "discriminative", "no_known_high_risk_gap"))
-    return {"ok": True, "operation": "task receipt", "content_trust": "UNTRUSTED_DATA", "task": {"task_id": task_id, "goal": task["goal"], "project": task["project"], "domain": task["domain"], "state": task["state"]}, "loaded_knowledge": task["loaded_refs"], "followed_refs": task["followed_refs"], "missing": task["missing"], "next_probe": task["next_probe"], "ready": ready, "validation": task["validation"], "outcome": task["outcome"], "metrics": task_metrics(root, task_id)}
+    return {"ok": True, "operation": "task receipt", "content_trust": "UNTRUSTED_DATA", "task": {"task_id": task_id, "external_task_ref": task["external_task_ref"], "goal": task["goal"], "project": task["project"], "domain": task["domain"], "state": task["state"]}, "loaded_knowledge": task["loaded_refs"], "followed_refs": task["followed_refs"], "missing": task["missing"], "next_probe": task["next_probe"], "ready": ready, "validation": task["validation"], "outcome": task["outcome"], "metrics": task_metrics(root, task_id)}

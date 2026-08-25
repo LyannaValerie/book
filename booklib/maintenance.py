@@ -11,9 +11,9 @@ from .events import load_events, validate_events
 from .index import check_index
 from .ladders import validate_ladder
 from .relations import load_relations, validate_relation
-from .tasks import load_task
+from .tasks import EXTERNAL_TASK_REF_RE, load_task
 from .views import facet_path, infer_facets
-from . import v0
+from . import TOOL_VERSION, v0
 
 
 def verify(root: Path) -> tuple[dict[str, Any], int]:
@@ -29,8 +29,11 @@ def verify(root: Path) -> tuple[dict[str, Any], int]:
     for path in sorted((root / "tasks").glob("*.json")) if (root / "tasks").exists() else []:
         def check_task(p=path):
             task = read_json(p)
-            required = {"task_id", "goal", "project", "domain", "started_at", "finished_at", "state", "known", "hypotheses", "missing", "next_probe", "loaded_refs", "followed_refs", "validation", "outcome"}
-            if set(task) != required or task["task_id"] != p.stem or task["state"] not in {"active", "finished"}: raise BookError("TASK_SCHEMA_INVALID", "task structure is invalid")
+            legacy = {"task_id", "goal", "project", "domain", "started_at", "finished_at", "state", "known", "hypotheses", "missing", "next_probe", "loaded_refs", "followed_refs", "validation", "outcome"}
+            current = legacy | {"external_task_ref"}
+            external = task.get("external_task_ref")
+            if frozenset(task) not in {frozenset(legacy), frozenset(current)} or task["task_id"] != p.stem or task["state"] not in {"active", "finished"}: raise BookError("TASK_SCHEMA_INVALID", "task structure is invalid")
+            if external is not None and (not isinstance(external, str) or not EXTERNAL_TASK_REF_RE.fullmatch(external)): raise BookError("EXTERNAL_TASK_REF_INVALID", "external task reference must use pinker:<task-id>")
         capture("task", path, check_task)
     for path in sorted((root / "ladders").glob("*.json")) if (root / "ladders").exists() else []:
         capture("ladder", path, lambda p=path: validate_ladder(read_json(p)))
@@ -41,7 +44,7 @@ def verify(root: Path) -> tuple[dict[str, Any], int]:
             if set(item) != {"case_id", "domain", "views", "synthetic", "updated_at"} or item["case_id"] != p.stem or item["case_id"] not in case_ids: raise BookError("FACET_INVALID", "facet metadata is invalid or orphaned")
         capture("facet", path, check_facet)
     index = check_index(root)
-    result = {"ok": not errors, "operation": "verify", "tool_version": "1.0.0", "schema_version": v0.SCHEMA_VERSION, "files": base["files"], "valid_cases": base["valid_cases"], "relations": len(relation_files) if (relation_files := (list((root / "relations").glob("*.json")) if (root / "relations").exists() else [])) else 0, "events": len(load_events(root)) if not any(e.get("kind") == "events" for e in errors) else None, "tasks": len(list((root / "tasks").glob("*.json"))) if (root / "tasks").exists() else 0, "ladders": len(list((root / "ladders").glob("*.json"))) if (root / "ladders").exists() else 0, "derived_index": index, "errors": errors}
+    result = {"ok": not errors, "operation": "verify", "tool_version": TOOL_VERSION, "schema_version": v0.SCHEMA_VERSION, "files": base["files"], "valid_cases": base["valid_cases"], "relations": len(relation_files) if (relation_files := (list((root / "relations").glob("*.json")) if (root / "relations").exists() else [])) else 0, "events": len(load_events(root)) if not any(e.get("kind") == "events" for e in errors) else None, "tasks": len(list((root / "tasks").glob("*.json"))) if (root / "tasks").exists() else 0, "ladders": len(list((root / "ladders").glob("*.json"))) if (root / "ladders").exists() else 0, "derived_index": index, "errors": errors}
     return result, 0 if not errors else 1
 
 

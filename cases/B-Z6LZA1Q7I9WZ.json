@@ -1,0 +1,68 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não reabra ou reescreva uma Task finalizada apenas para esconder o histórico incorreto.",
+    "Uma Task executada no repositório Pinker pode tratar de Forja; project e domain podem divergir legitimamente."
+  ],
+  "cues": [
+    "task metadata",
+    "finished task",
+    "domain correction",
+    "receipt",
+    "amend",
+    "project-domain"
+  ],
+  "discriminating_probe": {
+    "action": "Inspecionar book task --help e tentar localizar uma operação auditável de correção de goal, project ou domain após task finish.",
+    "observable": "A CLI expõe begin, status, receipt, missing, known, hypothesis, next-probe, validate e finish, mas nenhuma correção de metadata encerrada."
+  },
+  "environment": {
+    "repository": "LyannaValerie/book",
+    "tool_version": "1.0.0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Dois receipts encerrados conservaram domain Pinker e a enumeração da CLI mostrou ausência de amend/revise.",
+      "source": "event:E-FE71E8C0AC65E4B54D10"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Escolha project e domain explicitamente antes de task begin e trate project como local de trabalho, não como sinônimo do assunto. Não edite Task JSON manualmente. Quando a classificação já estiver errada, preserve o finding até existir correção auditável ou política explícita de replay."
+  },
+  "id": "B-Z6LZA1Q7I9WZ",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Os casos puderam ter facetas corrigidas com facet set, porém os Task JSONs históricos permaneceram semanticamente mal classificados sem uma operação canônica equivalente."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Depois de separar Forja de Pinker, dois Task receipts encerrados continuaram com domain Pinker. A CLI permite atualizar estado operacional durante a Task, mas não oferece revise ou amend para corrigir metadados classificatórios de uma Task finalizada."
+  },
+  "references": [
+    "event:E-FE71E8C0AC65E4B54D10"
+  ],
+  "revision": {
+    "hash": "4229b559ef63959e20fd4d0314dfbc1319cf6778fa98c2ac58a77dd3e647bc5a",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T02:52:24Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "tasks",
+      "task receipt",
+      "CLI"
+    ],
+    "conditions": [
+      "Task já foi encerrada e um campo classificatório como domain foi registrado incorretamente"
+    ]
+  },
+  "status": "candidate",
+  "title": "Task encerrada não possui correção auditável de metadados na CLI V1"
+}

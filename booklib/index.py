@@ -9,7 +9,7 @@ import hashlib
 from pathlib import Path
 from typing import Any
 
-from .core import BookError, lock
+from .core import BookError, grant_shared_group_access, lock
 from .relations import load_relations
 from .views import case_views
 from . import v0
@@ -30,7 +30,8 @@ def corpus_signature(root: Path) -> str:
 def reindex(root: Path) -> dict[str, Any]:
     target = index_path(root); target.parent.mkdir(parents=True, exist_ok=True)
     with lock(root, "index"):
-        fd, temp_name = tempfile.mkstemp(prefix="index.", suffix=".sqlite3", dir=target.parent); os.close(fd)
+        fd, temp_name = tempfile.mkstemp(prefix="index.", suffix=".sqlite3", dir=target.parent)
+        grant_shared_group_access(fd); os.close(fd)
         try:
             db = sqlite3.connect(temp_name)
             db.execute("PRAGMA journal_mode=DELETE")

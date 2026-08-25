@@ -1,0 +1,26 @@
+{
+  "domain": "Book",
+  "external_task_ref": "pinker:pinker-skill-book-blocking-negative-policy",
+  "finished_at": "2026-08-25T09:24:14Z",
+  "followed_refs": [],
+  "goal": "Atualizar a política Pinker para consulta limitada e retenção automática de negativos bloqueantes, preservando ownership compartilhado do Book",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [
+    "B-4Y18BOYQEE0T"
+  ],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "Skill Pinker 0.6.0 atualizada e dificuldade owner-only do Book retida como B-4Y18BOYQEE0T",
+  "project": "LyannaValerie/pinker-skill",
+  "started_at": "2026-08-25T09:21:10Z",
+  "state": "finished",
+  "task_id": "T-8Q5S26PJLF2GAWZ1",
+  "validation": {
+    "oracle": "file:/book/tests/test_shared_permissions.py",
+    "outcome": "66 testes do Book e validação das duas cópias da skill passaram",
+    "passed": true,
+    "summary": "Política de consulta limitada e retenção automática validada; escrita compartilhada funciona sem fchmod owner-only",
+    "validated_at": "2026-08-25T09:24:09Z"
+  }
+}
