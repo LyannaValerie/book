@@ -1,0 +1,40 @@
+{
+  "domain": "Pinker",
+  "external_task_ref": "pinker:agents-md-target-por-task",
+  "finished_at": "2026-08-26T08:46:19Z",
+  "followed_refs": [],
+  "goal": "Corrigir o vazamento de build fora do escopo do fl e o contrato operacional do AGENTS.md",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [
+    "B-RJQF4F92ZAF8",
+    "B-RHSK3050R6VG",
+    "B-ZI6WVTHJ4QMK",
+    "B-L82QTHN2Z9EI",
+    "B-GDCKPRJE5VZX",
+    "B-M5T31AWWT14D",
+    "B-UVBZ8KXSRKJD",
+    "B-DRE73GB50K0C",
+    "B-L321TGXIJNRL",
+    "B-LQ3ROLGYV9YL",
+    "B-N6RVQSYWV8SR",
+    "B-8TJG36J1C852",
+    "B-H3B1WS9KVE7Q",
+    "B-A2L9OZH9Q96L",
+    "B-GLJZSQ39GD56"
+  ],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "AGENTS.md corrigido e publicado na PR #524; caso B-RJQF4F92ZAF8 retido e recuperavel por sintoma",
+  "project": "LyannaValerie/pinker-v0",
+  "started_at": "2026-08-26T08:45:13Z",
+  "state": "finished",
+  "task_id": "T-U2QVNYTTF8TII7N6",
+  "validation": {
+    "oracle": "file:/pinker/artifacts/tasks/agents-md-target-por-task/make-ci-base.log",
+    "outcome": "make ci exit 0 nas duas configuracoes; controle em arvore gerou 7,3 GB, confirmando a magnitude do vazamento",
+    "passed": true,
+    "summary": "remedio validado: CARGO_TARGET_DIR no slot canonico torna o build visivel ao fl",
+    "validated_at": "2026-08-26T08:46:14Z"
+  }
+}

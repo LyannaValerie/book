@@ -1,0 +1,70 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica a processo único ou a escrita append-only sem compare prévio.",
+    "Lock de diretório resolve concorrência local; não cobre escritores em máquinas distintas sobre armazenamento compartilhado."
+  ],
+  "cues": [
+    "os.replace",
+    "CAS",
+    "controle otimista",
+    "corrida",
+    "lock de diretório",
+    "duplicata",
+    "revise",
+    "add-case",
+    "probe concorrente"
+  ],
+  "discriminating_probe": {
+    "action": "Executar probes concorrentes sobre o mesmo registro e exigir exatamente um sucesso; o compare, a checagem de duplicata e a escrita precisam ocorrer sob o mesmo lock de diretório.",
+    "observable": "Sem lock compartilhado mais de um probe conclui com sucesso; com lock, exatamente um."
+  },
+  "environment": {
+    "repository": "LyannaValerie/book",
+    "toolchain": "Python stdlib"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Revisão adversarial independente reproduziu corridas de revise/add na fatia Book V0 antes da correção e reexecutou os casos depois; validação final registrou 21/21 testes determinísticos.",
+      "source": "file:/pinker/msg/campanhas/maturacao-adulta/issue-520-book-v0-case-library.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Não confunda atomicidade do rename com exclusão mútua da transação: os.replace garante que o arquivo final não fica parcial, não que ninguém mais leu o mesmo estado anterior. Coloque compare, checagem de duplicata e escrita sob um lock de diretório compartilhado, e escreva o probe de concorrência como asserção de exatamente um sucesso, não de ausência de erro."
+  },
+  "id": "B-7641F8Y80CQ2",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "A revisão adversarial da fatia Book V0 encontrou corridas reais entre revise e add, reproduzidas antes das correções e reexecutadas depois; a atomicidade de os.replace não cobria o compare nem a checagem de duplicata, que precisavam entrar no mesmo lock de diretório."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Controle otimista feito por leitura, checagem em memória e os.replace parece atômico porque o rename é atômico, mas a janela entre ler e substituir permite que dois processos passem pelo mesmo compare e ambos escrevam."
+  },
+  "references": [
+    "file:/pinker/msg/campanhas/maturacao-adulta/issue-520-book-v0-case-library.md"
+  ],
+  "revision": {
+    "hash": "93297199853d98999eaea17a0caeda4e5b7a150ff40580301d3a364a6d261485",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T17:00:38Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "armazenamento canônico",
+      "escrita concorrente"
+    ],
+    "conditions": [
+      "múltiplos processos escrevendo o mesmo registro canônico"
+    ]
+  },
+  "status": "candidate",
+  "title": "Leitura seguida de os.replace não é CAS entre processos sem lock compartilhado"
+}

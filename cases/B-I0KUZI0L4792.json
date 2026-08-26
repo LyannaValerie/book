@@ -1,0 +1,67 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica quando a própria Issue declara explicitamente o repositório de destino e essa declaração é autoridade corrente.",
+    "Preservação byte a byte só é suficiente quando nenhum conteúdo dependia do contexto do repositório de origem."
+  ],
+  "cues": [
+    "identidade do repositório",
+    "destino",
+    "Issue de campanha",
+    "PR fechada sem merge",
+    "ownership",
+    "autorização de localização",
+    "repositório errado"
+  ],
+  "discriminating_probe": {
+    "action": "Antes de abrir a PR, confirmar a identidade e o ownership do repositório de destino como autoridade própria, separadamente da Issue que autorizou a campanha.",
+    "observable": "O destino confirmado coincide ou não com o repositório onde a Issue vive."
+  },
+  "environment": {
+    "workflow": "campanha com entrega versionada"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "PR Pinker #521 fechada sem merge após esclarecimento de autoridade humana; os quatro arquivos funcionais foram preservados byte a byte e publicados pela PR Book #1.",
+      "source": "file:/pinker/msg/campanhas/maturacao-adulta/issue-520-book-v0-case-library.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Trate a Issue de campanha como autoridade sobre o trabalho autorizado, nunca sobre a localização do resultado; confirme identidade e ownership do destino antes de publicar. Quando o destino estiver errado, feche sem merge e preserve os arquivos byte a byte para republicação, em vez de tentar mover histórico."
+  },
+  "id": "B-I0KUZI0L4792",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "A fatia Book V0 foi entregue como PR Pinker #521 porque a Issue de campanha vivia no repositório Pinker. Autoridade humana posterior esclareceu que o Book pertence a LyannaValerie/book. A PR #521 foi fechada sem merge, os quatro arquivos funcionais foram preservados byte a byte e republicados no destino correto pela PR Book #1."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Interpretar a Issue de campanha como autorização de localização leva a entregar o artefato no repositório errado, porque a Issue autoriza o trabalho e não decide a que repositório o resultado pertence."
+  },
+  "references": [
+    "file:/pinker/msg/campanhas/maturacao-adulta/issue-520-book-v0-case-library.md"
+  ],
+  "revision": {
+    "hash": "c24f87e62d1d228050adc4e1a69af73f4b8558ff5c6be134ace7064843739aec",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T17:00:38Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "governança de campanha",
+      "publicação"
+    ],
+    "conditions": [
+      "Issue de campanha vive num repositório e o artefato pertence a outro"
+    ]
+  },
+  "status": "candidate",
+  "title": "Identidade do repositório de destino é autoridade separada da Issue de campanha"
+}

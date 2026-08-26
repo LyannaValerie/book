@@ -1,0 +1,73 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica a processo folha que comprovadamente não forka durante a captura.",
+    "Reabsorver só por sessão ou só por PGID reintroduz o erro de identidade que a regra existe para evitar.",
+    "Em campanha curta, num sistema onde o contador de PID não dá a volta, o segundo fator pode ser desnecessário — mas confirme a volta, não presuma."
+  ],
+  "cues": [
+    "contenção",
+    "SIGKILL",
+    "process group",
+    "PGID",
+    "sessão",
+    "setsid",
+    "neto órfão",
+    "PID reciclado",
+    "timeout",
+    "resíduo"
+  ],
+  "discriminating_probe": {
+    "action": "Comparar a asserção de membro sobrevivente com a de grupo não vazio: se nenhum membro capturado sobreviveu e o grupo continua não vazio, existe processo que nunca foi capturado. Exigir que o pai seja o controlador ou um membro já capturado antes de sinalizar ou acusar.",
+    "observable": "A assimetria entre as duas asserções isola o neto recém-nascido; o teste de parentage distingue neto legítimo de processo que herdou o número."
+  },
+  "environment": {
+    "repository": "Pinker",
+    "workflow": "campanha paralela com fixture de encerramento"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Assimetria estável entre asserção de grupo não vazio e asserção de membro sobrevivente em 5 de 84 execuções paralelas, com censo mostrando o contador de PID da VM indo de 4.123.862 a 43.161.",
+      "source": "file:/pinker/msg/amara/dificuldades/2026-08-06-contencao-de-passada-unica.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Faça a contenção virar laço: cada rodada reabsorve a árvore antes de sinalizar, em duas fases TERM e depois KILL, com dreno final que confere grupo e sessões por varredura independente da lista de membros. Exija dois fatores para absorver — sessão e pai — e aplique a mesma prova de parentage às asserções de resíduo, senão um PID reciclado vira acusação falsa. Leia o alvo antes de escrever o encerramento: saber que o runner cria timeout por setsid não basta se o monitor também forka em laço enquanto esse timeout viver."
+  },
+  "id": "B-SLMPE4IDJA1G",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Cinco execuções em oitenta e quatro falharam em modo paralelo, sempre na asserção de grupo não vazio e nunca na de membro sobrevivente. A causa era o monitor do runner, que segue vivo porque controller_pid é o timeout que sobrevive ao SIGKILL do controlador, forkando ps, find, awk e wc a cada cinquenta milissegundos. Durante as campanhas os PIDs da VM foram de 4.123.862 a 43.161: o contador deu a volta, tornando número de sessão tão reciclável quanto PID."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Uma contenção de passada única captura a lista de membros e sinaliza, mas um neto nascido entre a captura e o sinal nunca é capturado, e reabsorver por número de sessão ou PGID atinge processo alheio quando o contador dá a volta."
+  },
+  "references": [
+    "file:/pinker/msg/amara/dificuldades/2026-08-06-contencao-de-passada-unica.md"
+  ],
+  "revision": {
+    "hash": "946f53343d3430a99feec52343f5e0f0f3480ffa47ecda06af1df7d6dd56aae5",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T16:57:36Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "process-lifecycle",
+      "fixture de encerramento"
+    ],
+    "conditions": [
+      "árvore de processos que continua forkando durante a captura",
+      "campanha longa numa VM que recicla o contador de PID"
+    ]
+  },
+  "status": "candidate",
+  "title": "Contenção de árvore de processos exige laço, parentage e identidade não reciclável"
+}

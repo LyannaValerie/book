@@ -1,0 +1,69 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica quando a saída não ecoa o insumo do chamador.",
+    "Truncar o eco melhora o orçamento mas pode prejudicar a auditabilidade da consulta; registre o truncamento explicitamente."
+  ],
+  "cues": [
+    "saída compacta",
+    "amplificação",
+    "limite de corpus",
+    "query longa",
+    "scope",
+    "cues",
+    "busca",
+    "eco do insumo"
+  ],
+  "discriminating_probe": {
+    "action": "Emitir uma busca com query, scope e cues deliberadamente longos sobre um corpus já limitado e medir o tamanho da saída.",
+    "observable": "A saída excede o limite pretendido por amplificação do insumo, mesmo com o corpus dentro do teto."
+  },
+  "environment": {
+    "repository": "LyannaValerie/book",
+    "toolchain": "Python stdlib"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Resultado reutilizável registrado na campanha: saída de busca compacta precisa limitar tanto scope quanto cues e query, porque limites apenas no corpus não impedem amplificação pelo resultado.",
+      "source": "file:/pinker/msg/campanhas/maturacao-adulta/issue-520-book-v0-case-library.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Aplique o teto a tudo que a resposta reproduz, não só ao que ela recupera: query, scope e cues ecoados são insumo do chamador e podem ser arbitrariamente grandes. Meça a saída num teste com insumo longo e corpus pequeno, que é o caso que os limites de corpus não cobrem."
+  },
+  "id": "B-OJASXSCD2RPA",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "A revisão adversarial da fatia Book V0 classificou a saída como potencialmente grande e registrou que limites apenas no corpus não impedem amplificação pelo resultado; a correção passou a limitar também scope, cues e query."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Limitar apenas o número e o tamanho dos itens do corpus não impede que a saída cresça, porque a resposta também ecoa a query, o scope e as cues fornecidos pelo chamador."
+  },
+  "references": [
+    "file:/pinker/msg/campanhas/maturacao-adulta/issue-520-book-v0-case-library.md"
+  ],
+  "revision": {
+    "hash": "73098f5e7cbcf5e453f0faca0a19546cd1eb3721d2b84bf228d2f0e29a34fa75",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T17:00:38Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "busca",
+      "formatação de saída"
+    ],
+    "conditions": [
+      "saída consumida por agente com orçamento de contexto"
+    ]
+  },
+  "status": "candidate",
+  "title": "Saída compacta precisa limitar query, scope e cues, não apenas o corpus"
+}

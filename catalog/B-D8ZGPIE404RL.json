@@ -1,0 +1,9 @@
+{
+  "case_id": "B-D8ZGPIE404RL",
+  "domain": "Pinker",
+  "synthetic": false,
+  "updated_at": "2026-08-25T16:56:44Z",
+  "views": [
+    "Pinker/TestHarness"
+  ]
+}

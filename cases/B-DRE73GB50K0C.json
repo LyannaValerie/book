@@ -1,0 +1,72 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica quando cada caso já compila em diretório de build próprio.",
+    "Target isolado custa disco e tempo de compilação; em suíte grande, orçar antes.",
+    "O controle positivo detecta contaminação do arnês, não erro de mérito na guarda."
+  ],
+  "cues": [
+    "CARGO_TARGET_DIR",
+    "cargo",
+    "binário obsoleto",
+    "include_str!",
+    "controle positivo",
+    "contaminação",
+    "cópia da árvore",
+    "suíte de sensibilidade"
+  ],
+  "discriminating_probe": {
+    "action": "Definir CARGO_TARGET_DIR próprio por cópia dentro do laço e incluir um controle positivo com a árvore intacta; quando a asserção acusar um texto, conferir com grep na mesma cópia.",
+    "observable": "Teste e grep concordam sobre o conteúdo do arquivo, e o controle positivo passa."
+  },
+  "environment": {
+    "repository": "Pinker",
+    "toolchain": "cargo",
+    "workflow": "suíte de sensibilidade por cópia mutada"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Controle positivo reprovou com árvore intacta acusando 'o harness estrutural voltou a restaurar campo histórico: region.hash =' enquanto grep -c na mesma cópia devolvia 0; isolar o target levou a suíte de 5/6 para 6/6.",
+      "source": "file:/pinker/msg/amara/dificuldades/2026-08-07-target-compartilhado-contaminou-o-controle-positivo.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Use um CARGO_TARGET_DIR por árvore de fonte: compartilhar entre diretórios distintos troca minutos de compilação por resultados inválidos. Inclua sempre um controle positivo — ele não valida a guarda, valida o arnês, e sem ele uma suíte de negativos contaminada é indistinguível de uma que falha por mérito. Desconfie em dobro de teste que lê o próprio fonte, porque include_str! fixa o conteúdo no binário e qualquer artefato compilado reusado mente sobre o presente."
+  },
+  "id": "B-DRE73GB50K0C",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Seis casos, cinco negativos e um controle positivo, deram 5/6 com falha exatamente no controle positivo: a asserção acusava 'region.hash =' enquanto grep -c na cópia devolvia 0. O caso anterior, harness-restaura-hash, injetava esse texto e o cargo reaproveitou seu binário. Com um target por caso o resultado foi 6/6."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Cópias distintas da árvore compartilhando CARGO_TARGET_DIR fazem o cargo reaproveitar o binário de outra cópia, e uma guarda que lê o próprio fonte por include_str! passa a julgar um conteúdo que não é o da cópia sob teste."
+  },
+  "references": [
+    "file:/pinker/msg/amara/dificuldades/2026-08-07-target-compartilhado-contaminou-o-controle-positivo.md"
+  ],
+  "revision": {
+    "hash": "05d31d8949ce9ab1097272ffc0b09808613ae95b680c7de443b87aa3517b1843",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T16:56:45Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "test-harness",
+      "cargo",
+      "build"
+    ],
+    "conditions": [
+      "múltiplas cópias mutadas da mesma árvore compiladas em sequência"
+    ]
+  },
+  "status": "candidate",
+  "title": "Cópias mutadas de workspace exigem target isolado e controle positivo"
+}

@@ -1,0 +1,78 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica quando a falha é determinística e reproduzível numa única execução.",
+    "Divergência entre os lados só incrimina se o arquivo do caso for byte a byte idêntico nos dois checkouts.",
+    "Diferenças de ambiente entre a Forja e o runner hospedado — número de núcleos, vizinhança, I/O — podem impedir qualquer reprodução local, e isso precisa ser registrado, não interpretado."
+  ],
+  "cues": [
+    "base versus cabeça",
+    "pré-existente",
+    "flake",
+    "resultado nulo",
+    "saturação",
+    "sha256sum",
+    "0/96",
+    "ausência de sinal",
+    "runner hospedado"
+  ],
+  "discriminating_probe": {
+    "action": "Rodar a mesma carga e o mesmo número de rodadas nos dois checkouts, com o arquivo do caso conferido idêntico por sha256sum, preservando a saída de cada falha antes de qualquer limpeza; e anotar antes de rodar qual resultado seria capaz de incriminar a mudança.",
+    "observable": "Ou os lados divergem e o número aponta a causa, ou os dois ficam mudos e o experimento é declarado não decisivo em vez de absolutório."
+  },
+  "environment": {
+    "repository": "Pinker",
+    "workflow": "campanha com gates de CI e reprodução na Forja"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Experimento assimétrico base 0/32 contra cabeça 1/32 isolou defeito próprio; após a correção, 48 execuções sob a mesma carga sem falha.",
+      "source": "file:/pinker/msg/amara/dificuldades/2026-08-06-experimento-decisivo-base-versus-cabeca.md"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Experimento simétrico 0/96 de cada lado não distinguiu base de cabeça; a decisão veio de o mesmo head com blob idêntico 232b9643 ter fechado failure e depois success no attempt seguinte.",
+      "source": "file:/pinker/msg/amara/dificuldades/2026-08-06-vermelho-no-runner-que-a-forja-nao-reproduz.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Trate a frase 'provavelmente é pré-existente' como gatilho do experimento, não como encerramento. Antes de rodar, escreva qual resultado seria capaz de incriminar a mudança: se nenhum resultado plausível incrimina, o experimento não é decisivo e seu custo precisa de outra justificativa. Não leia resultado nulo simétrico como absolvição — é ausência de sinal, e uma medida que não reproduz o defeito nem no lado onde ele foi observado não distingue lado nenhum. Faça o instrumento preservar a saída de cada falha antes de limpar, e registre o que o experimento não cobre: taskset limita CPU, não latência de escalonamento sob contenção real."
+  },
+  "id": "B-FT6S0UQEHHGC",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "No primeiro caso, base 4cec358 deu 0 falhas em 32 execuções e a cabeça 1 em 32; a mensagem preservada expôs o mecanismo — o controlador publicava a própria identidade e só então executava exec do timeout, de modo que o mesmo PID aparecia como shell e como timeout, e a fixture que contava entradas dava por satisfeita a espera por dois membros. Após identificar membro por (pid, start_time), 48 execuções sem falha. No segundo caso os dois lados deram 0 falhas em 96 execuções e a Forja não reproduziu o fenômeno nem sob saturação; a discriminação veio do próprio CI, onde o mesmo head com os mesmos bytes fechou failure e depois success num attempt=2."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A leitura confortável de que uma falha é pré-existente encerra a investigação sem custo, e o experimento que a testaria pode sair simétrico e nulo quando o instrumento não alcança o fenômeno — caso em que o nulo não absolve a mudança."
+  },
+  "references": [
+    "file:/pinker/msg/amara/dificuldades/2026-08-06-experimento-decisivo-base-versus-cabeca.md",
+    "file:/pinker/msg/amara/dificuldades/2026-08-06-vermelho-no-runner-que-a-forja-nao-reproduz.md"
+  ],
+  "revision": {
+    "hash": "08e2df8bc0695efe4ae63f62c5466bcaaf69a6e518b8c53383b3634033311821",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T16:59:15Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "CI",
+      "experimento de bissecção",
+      "suíte sob carga"
+    ],
+    "conditions": [
+      "falha intermitente atribuída a fragilidade anterior"
+    ]
+  },
+  "status": "candidate",
+  "title": "Experimento base versus cabeça só decide quando o instrumento alcança o fenômeno"
+}

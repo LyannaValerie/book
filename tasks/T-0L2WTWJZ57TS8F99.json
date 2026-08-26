@@ -1,0 +1,18 @@
+{
+  "domain": "Book",
+  "external_task_ref": "pinker:book-import-pinker-msg-2026-08-25",
+  "finished_at": "2026-08-25T17:00:52Z",
+  "followed_refs": [],
+  "goal": "Importar seletivamente conhecimento operacional de /pinker/msg conforme auditoria de 2026-08-25, primeira onda P0",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "12 casos P0 importados de /pinker/msg com evidencia OBSERVED e learned_from; 30 casos validos, 0 erros; recuperacao por sintoma verificada",
+  "project": "LyannaValerie/book",
+  "started_at": "2026-08-25T16:53:52Z",
+  "state": "finished",
+  "task_id": "T-0L2WTWJZ57TS8F99",
+  "validation": null
+}

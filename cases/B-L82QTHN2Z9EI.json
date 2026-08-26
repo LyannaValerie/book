@@ -1,0 +1,66 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica quando a cápsula diverge em contagem de regiões, o que indica região nova ou removida e não deriva de hash.",
+    "Não use preparar/aceitar para esta manutenção: aquele fluxo cria marco novo e não reconcilia a cadeia."
+  ],
+  "cues": [
+    "FROZEN",
+    "DRIFT",
+    "projecao",
+    "stable_projection",
+    "override-region",
+    "exclude-key",
+    "E-SNAP-OVERRIDE-BASE"
+  ],
+  "discriminating_probe": {
+    "action": "reconstruir a projeção estável da mesma cápsula na baseline conhecida como MATCH e no estado atual, e comparar registro a registro por chave e campo",
+    "observable": "o conjunto exato de chaves e campos divergentes, em vez do hash agregado"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "O comparador de projeção estável isolou duas divergências de campo hash; após a reconciliação estrita a cadeia inteira voltou a MATCH, a cápsula base reproduziu o hash congelado e o diff estável ficou vazio",
+      "source": "file:/pinker/state/tasks/issue-522-pre-505-native-parity-repair/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Nunca recalibre medidas FROZEN. Compare a projeção estável reconstruída contra uma baseline conhecida como MATCH para obter o conjunto exato de campos divergentes, e só então escreva transformações na receita. Região que existia historicamente e mudou pede override-region; região nova pede exclude-key. Extraia to_hash e to_summary da baseline, nunca de memória."
+  },
+  "id": "B-L82QTHN2Z9EI",
+  "observed_at": "2026-08-26T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "As divergências eram duas regiões produtivas modificadas pela Task que não possuíam transformação na receita histórica: seus hashes correntes vazavam para a reconstrução. Comprimento total idêntico porque string de hash tem tamanho fixo. O reparo foi acrescentar override-region estrita por chave restaurando o estado histórico exato extraído da baseline, mais exclude-key para a região de evidência genuinamente nova, e atualizar os contadores para o número real de regras."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Depois que todos os overrides de região resolvem, a cápsula base ainda diverge apenas no hash agregado, com contagem de regiões e comprimento idênticos. O hash de 64 bits não diz qual fato mudou, e recalibrar a cápsula é proibido porque FROZEN é byte-imutável."
+  },
+  "references": [],
+  "revision": {
+    "hash": "f3ea4f9ffe0f7d8f8e3681c2649bfe0fc2a363dfa2856de53ccc02946aed7b4d",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-26T05:28:11Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "pink nav projecao",
+      "recipes",
+      "navigation"
+    ],
+    "conditions": [
+      "Task modifica região coberta pela reconstrução histórica"
+    ]
+  },
+  "status": "candidate",
+  "title": "Drift de cápsula FROZEN após reconstrução válida vem de região modificada sem transformação na receita"
+}

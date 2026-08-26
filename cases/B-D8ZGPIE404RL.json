@@ -1,0 +1,69 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica quando o sistema tem um único modo de falha possível no ponto testado.",
+    "Asserir o código de erro não cobre falha que ocorra com o código certo pelo motivo errado; o ponto de injeção continua precisando de análise."
+  ],
+  "cues": [
+    "teste negativo",
+    "suíte de sensibilidade",
+    "falso verde",
+    "código de erro esperado",
+    "arnês",
+    "pipeline encadeado",
+    "mascaramento"
+  ],
+  "discriminating_probe": {
+    "action": "Declarar no caso o código de diagnóstico esperado e fazer o arnês recusar falha com código diferente; verificar também onde a mutação bate primeiro no pipeline encadeado.",
+    "observable": "O caso distingue recusa pelo motivo certo de recusa por acaso, ou revela que não é escrevível naquela topologia."
+  },
+  "environment": {
+    "repository": "Pinker",
+    "workflow": "suíte de sensibilidade de blueprint estrito"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Suíte reportou [OK] 11/11 com a razão real 'bytes divergentes em historico-484' num caso cuja descrição fala em consumo de exclusão; o mecanismo pretendido só foi confirmado à mão pelo caso orcamento-de-exclusao-alterado, que dispara E-SNAP-EXCLUSAO-PARCIAL no ponto certo.",
+      "source": "file:/pinker/msg/amara/dificuldades/2026-08-07-teste-negativo-que-falha-antes-do-alvo.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Faça o teste negativo declarar o erro esperado e o arnês recusar qualquer outro código, mesmo sendo falha. Antes de escrever um negativo, pergunte onde a mutação vai bater primeiro: num pipeline encadeado ela precisa entrar depois de tudo que a detectaria antes; se não existir esse ponto, reformule o caso mutando a regra em vez do dado. Imprimir a razão ao lado do veredito é o que torna a incoerência visível."
+  },
+  "id": "B-D8ZGPIE404RL",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O caso regiao-consumida-removida-do-catalogo reportou [OK] em 11/11, mas a razão registrada foi 'bytes divergentes em historico-484': historico-484 é reconstruído antes de historico-365 e sua projeção contém as regiões removidas, então a exclusão pretendida nunca foi alcançada. A topologia encadeada por base_snapshot garante que qualquer adulteração do catálogo corrente falhe primeiro em 484, o que torna toda uma classe de casos negativos inescrevível daquele jeito."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um caso negativo cujo arnês pergunta apenas se houve falha reporta verde quando a execução falhou por outro motivo, antes de alcançar o mecanismo que o caso existia para exercitar."
+  },
+  "references": [
+    "file:/pinker/msg/amara/dificuldades/2026-08-07-teste-negativo-que-falha-antes-do-alvo.md"
+  ],
+  "revision": {
+    "hash": "3438c7b88a90beaa171a9a6c9fbd8e598448b3261e3081c79c127bbf9d93b888",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T16:56:44Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "test-harness",
+      "suíte de sensibilidade"
+    ],
+    "conditions": [
+      "sistema com múltiplos modos de falha",
+      "pipeline encadeado onde um estágio anterior detecta a mutação primeiro"
+    ]
+  },
+  "status": "candidate",
+  "title": "Teste negativo deve asserir o erro pretendido, não a existência de erro"
+}

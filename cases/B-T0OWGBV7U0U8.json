@@ -1,0 +1,64 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica se o preflight da versão corrente deixar de compor projection_validation."
+  ],
+  "cues": [
+    "make ci",
+    "pink verificar",
+    "projection_validation",
+    "preflight",
+    "nav-check",
+    "f1_tooling_tests"
+  ],
+  "discriminating_probe": {
+    "action": "executar pink verificar com corpo pinker-change válido e inspecionar o campo blocking",
+    "observable": "blocking contém ou não projection_validation_not_current"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "make ci parou em f1_tooling_tests com assert de status; pink verificar com corpo válido devolveu blocking=[projection_validation_not_current] como único bloqueador",
+      "source": "file:/pinker/state/tasks/issue-522-pre-505-native-parity-repair/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Para saber se algo é gate de CI, siga o entry point canônico até os testes que ele executa, não apenas os nomes dos alvos. Um teste de tooling pode embutir uma validação inteira."
+  },
+  "id": "B-T0OWGBV7U0U8",
+  "observed_at": "2026-08-25T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O preflight unificado pink verificar inclui projection_validation. Com a cadeia divergente ele sai com exit 1, e o teste f1_tooling_tests::preflight_unificado_compoe_campos_e_deferred quebra no assert de sucesso, deixando make ci vermelho por um caminho sem relação aparente com a mudança."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Ler apenas os alvos do Makefile leva à conclusão errada de que projeção não é gate de CI, porque make ci roda nav-check e não pink nav projecao verificar."
+  },
+  "references": [],
+  "revision": {
+    "hash": "90eed146b7dcf2832481a846efa203c84239fe21f5d767c2848a161aea70ced1",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-26T01:36:24Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "make ci",
+      "pink verificar",
+      "projecao"
+    ],
+    "conditions": [
+      "cadeia de projeção divergente durante uma Task de código"
+    ]
+  },
+  "status": "candidate",
+  "title": "Validação de projeção chega à CI por dentro do preflight, mesmo sem alvo dedicado no Makefile"
+}

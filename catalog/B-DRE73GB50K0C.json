@@ -1,0 +1,9 @@
+{
+  "case_id": "B-DRE73GB50K0C",
+  "domain": "Pinker",
+  "synthetic": false,
+  "updated_at": "2026-08-25T16:56:45Z",
+  "views": [
+    "Pinker/TestHarness"
+  ]
+}
