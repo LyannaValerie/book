@@ -1,0 +1,75 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica a formato com uma única operação, onde união e tabela por operação coincidem.",
+    "A tabela por operação precisa ser mantida junto com a gramática; se divergirem, ela vira nova fonte de falso negativo."
+  ],
+  "cues": [
+    "allowlist de união",
+    "chave duplicada",
+    "bool como inteiro",
+    "schema_version",
+    "JSON estrito",
+    "campo de outra operação",
+    "descarte silencioso",
+    "RULE_KEYS"
+  ],
+  "discriminating_probe": {
+    "action": "Para todo par de operações válidas A e B, testar a troca: colocar um campo legítimo de A numa regra B e exigir erro nomeado, distinguível de chave fora da gramática. Em Python, validar também chave duplicada e booleano onde se espera inteiro.",
+    "observable": "O campo mal colocado produz erro nomeado em vez de ser ignorado; True deixa de ser aceito como schema_version."
+  },
+  "environment": {
+    "repository": "LyannaValerie/book",
+    "toolchain": "Python stdlib"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Regressões reexecutadas contra o código anterior sem a checagem por operação: seis de oito falharam, e as duas aprovadas são casos de preservação que existem para passar nos dois lados.",
+      "source": "file:/pinker/msg/amara/dificuldades/2026-08-07-allowlist-de-uniao-aceita-campo-alheio.md"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "A fatia Book V0 registrou que JSON estrito deve rejeitar chaves duplicadas e distinguir booleanos de inteiros ao validar schema_version em Python.",
+      "source": "file:/pinker/msg/campanhas/maturacao-adulta/issue-520-book-v0-case-library.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Separe as duas perguntas em duas camadas: a união responde se a chave existe no formato, e uma tabela por operação, consultada logo após resolver a operação, responde se ela pertence àquela regra. Allowlist de união é cheiro: sempre que um validador aceitar a soma de vários contextos, há uma segunda pergunta não feita. Gere mecanicamente a família de testes de troca entre operações. Em Python, JSON estrito precisa rejeitar chaves duplicadas e distinguir bool de int ao validar schema_version. Descartar em silêncio nunca é a opção correta: entre recusar e ignorar, quem ignora decide pelo autor que a linha dele não importava."
+  },
+  "id": "B-3HPMNZ36HXDQ",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "from_summary e to_summary anexados a uma regra override-hash passavam pelo filtro por existirem na gramática e eram descartados pelo braço, inclusive em versões do formato que sequer conhecem a operação dona daqueles campos: o autor acreditava ter declarado uma restauração de summary que nunca acontecia. Os testes de rejeição existentes só perguntavam se campo inventado era recusado, nunca se campo legítimo da operação errada era. Removida a checagem nova e reexecutadas as regressões contra o código anterior, seis das oito falharam, e as duas que passaram são de preservação."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um validador que aceita a união dos campos de todas as operações responde apenas se a chave existe no formato e nunca se ela pertence àquela operação, então campo legítimo colocado na operação errada passa pelo filtro e é descartado em silêncio pelo braço que não o lê."
+  },
+  "references": [
+    "file:/pinker/msg/amara/dificuldades/2026-08-07-allowlist-de-uniao-aceita-campo-alheio.md",
+    "file:/pinker/msg/campanhas/maturacao-adulta/issue-520-book-v0-case-library.md"
+  ],
+  "revision": {
+    "hash": "377115f52b2ba521bc97290aa3187afb0a760beb8432a0783bd1425d432e1e5a",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T17:00:38Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "parser",
+      "validador de payload"
+    ],
+    "conditions": [
+      "formato com várias operações que compartilham um vocabulário de campos"
+    ]
+  },
+  "status": "candidate",
+  "title": "Validação estrita deve perguntar se a chave pertence àquela operação, não apenas se existe"
+}

@@ -1,0 +1,65 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica a arquivos fora das ondas de cartografia.",
+    "Não vale enfraquecer unowned_tests para acomodar a colocação errada."
+  ],
+  "cues": [
+    "nav_cartography_tests",
+    "unowned_tests",
+    "evidencia",
+    "retain_membership_base",
+    "ownership",
+    "pinker-nav"
+  ],
+  "discriminating_probe": {
+    "action": "verificar se a região que possui os testes novos sobrevive ao filtro de membership usado pela onda",
+    "observable": "o conjunto observado de regiões de evidência contém ou não a região nova"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "A região nova foi registrada no filtro e a onda passou a acusar conjunto de chaves divergente; ao mover os testes para uma região existente e incrementar seu ownership, a suíte de cartografia voltou a 39/39",
+      "source": "file:/pinker/state/tasks/issue-522-pre-505-native-parity-repair/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Antes de criar região de evidência para testes novos, verifique se ela seria filtrada pelo membership histórico. Se for, coloque os testes numa região existente cujo domínio comporte o assunto e atualize o sumário dela para continuar verdadeiro. Criar região nova só é viável quando o escopo é genuinamente corrente e nenhuma onda histórica conta aquele total."
+  },
+  "id": "B-H3B1WS9KVE7Q",
+  "observed_at": "2026-08-26T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Região nova e filtro histórico são mutuamente exclusivos para esse fim. O caminho consistente é estender uma região de evidência já existente e incrementar a contagem dela na tabela de ownership da onda, que é exatamente o que ondas anteriores fizeram ao acrescentar testes."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Acrescentar testes a um arquivo cartografado quebra a onda correspondente. A tentação é criar uma região de evidência nova para eles, mas a região nova precisa ser registrada no filtro de membership histórico para não deslocar os totais congelados das outras ondas; uma vez filtrada, ela desaparece da reconstrução e seus testes ficam órfãos em unowned_tests."
+  },
+  "references": [],
+  "revision": {
+    "hash": "46f1b68c1eb9009590f73fafb8502fcd69062884d2ed337c557b565338e0ab1b",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-26T05:47:57Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "nav_cartography_tests",
+      "navigation",
+      "recipes"
+    ],
+    "conditions": [
+      "Task acrescenta #[test] a um arquivo coberto por ondas de cartografia"
+    ]
+  },
+  "status": "candidate",
+  "title": "Teste novo em arquivo cartografado exige região de evidência que sobreviva ao filtro histórico"
+}

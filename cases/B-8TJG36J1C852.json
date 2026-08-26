@@ -1,0 +1,67 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica quando o diretório de build nunca mudou durante a Task.",
+    "Distinto de archive de runtime obsoleto: ali o teste roda e observa comportamento errado; aqui o spawn nem acontece."
+  ],
+  "cues": [
+    "CARGO_BIN_EXE",
+    "ENOENT",
+    "NotFound",
+    "CARGO_TARGET_DIR",
+    "stale-test-binary",
+    "execve"
+  ],
+  "discriminating_probe": {
+    "action": "tracear execve do processo de teste e comparar o caminho assado com o que existe em disco",
+    "observable": "execve de um caminho inexistente devolve ENOENT antes de qualquer lógica do programa"
+  },
+  "environment": {
+    "backend": "native",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "strace -f -e trace=execve mostrou execve do caminho assado devolvendo ENOENT; após remoção do artefato, 8/8 testes passaram",
+      "source": "file:/pinker/state/tasks/issue-522-pre-505-native-parity-repair/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "CARGO_BIN_EXE_* é assado em tempo de compilação. Ao trocar CARGO_TARGET_DIR, artefatos antigos podem sobreviver com caminho morto. Antes de investigar semântica, compare o caminho assado com o disco."
+  },
+  "id": "B-8TJG36J1C852",
+  "observed_at": "2026-08-25T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O cargo selecionou um binário de teste antigo cujo CARGO_BIN_EXE apontava para um diretório de build inexistente; remover o artefato obsoleto e seu fingerprint fez o cargo reconstruir e a suíte passar inteira."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Testes falham com Os { code: 2, kind: NotFound } ao invocar o binário sob teste, enquanto o mesmo binário de teste executado diretamente passa. A mensagem sugere defeito de código, mas a causa é de materialização."
+  },
+  "references": [],
+  "revision": {
+    "hash": "5bc3831204efd79ae12600dd9549c0890525259b14157a62e561a6da909bb2de",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-26T01:35:51Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "cargo",
+      "test-harness",
+      "native-test"
+    ],
+    "conditions": [
+      "CARGO_TARGET_DIR mudou entre execuções",
+      "binários de teste rivais no mesmo deps/"
+    ]
+  },
+  "status": "candidate",
+  "title": "Binário de teste obsoleto assa caminho morto de CARGO_BIN_EXE e falha como ENOENT de spawn"
+}

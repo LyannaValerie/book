@@ -1,0 +1,63 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica quando a intenção é genuinamente criar um novo marco histórico, que é o propósito de preparar/aceitar."
+  ],
+  "cues": [
+    "projecao",
+    "preparar",
+    "aceitar",
+    "E-SNAP-OVERRIDE-BASE",
+    "normalizacao-corrente-para-historico",
+    "FROZEN"
+  ],
+  "discriminating_probe": {
+    "action": "executar preparar+aceitar e depois reexecutar pink nav projecao verificar",
+    "observable": "a cápsula nova dá MATCH enquanto as históricas continuam falhando"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Cápsula criada deu MATCH e as 13 históricas seguiram em HARNESS_FAILURE; a receita gerada tinha zero regras; a atualização do from_hash das regras existentes eliminou E-SNAP-OVERRIDE-BASE e E-SNAP-OVERRIDE-SUMMARY",
+      "source": "file:/pinker/state/tasks/issue-522-pre-505-native-parity-repair/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Antes de rodar preparar/aceitar para consertar divergência, verifique se a região já possui override-region na receita compartilhada. Se possui, o reparo é atualizar from_hash e, quando o sumário ficou falso, from_summary. As chaves da receita são únicas."
+  },
+  "id": "B-N6RVQSYWV8SR",
+  "observed_at": "2026-08-25T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "preparar fotografa o estado corrente e emite receita vazia (expected_overrides=0, zero regras). A reconciliação real mora na receita compartilhada normalizacao-corrente-para-historico.toml, cuja direção é corrente para histórico: from_hash é o hash da fonte atual e to_hash o alvo histórico. Região alterada exige atualizar o from_hash da regra existente, não acrescentar regra."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Com a cadeia de projeção divergente, o fluxo governado preparar+aceitar parece ser o reparo, mas executá-lo não fecha o gate."
+  },
+  "references": [],
+  "revision": {
+    "hash": "40a535a8967d6ee244ae44d199258af1b9d9e9c450a13b5208f2a11e71598028",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-26T01:36:10Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "pink nav projecao",
+      "recipes"
+    ],
+    "conditions": [
+      "mudança de código dentro de região coberta por override-region"
+    ]
+  },
+  "status": "candidate",
+  "title": "preparar/aceitar de projeção cria marco novo e não reconcilia a cadeia histórica"
+}

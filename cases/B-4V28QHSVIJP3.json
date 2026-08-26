@@ -1,0 +1,90 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica quando o domínio já é uma autoridade fechada e verificada mecanicamente no head corrente.",
+    "Neutralizar e rodar a suíte exige suíte que cubra os consumidores; suíte fraca não substitui a enumeração por tipo.",
+    "Os números citados são específicos das campanhas observadas; recontar sempre no head atual."
+  ],
+  "cues": [
+    "inventário",
+    "censo",
+    "completude",
+    "prefixo de nome",
+    "helper",
+    "consumidor",
+    "grep",
+    "alcance do instrumento",
+    "total herdado"
+  ],
+  "discriminating_probe": {
+    "action": "Enumerar pelo tipo ou assinatura que define o papel, unir explicitamente todas as autoridades declaradas e, antes de remover, neutralizar o mecanismo e rodar a suíte para que o compilador e os testes listem os consumidores.",
+    "observable": "A neutralização nomeia consumidores que a enumeração estática não previa, ou confirma que o conjunto fecha."
+  },
+  "environment": {
+    "repository": "Pinker",
+    "workflow": "campanha de migração e censo"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Extração fail-closed sobre ba9b161 encontrou 17 funções com assinatura fn NOME(catalog: &mut CodeCatalog) contra 15 do inventário por prefixo, e o caso de sensibilidade helper-desconhecido parou em L661.",
+      "source": "file:/pinker/msg/amara/dificuldades/2026-08-07-inventario-por-prefixo-perde-helper.md"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Varredura de atribuições grep -nE 'region\\.(\\w+)\\s*=(?!=)' separou region.summary = de region.key == e expôs o eixo de campos que o contador de ocorrências não media.",
+      "source": "file:/pinker/msg/amara/dificuldades/2026-08-07-inventario-cego-no-eixo-dos-campos.md"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Neutralizar as chamadas de helper legado numa cópia e rodar a suíte fez falhar 14 testes, sendo o décimo quarto um consumidor estrutural sem medida que nenhum dos quatro inventários anteriores poderia alcançar.",
+      "source": "file:/pinker/msg/amara/dificuldades/2026-08-07-inventario-escopado-pelo-artefato-perde-consumidor.md"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "O censo de intrínsecas exigiu união explícita de duas autoridades: 163 grafias enumeráveis mais três nomes de declaração pública separada.",
+      "source": "file:/pinker/msg/campanhas/maturacao-adulta/issue-505-intrinsic-inventory.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Derive o domínio de uma autoridade finita e verificável — assinatura, tipo, união explícita de autoridades declaradas — e não de convenção de nome ou do recorte do que está sendo migrado. Inventarie o contradomínio, isto é, quais efeitos o mecanismo produz, e não apenas quantas vezes. Antes de remover, apague o mecanismo e rode a suíte: é o inventário de consumidores mais barato e sem ponto cego. Trate zero como suspeita e todo total herdado como hipótese até ser recontado no head corrente."
+  },
+  "id": "B-4V28QHSVIJP3",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Enumeração por prefixo devolveu 15 helpers num universo de 17, perdendo project_pink_agent_wave_a por escrever pink onde os outros escreviam pre. A contagem por ocorrência media quantas restaurações existem e nunca o que cada uma escreve, omitindo o campo summary e inviabilizando 13 medidas históricas. O recorte pelo produto migrado não enxergou onda_8e_cartografa_evidencias_da_execucao_interpretada, consumidor sem medida, revelado por neutralização de 20 segundos após quatro fases de arqueologia. No censo de intrínsecas a autoridade central enumerável tinha 163 grafias e omitia processo_codigo, processo_erro e processo_saida, com declaração pública separada e consumidores em semantic, interpreter e backend."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um inventário que enumera por prefixo de nome, pelo produto migrado ou por uma única autoridade parcial devolve um número plausível para um universo incompleto, sem erro visível."
+  },
+  "references": [
+    "file:/pinker/msg/amara/dificuldades/2026-08-07-inventario-por-prefixo-perde-helper.md",
+    "file:/pinker/msg/amara/dificuldades/2026-08-07-inventario-cego-no-eixo-dos-campos.md",
+    "file:/pinker/msg/amara/dificuldades/2026-08-07-inventario-escopado-pelo-artefato-perde-consumidor.md",
+    "file:/pinker/msg/campanhas/maturacao-adulta/issue-505-intrinsic-inventory.md"
+  ],
+  "revision": {
+    "hash": "0fe9f887a31ce02002cbe5ed28f2148aa0a5272834219cd2a0439d52d2526f46",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T16:54:47Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "inventário",
+      "migração",
+      "extrator"
+    ],
+    "conditions": [
+      "remoção ou substituição de mecanismo com muitos sítios de uso"
+    ]
+  },
+  "status": "candidate",
+  "title": "Inventário exaustivo exige domínio autoritativo finito e auditoria de consumidores"
+}

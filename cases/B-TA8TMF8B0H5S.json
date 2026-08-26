@@ -1,0 +1,71 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica a execução única com diretório de evidência já exclusivo.",
+    "Lock por checkout não protege campanhas em clones distintos que compartilhem outro recurso global.",
+    "Permanece lacuna não fechada: iteração morta com exit=137 durante teste que encerra árvore pode ter lido PID da outra campanha por markers compartilhados; não foi provado."
+  ],
+  "cues": [
+    "campanhas concorrentes",
+    "mesmo checkout",
+    "evidência contaminada",
+    "PROGRESS",
+    "SUMMARY",
+    "failures=0",
+    "lock de exclusividade",
+    "ps -eo",
+    "rename atômico"
+  ],
+  "discriminating_probe": {
+    "action": "Enumerar processos corretamente antes de agir e ler o runner: identificar dois processos com o mesmo repo_root somado à linha que remove PROGRESS e SUMMARY no início do lote explica a contaminação sem hipótese adicional.",
+    "observable": "A enumeração revela campanhas não declaradas, e a linha de remoção no runner liga a segunda campanha ao resumo sobrescrito."
+  },
+  "environment": {
+    "repository": "Pinker",
+    "workflow": "campanha de estabilidade em checkout compartilhado"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Três iterações falhadas ocultas atrás de failures=0 escrito pela campanha concorrente, com as duas usando o mesmo repo_root; hipótese de que pinker-cleanup.sh matasse processos alheios foi testada e descartada por ausência de kill, pkill e pgrep no script.",
+      "source": "file:/pinker/msg/amara/dificuldades/2026-08-05-campanhas-concorrentes.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Trate proibição operacional como intenção, não como mecanismo: a frase 'não rode campanhas simultâneas' já existia, o que faltava era o lock. Implemente lock de exclusividade por checkout no próprio runner e namespace batches/<batch-id>/ por campanha, com o resumo por modo rebaixado a projeção publicada por rename atômico apenas no fim. Ao adotar tarefa em andamento, capture identidade de tudo antes de tocar em qualquer coisa e encerre por identidade revalidada, preservando evidência. Resultado colhido sob contaminação deve ser rotulado diagnostic_only e não atribuído a head algum."
+  },
+  "id": "B-TA8TMF8B0H5S",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O estado herdado declarava uma campanha em screen; havia duas, a segunda sob uma sessão SSH viva rodando bash -l /tmp/camp.sh, ambas usando o mesmo target/pinker-flake-evidence e target/pinker-exec. Três iterações falhadas de uma campanha ficaram invisíveis atrás de um failures=0 escrito pela outra. O primeiro ps -eo ... -u amara devolveu a tabela inteira porque -e anula -u, e aceitar aquela saída teria levado a iniciar uma terceira campanha por cima."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Duas campanhas no mesmo checkout compartilham os diretórios de evidência, e um runner que apaga os arquivos de progresso e resumo no início de cada lote faz uma campanha sobrescrever o resultado da outra, escondendo falhas atrás de um resumo agregado."
+  },
+  "references": [
+    "file:/pinker/msg/amara/dificuldades/2026-08-05-campanhas-concorrentes.md"
+  ],
+  "revision": {
+    "hash": "c6451b4ec3e97e198020e01e108c03c49ee1269f6accdcdb18413ab0930f4397",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T16:59:16Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "runner de campanha",
+      "evidência de lote"
+    ],
+    "conditions": [
+      "mais de uma campanha usando o mesmo clone e os mesmos diretórios de evidência"
+    ]
+  },
+  "status": "candidate",
+  "title": "Campanhas concorrentes exigem lock e namespace exclusivo de evidência"
+}

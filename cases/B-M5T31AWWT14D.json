@@ -1,0 +1,63 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica a snapshots FROZEN, que não devem ser reescritos de forma alguma."
+  ],
+  "cues": [
+    "render_recipe",
+    "forma canonica",
+    "nav_projection_authority_tests",
+    "recipes",
+    "parse_recipe"
+  ],
+  "discriminating_probe": {
+    "action": "parsear a receita com parse_recipe e comparar render_recipe do modelo com os bytes em disco",
+    "observable": "o diff revela a diferença de ordenação ou formatação"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "76 linhas divergentes entre o arquivo editado à mão e a saída de render_recipe, apenas por posição das regras novas; após gravar a saída canônica, nav_projection_authority_tests passou 15/15 com a projeção ainda em MATCH",
+      "source": "file:/pinker/state/tasks/issue-522-pre-505-native-parity-repair/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Depois de editar a receita, regenere-a com parse_recipe seguido de render_recipe e grave a saída. Não tente reproduzir a ordenação canônica à mão. O gate de projeção passar não prova forma canônica: são dois contratos distintos."
+  },
+  "id": "B-M5T31AWWT14D",
+  "observed_at": "2026-08-26T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O renderer ordena as regras por chave dentro de cada grupo de operação. Regras acrescentadas no fim do arquivo ficam fora de ordem, mesmo estando corretas semanticamente e mesmo com o gate de projeção em MATCH."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A receita aceita edição textual e o gate de projeção passa, mas make ci quebra depois em arquivos_reais_estao_na_forma_canonica_do_renderer, porque o arquivo precisa ser byte a byte igual ao que render_recipe produz."
+  },
+  "references": [],
+  "revision": {
+    "hash": "1e04921cff96fd1dba19ae8870a50d0b4ee84109b50bdb838a5ae33e47700ab6",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-26T05:55:15Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "nav_projection_recipe",
+      "recipes",
+      "nav_projection_authority_tests"
+    ],
+    "conditions": [
+      "Task acrescenta ou altera regras na receita de normalização"
+    ]
+  },
+  "status": "candidate",
+  "title": "Receita de projeção tem forma canônica de renderer; editar à mão quebra o gate de autoridade"
+}

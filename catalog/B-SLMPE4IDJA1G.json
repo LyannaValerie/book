@@ -1,0 +1,9 @@
+{
+  "case_id": "B-SLMPE4IDJA1G",
+  "domain": "Forja",
+  "synthetic": false,
+  "updated_at": "2026-08-25T16:57:36Z",
+  "views": [
+    "Forja/ProcessLifecycle"
+  ]
+}

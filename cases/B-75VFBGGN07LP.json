@@ -1,0 +1,70 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica a workflow cujos passos leem o estado atual da API em vez do payload do evento.",
+    "Um run vermelho do evento opened continua inevitável enquanto o conteúdo exigido depender de um número que só existe após a criação do PR.",
+    "Não substitua o evento novo por commit vazio: isso invalida gates já verdes."
+  ],
+  "cues": [
+    "gh run rerun",
+    "github.event.pull_request.body",
+    "payload do evento",
+    "corpo do PR",
+    "run vermelho",
+    "edited",
+    "synchronize",
+    "run_attempt"
+  ],
+  "discriminating_probe": {
+    "action": "Comparar o carimbo de tempo do rerun com o momento em que o corpo se tornou canônico, e observar qual passo falha: um job que passa no gate integral e falha apenas no passo que lê o payload está indicando a origem do insumo.",
+    "observable": "O rerun falha alegando ausência de conteúdo que já existia no corpo há tempo, enquanto o gate integral passa nas duas tentativas."
+  },
+  "environment": {
+    "repository": "Pinker",
+    "workflow": "Trama Pinker no GitHub Actions"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Rerun às 01:55 falhou com E-CHANGE-BLOCK alegando bloco ausente no corpo do PR, embora o corpo canônico existisse desde 01:36; o passo de make ci integral passou nas duas tentativas.",
+      "source": "file:/pinker/msg/amara/dificuldades/2026-08-07-rerun-replica-payload-antigo.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "O que revalida um workflow que lê o payload é um evento novo — edited no corpo ou synchronize por push — nunca um rerun. Reduza a janela publicando o corpo canônico antes do último push, para que o synchronize já nasça verde. No relatório, nomeie a execução autoritativa por run_id e run_attempt em vez de dizer que o CI passou, e registre os dois runs em vez de tentar apagar o vermelho: o verde do evento posterior é o autoritativo e o vermelho é execução substituída."
+  },
+  "id": "B-75VFBGGN07LP",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Na PR #428, no mesmo head 2e3d9df, dois runs da Trama a um segundo de distância: 31138513937 às 01:35:31 por synchronize fechou failure no passo 5 com E-CHANGE-BLOCK, e 31138515276 às 01:35:32 por edited fechou success. O gh run rerun --failed sobre o run vermelho falhou de novo às 01:55 com a mesma mensagem, vinte minutos depois de o corpo já estar canônico desde 01:36. make ci passou nas duas tentativas."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Corrigir o corpo do PR não conserta um run vermelho por rerun, porque o rerun reexecuta com o payload do evento original e não relê o estado atual do PR."
+  },
+  "references": [
+    "file:/pinker/msg/amara/dificuldades/2026-08-07-rerun-replica-payload-antigo.md"
+  ],
+  "revision": {
+    "hash": "22e2d937288cd9692b97e79b8fea9a9be7f5d726cf1ffe654b5c4856b291cff3",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T16:59:15Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "GitHub Actions",
+      "workflow que lê o payload do evento"
+    ],
+    "conditions": [
+      "workflow valida conteúdo do corpo do PR que foi editado depois do evento"
+    ]
+  },
+  "status": "candidate",
+  "title": "Rerun do GitHub Actions replica o payload do evento original"
+}

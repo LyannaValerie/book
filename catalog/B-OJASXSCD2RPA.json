@@ -1,0 +1,9 @@
+{
+  "case_id": "B-OJASXSCD2RPA",
+  "domain": "Book",
+  "synthetic": false,
+  "updated_at": "2026-08-25T17:00:38Z",
+  "views": [
+    "Book/Search"
+  ]
+}

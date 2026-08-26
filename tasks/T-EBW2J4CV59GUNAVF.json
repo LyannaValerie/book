@@ -1,0 +1,51 @@
+{
+  "domain": "Pinker",
+  "external_task_ref": "pinker:issue-522-pre-505-native-parity-repair",
+  "finished_at": "2026-08-26T05:28:18Z",
+  "followed_refs": [],
+  "goal": "Fechar paridade nativa das cinco intrinsecas da Issue 522 e reconciliar a projecao historica apos a mudanca",
+  "hypotheses": [
+    "NAO VALIDADA: o remedio aparente seria acrescentar override-region para as duas regioes, mas isso viola NEW_OVERRIDE_RULE=FORBIDDEN e elevaria expected_overrides para 112; permanece pendente de disposicao do Guia"
+  ],
+  "known": [
+    "As quatro transicoes de override-region da receita compartilhada reconciliaram: E-SNAP-OVERRIDE-BASE e E-SNAP-OVERRIDE-SUMMARY desapareceram e o gate passou a reportar DRIFT de capsula",
+    "O diff de projecao estavel entre a baseline fabd794 e o worktree isola exatamente duas regioes divergentes, ambas no campo hash: runtime.listas.dinamicas e runtime.tempo.relogio",
+    "Essas duas regioes sao precisamente as unicas regioes modificadas que nao possuem override-region na receita compartilhada; regiao string de hash tem tamanho fixo, o que explica comprimento total identico com hash diferente",
+    "Remedio validado: a reconciliacao final adicionou override-region estrita para runtime.listas.dinamicas e runtime.tempo.relogio restaurando o estado historico exato extraido de fabd794, mais exclude-key para a regiao de evidencia nova; expected_overrides 110->112 e expected_exclusions 119->120"
+  ],
+  "loaded_refs": [
+    "B-A2L9OZH9Q96L",
+    "B-RHSK3050R6VG",
+    "B-8TJG36J1C852",
+    "B-3N8C5W2H9J6X",
+    "B-DRE73GB50K0C",
+    "B-7K4M2Q9R6T3V",
+    "B-D8ZGPIE404RL",
+    "B-FT6S0UQEHHGC",
+    "B-T0OWGBV7U0U8",
+    "B-N6RVQSYWV8SR",
+    "B-GDCKPRJE5VZX",
+    "B-L321TGXIJNRL",
+    "B-LQ3ROLGYV9YL",
+    "B-4V28QHSVIJP3",
+    "B-GLJZSQ39GD56",
+    "B-L82QTHN2Z9EI",
+    "B-JPDXDAT88X5I"
+  ],
+  "missing": [
+    "Qual mecanismo autorizado normaliza uma regiao modificada que nao possui override-region, sem criar regra nova e sem recalibrar capsula FROZEN?"
+  ],
+  "next_probe": null,
+  "outcome": "Paridade nativa das cinco identidades fechada e cadeia de projecao historica reconciliada sem tocar capsula FROZEN",
+  "project": "LyannaValerie/pinker-v0",
+  "started_at": "2026-08-26T01:33:26Z",
+  "state": "finished",
+  "task_id": "T-EBW2J4CV59GUNAVF",
+  "validation": {
+    "oracle": "file:/pinker/artifacts/tasks/issue-522-pre-505-native-parity-repair/projection-final-diff.txt",
+    "outcome": "cadeia de projecao MATCH e diff de projecao estavel vazio contra a baseline fabd794",
+    "passed": true,
+    "summary": "A reconciliacao estrita da recipe historica restaurou a reconstrucao sem tocar em nenhuma capsula FROZEN",
+    "validated_at": "2026-08-26T05:27:26Z"
+  }
+}

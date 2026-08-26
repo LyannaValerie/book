@@ -1,0 +1,65 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica a CI, que já roda em caminho curto com target dentro da árvore."
+  ],
+  "cues": [
+    "SUN_LEN",
+    "staticlib nativa ausente",
+    "CARGO_TARGET_DIR",
+    "pinker-exec",
+    "worktree",
+    "socket unix"
+  ],
+  "discriminating_probe": {
+    "action": "medir o comprimento do caminho que o fixture tenta bindar e conferir onde o teste procura a staticlib",
+    "observable": "o caminho excede 108 bytes, e a staticlib está no target fora da árvore em vez de <repo>/target/debug"
+  },
+  "environment": {
+    "backend": "native",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Medição direta: bind falhou em caminho de 109 bytes e passou em 101; ligar a staticlib ao caminho esperado fez part_d passar 8/8 sem mudar código",
+      "source": "file:/pinker/state/tasks/issue-522-pre-505-native-parity-repair/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Para gates nativos use um worktree de caminho curto e o target padrão dentro da árvore. Se precisar de target fora da árvore, ao menos ligue <repo>/target/debug/libpinker_rt.a ao artefato real. Falha em fixture antes da execução do sujeito não é regressão: confira o local do panic antes de investigar semântica."
+  },
+  "id": "B-ZI6WVTHJ4QMK",
+  "observed_at": "2026-08-26T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O harness cria o sandbox em <repo>/target/pinker-exec e canonicaliza a raiz exigindo contenção, então symlink não encurta o caminho. O teste de processos procura a staticlib literalmente em <repo>/target/debug/libpinker_rt.a. Com o repositório num caminho de 62 caracteres, o path do socket dá 109 bytes contra o limite de 108: falha por um byte, dentro do fixture, antes de qualquer código Pinker executar."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Dois alvos de teste falham por motivo ambiental e não por regressão: um acusa staticlib nativa ausente e o outro falha ao criar socket unix com path must be shorter than SUN_LEN. As mensagens sugerem defeito de build ou de código."
+  },
+  "references": [],
+  "revision": {
+    "hash": "832e1f634adb71e09c45ca98c7f5f49c0b375608023ec4d747847f03ff1405e8",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-26T06:16:44Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "part_c_filesystem_adulto_tests",
+      "part_d_native_process_tests",
+      "native test harness"
+    ],
+    "conditions": [
+      "Task roda gates em worktree de caminho longo ou com CARGO_TARGET_DIR fora da árvore"
+    ]
+  },
+  "status": "candidate",
+  "title": "Gates nativos assumem target dentro da árvore e caminho de repositório curto"
+}

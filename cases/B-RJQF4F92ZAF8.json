@@ -1,0 +1,74 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não generalize: CLEAN_NOOP com zero bytes após finalização legítima anterior é limpeza correta, não vazamento. Medido: 1a passagem CLEAN reclaimed 8,06 GB; 2a passagem CLEAN_NOOP reclaimed 0.",
+    "Os fixtures que dependem de paths históricos não respeitam CARGO_TARGET_DIR e exigem a ponte <repo>/target/debug/libpinker_rt.a; isso vale para part_d_native_process_tests e o sandbox pinker-exec, não para todo gate nativo. Ver B-ZI6WVTHJ4QMK.",
+    "Não se aplica a CI, que roda com target dentro da árvore em ambiente descartável."
+  ],
+  "cues": [
+    "CLEAN_NOOP",
+    "reclaimed_bytes",
+    "CARGO_TARGET_DIR",
+    "fl",
+    "preserved",
+    "vazamento de build"
+  ],
+  "discriminating_probe": {
+    "action": "ler o recibo de cleanup da Task e comparar o slot kind:cache com o que a Task realmente compilou",
+    "observable": "bytes_before 0 no slot de cache apesar de a Task ter compilado, e a worktree listada em preserved"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Recibos de cleanup de issue-514 e issue-520 com status CLEAN_NOOP, reclaimed_bytes 0, worktree em preserved e slot de cache com bytes_before 0; remoção manual recuperou 14,3 GB e o disco /pinker saiu de 991M para 16G livres.",
+      "source": "file:/pinker/state/tasks/issue-514-module-composition/cleanup/20260825T082624.373719Z.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Controle: make ci com target dentro da árvore gerou 7,3 GB em <worktree>/target, o mesmo volume encontrado órfão em issue-514.",
+      "source": "file:/pinker/artifacts/tasks/agents-md-target-por-task/make-ci-base.log"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Exporte CARGO_TARGET_DIR para o slot registrado da Task antes do primeiro build — recuperado do fl --report (kind:cache) ou do observador atual, nunca concatenado a partir do TASK_ID — e confirme a cobertura com fl --report. CLEAN_NOOP é resultado terminal legítimo do finalizador, inclusive quando os recursos já foram finalizados ou reclamados numa passagem anterior autorizada: ausência de bytes NÃO é prova de vazamento. A suspeita só se justifica sob a conjunção: primeira finalização após um build conhecido desta Task, sem limpeza autorizada anterior, slot de cache registrado e esperado, e bytes_before = 0 — então SUSPECT_UNCOVERED_BUILD, investigar antes de encerrar. O fl não está errado quando reporta CLEAN_NOOP: o build é que pode nunca ter entrado no escopo que ele sabe liberar."
+  },
+  "id": "B-RJQF4F92ZAF8",
+  "observed_at": "2026-08-26T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "ci_env.sh não define CARGO_TARGET_DIR, então o Cargo usa <worktree>/target. O fl inventaria sete slots por Task e nenhum fica sob /pinker/worktrees; pior, lista a worktree em preserved. O slot canônico /pinker/caches/target/tasks/<task> registra bytes_before 0 porque nunca foi usado. Medido: issue-514 e issue-520 encerraram com CLEAN_NOOP deixando 7,3 GB e 7,0 GB. Com CARGO_TARGET_DIR apontado ao slot canônico, fl --report passou a acusar reclaimable_bytes 898482176 e <worktree>/target caiu para 32 KB."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "O fl reporta CLEAN_NOOP com reclaimed_bytes 0 e a Task é encerrada como limpa, mas gigabytes de build permanecem em <worktree>/target. O status é verdadeiro e enganoso ao mesmo tempo."
+  },
+  "references": [
+    "book:B-ZI6WVTHJ4QMK"
+  ],
+  "revision": {
+    "hash": "75ea0abab1bf767c00caef775aff5def56f1ba341261d9a017407651ae650a08",
+    "number": 2,
+    "parent_hash": "fb3cbc23655b4bca3eaf7a4606736ae388728e973384b43bc0ad22f4586ee744",
+    "reason": "review do Guia na PR #524: CLEAN_NOOP estava generalizado; vira condicao discriminante",
+    "updated_at": "2026-08-26T18:26:27Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "fl",
+      "forja-task-storage",
+      "ci_env.sh",
+      "AGENTS.md"
+    ],
+    "conditions": [
+      "Task da Forja compila Rust sem exportar CARGO_TARGET_DIR"
+    ]
+  },
+  "status": "candidate",
+  "title": "CLEAN_NOOP do fl é cego ao build gravado fora do escopo registrado"
+}

@@ -1,0 +1,61 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica quando o delta difere entre asserções, o que indica mais de uma causa."
+  ],
+  "cues": [
+    "nav_cartography_tests",
+    "total vivo",
+    "retain_membership_base",
+    "literais congelados",
+    "regioes"
+  ],
+  "discriminating_probe": {
+    "action": "ler o comentário do total vivo e verificar quais asserções derivam de catálogo filtrado por membership histórico",
+    "observable": "apenas uma asserção conta o catálogo corrente sem filtro; as demais reconstroem estado histórico"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Oito asserções falharam com delta +1; registrar a chave no filtro reduziu para duas, que eram o total vivo e a contagem viva por camada",
+      "source": "file:/pinker/state/tasks/issue-522-pre-505-native-parity-repair/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Diante de N falhas de contagem com o mesmo delta, registre a chave nova no filtro de membership primeiro e rode de novo. O que sobrar é o escopo corrente e só esse pode ser incrementado. Nunca incremente literal de reconstrução histórica para obter verde."
+  },
+  "id": "B-UVBZ8KXSRKJD",
+  "observed_at": "2026-08-26T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Só o total vivo e as contagens vivas por camada sobem. As demais voltam a bater sozinhas assim que a chave nova é registrada no filtro de membership, em paridade com o exclude-key da receita canônica de projeções."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Acrescentar uma região faz várias asserções de contagem falharem ao mesmo tempo, todas por delta +1. A leitura ingênua é incrementar todas, o que corrompe silenciosamente os sítios históricos."
+  },
+  "references": [],
+  "revision": {
+    "hash": "e3dd5d8ad8d3ed2f8fce962575b314ae127d1a3c8f540ce3d33757ed7693e751",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-26T05:48:15Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "nav_cartography_tests"
+    ],
+    "conditions": [
+      "Task acrescenta ou remove região @pinker-nav"
+    ]
+  },
+  "status": "candidate",
+  "title": "Na suíte de cartografia só um total é vivo; os demais são reconstruções com literais congelados"
+}

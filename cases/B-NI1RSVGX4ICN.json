@@ -1,0 +1,72 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica a comando curto e interativo cuja saída o operador acompanha.",
+    "Prazo próprio precisa ser dimensionado: teto curto demais mata campanha legítima.",
+    "A recomendação de pinker-run permanece não testada nestes incidentes; confirme disponibilidade e barramento antes de depender dela."
+  ],
+  "cues": [
+    "ssh",
+    "SIGPIPE",
+    "tee",
+    "resumo congelado",
+    "processo órfão",
+    "burn-in",
+    "timeout",
+    "prazo próprio",
+    "evidência",
+    "transporte"
+  ],
+  "discriminating_probe": {
+    "action": "Comparar a carga real da máquina com o que o resumo afirma: um uptime com load average próximo de zero contra um resumo dizendo estar no meio da campanha revela que o registro parou, não o trabalho.",
+    "observable": "As duas afirmações divergem, e a carga é a que não mente."
+  },
+  "environment": {
+    "repository": "Pinker",
+    "workflow": "campanha longa sob ssh"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "RESUMO.txt congelado por trinta minutos após SIGPIPE em tee, revelado por contradição entre load average 0.00 e o resumo; oito processos em estado R com etime crescente após expirar a ferramenta local.",
+      "source": "file:/pinker/msg/amara/dificuldades/2026-08-06-ferramental-nao-sobrevive-a-queda-do-ssh.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Escreva evidência direto no arquivo antes de qualquer outra coisa, nunca por stdout: trap '' PIPE mais exec >>arquivo 2>&1 no topo, e uma função de registro que não passa por pipe. Dê prazo próprio a tudo que é auxiliar — timeout --signal=KILL para carga, timeout --signal=TERM --kill-after para a campanha inteira — de modo que o processo não precise de quem o encerre. Prefira o supervisor do sistema quando existir: pinker-run entrega a tarefa como service transitório com cgroup próprio e systemd como autoridade de encerramento, e nenhum dos três incidentes teria ocorrido sob ele."
+  },
+  "id": "B-NI1RSVGX4ICN",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Três incidentes com a mesma raiz. O registro por printf | tee -a morreu de SIGPIPE quando o cliente ssh caiu, e por trinta minutos o RESUMO.txt exibiu uma linha antiga enquanto a campanha parecia continuar. Um burn-in com ( while :; do :; done ) & deixou oito processos órfãos girando a 100% de CPU numa sessão que já não existia, exigindo intervenção humana. Ao interromper outra campanha, fechar o cliente ssh não a encerrou: ela seguiu vinte minutos consumindo quatro núcleos e o target/."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Ferramental que supõe a permanência da sessão ssh que o iniciou perde o registro quando o cliente cai, deixa geradores de carga órfãos consumindo CPU, ou segue vivo depois de o operador querer encerrá-lo."
+  },
+  "references": [
+    "file:/pinker/msg/amara/dificuldades/2026-08-06-ferramental-nao-sobrevive-a-queda-do-ssh.md"
+  ],
+  "revision": {
+    "hash": "65ca3d2c64390ef80503932add0b287a730d284f419b6380ce7f10013c787e72",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-25T16:57:55Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "ferramental de campanha",
+      "registro de evidência"
+    ],
+    "conditions": [
+      "campanha longa iniciada a partir de uma sessão ssh interativa"
+    ]
+  },
+  "status": "candidate",
+  "title": "Campanha longa precisa de evidência fora do transporte e de prazo próprio"
+}

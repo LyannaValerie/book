@@ -1,0 +1,10 @@
+{
+  "case_id": "B-4V28QHSVIJP3",
+  "domain": "Pinker",
+  "synthetic": false,
+  "updated_at": "2026-08-25T16:54:47Z",
+  "views": [
+    "Pinker/Inventory",
+    "Pinker/Migration"
+  ]
+}
