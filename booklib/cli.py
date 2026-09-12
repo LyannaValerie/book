@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from . import CASE_SCHEMA_VERSION, CONTENT_TRUST, TOOL_VERSION
-from .authoring import create_case, import_case, minimal_interactive
+from .authoring import add_case_from_file, create_case, import_case, minimal_interactive
 from .core import BookError, atomic_write, loads_json, read_json, utc_now
 from .events import append_event
 from .index import reindex
@@ -59,6 +59,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--book", type=Path, default=Path(__file__).resolve().parents[1], help="Book root")
     parser.add_argument("--task", help="associate observable access with a Task ID")
     parser.add_argument("--actor", default=os.environ.get("USER", "agent")); parser.add_argument("--version", action="store_true")
+    # A1 — quem exige associação no caminho supervisionado é o chamador.
+    parser.add_argument("--require-task", action="store_true", help="refuse a knowledge mutation that carries no Task reference")
+    # A2/§3 — identidade da operação, obtida ANTES da tentativa que pode
+    # perder a resposta. Repetir com a mesma identidade recupera o resultado.
+    parser.add_argument("--operation-id", help="identity of this mutation, for safe retry")
     commands = parser.add_subparsers(dest="command")
     search = commands.add_parser("search"); search.add_argument("query"); search.add_argument("--within"); search.add_argument("--limit", type=int, default=50)
     listing = commands.add_parser("list"); listing.add_argument("view", nargs="?"); listing.add_argument("--limit", type=int, default=100)
@@ -105,9 +110,12 @@ def dispatch(args: argparse.Namespace) -> tuple[Any, int]:
     if args.command == "show":
         result=show_item(root,args.identifier,metadata_only=args.metadata); _record_access(root,args.task,"SHOW",result,{"id":args.identifier},args.identifier); note_loaded(root,args.task,[args.identifier]); return result,0
     if args.command == "add-case":
-        if args.input and not args.stdin and not args.json_payload: result=v0.add_case(root,args.input,args.allow_similar)
-        else: result=create_case(root,payload_from(args,interactive=minimal_interactive),actor=args.actor,allow_similar=args.allow_similar)
-        append_event(root,"CASE_ADD",task_id=args.task,summary=result["id"],data={"case_id":result["id"]}); return result,0
+        guard=dict(task_id=args.task,require_task=args.require_task,operation_id=args.operation_id)
+        if args.input and not args.stdin and not args.json_payload:
+            result=add_case_from_file(root,args.input,allow_similar=args.allow_similar,**guard)
+        else:
+            result=create_case(root,payload_from(args,interactive=minimal_interactive),actor=args.actor,allow_similar=args.allow_similar,**guard)
+        return result,0
     if args.command == "import-case":
         result=import_case(root,args.input,allow_similar=args.allow_similar); append_event(root,"CASE_ADD",task_id=args.task,summary=result["id"],data={"case_id":result["id"]}); return result,0
     if args.command == "revise":

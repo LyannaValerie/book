@@ -8,6 +8,7 @@ import string
 from pathlib import Path
 from typing import Any
 
+from . import journal, mutation
 from .core import BookError, atomic_write, require_object, require_text, utc_now
 from .security import reject_sensitive
 from . import v0
@@ -76,10 +77,24 @@ def semantic_to_draft(payload: Any, *, actor: str = "author", now: str | None = 
     return draft, facets
 
 
-def create_case(root: Path, payload: Any, *, actor: str = "author", allow_similar: bool = False, now: str | None = None) -> dict[str, Any]:
+def create_case(
+    root: Path,
+    payload: Any,
+    *,
+    actor: str = "author",
+    allow_similar: bool = False,
+    now: str | None = None,
+    task_id: str | None = None,
+    require_task: bool = False,
+    operation_id: str | None = None,
+) -> dict[str, Any]:
+    # A recusa por conteúdo é decidida antes de qualquer lock ou diretório:
+    # um payload rejeitado não deve deixar rastro de estrutura no acervo.
     draft, facets = semantic_to_draft(payload, actor=actor, now=now)
-    case = v0.prepare_new_case(draft)
-    with v0.exclusive_book_lock(root):
+    prepared = v0.prepare_new_case(draft)
+
+    def plan() -> dict[str, Any]:
+        case = copy.deepcopy(prepared)
         corpus = v0.load_corpus(root)
         fingerprint = v0.semantic_fingerprint(case)
         if any(v0.semantic_fingerprint(old) == fingerprint for old in corpus):
@@ -91,9 +106,108 @@ def create_case(root: Path, payload: Any, *, actor: str = "author", allow_simila
             case["id"] = new_case_id()
             facets["case_id"] = case["id"]
             v0.set_revision(case, number=1, parent_hash=None, updated_at=case["revision"]["updated_at"], updated_by=case["revision"]["updated_by"], reason=case["revision"]["reason"])
-        v0.atomic_write(v0.cases_dir(root) / f"{case['id']}.json", case)
-        atomic_write(root / "catalog" / f"{case['id']}.json", facets)
-    return {"ok": True, "operation": "add-case", "id": case["id"], "status": case["status"], "revision": case["revision"]["hash"], "generated": ["id", "schema_version", "status", "revision", "timestamps"], "similar_candidates": candidates}
+        return {"case": case, "facets": facets, "candidates": candidates}
+
+    def write(planned: dict[str, Any]) -> None:
+        case = planned["case"]
+        _write_if_absent_or_equal(v0.cases_dir(root) / f"{case['id']}.json", case, v0.atomic_write)
+        _write_if_absent_or_equal(root / "catalog" / f"{case['id']}.json", planned["facets"], atomic_write)
+
+    def event(planned: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        case = planned["case"]
+        return case["id"], {"case_id": case["id"], "revision": case["revision"]["hash"]}
+
+    def result(planned: dict[str, Any]) -> dict[str, Any]:
+        case = planned["case"]
+        return {"ok": True, "operation": "add-case", "id": case["id"], "status": case["status"], "revision": case["revision"]["hash"], "generated": ["id", "schema_version", "status", "revision", "timestamps"], "similar_candidates": planned["candidates"]}
+
+    return mutation.guarded(
+        root,
+        kind="case_add",
+        event_kind="CASE_ADD",
+        task_id=task_id,
+        require_task=require_task,
+        operation_id=operation_id,
+        request={"payload": payload, "actor": actor, "allow_similar": allow_similar},
+        store_lock=lambda: v0.exclusive_book_lock(root),
+        plan=plan,
+        write=write,
+        event=event,
+        result=result,
+    )
+
+
+def add_case_from_file(
+    root: Path,
+    input_path: Path,
+    *,
+    allow_similar: bool = False,
+    task_id: str | None = None,
+    require_task: bool = False,
+    operation_id: str | None = None,
+) -> dict[str, Any]:
+    """The ``--input`` path of ``add-case``, under the same guarantees.
+
+    It accepts a draft already in canonical shape; leaving it outside the
+    protected path would let a file argument walk around the association and
+    the journal.
+    """
+    source = v0.read_json(input_path)
+    prepared = v0.prepare_new_case(source)
+
+    def plan() -> dict[str, Any]:
+        case = copy.deepcopy(prepared)
+        corpus = v0.load_corpus(root)
+        if any(old["id"] == case["id"] for old in corpus):
+            raise BookError("CASE_ID_DUPLICATE", f"case id {case['id']} already exists")
+        fingerprint = v0.semantic_fingerprint(case)
+        exact = [old["id"] for old in corpus if v0.semantic_fingerprint(old) == fingerprint]
+        if exact:
+            raise BookError("CASE_EXACT_DUPLICATE", "exact case content already exists", {"candidates": exact})
+        candidates = v0.similar_candidates(case, corpus)
+        if candidates and not allow_similar:
+            raise BookError(
+                "CASE_SIMILAR_CANDIDATES",
+                "lexically similar cases require an explicit new-case decision",
+                {"candidates": candidates, "hint": "use revise or repeat add-case with --allow-similar"},
+            )
+        return {"case": case, "candidates": candidates}
+
+    def write(planned: dict[str, Any]) -> None:
+        case = planned["case"]
+        _write_if_absent_or_equal(v0.cases_dir(root) / f"{case['id']}.json", case, v0.atomic_write)
+
+    def event(planned: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        case = planned["case"]
+        return case["id"], {"case_id": case["id"], "revision": case["revision"]["hash"]}
+
+    def result(planned: dict[str, Any]) -> dict[str, Any]:
+        case = planned["case"]
+        return {"ok": True, "operation": "add", "id": case["id"], "revision": case["revision"]["hash"], "similar_candidates": planned["candidates"]}
+
+    return mutation.guarded(
+        root, kind="case_add", event_kind="CASE_ADD", task_id=task_id,
+        require_task=require_task, operation_id=operation_id,
+        request={"source": source, "allow_similar": allow_similar},
+        store_lock=lambda: v0.exclusive_book_lock(root),
+        plan=plan, write=write, event=event, result=result,
+    )
+
+
+def _write_if_absent_or_equal(path: Path, value: Any, writer) -> None:
+    """Idempotent write. A file that already holds exactly the planned content
+    is the operation already applied; one that holds something else is a change
+    nobody accounted for, and overwriting it would destroy evidence."""
+    if path.exists():
+        from .core import read_json
+        current = read_json(path)
+        if current == value:
+            return
+        raise mutation.Divergence(
+            f"{path} exists with content that differs from the recorded intent",
+            {"path": str(path)},
+        )
+    writer(path, value)
 
 
 def import_case(root: Path, path: Path, *, allow_similar: bool = False) -> dict[str, Any]:

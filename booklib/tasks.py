@@ -36,6 +36,46 @@ def load_task(root: Path, task_id: str) -> dict[str, Any]:
     return task
 
 
+def require_association(root: Path, task_id: str | None, *, require: bool = False) -> str | None:
+    """Validate the Task reference a knowledge mutation carries.
+
+    Two distinct rules, and conflating them would change policy by accident:
+
+    ```text
+    referência fornecida e inexistente  -> TASK_REF_UNKNOWN
+    referência omitida, modo que exige  -> TASK_REF_REQUIRED
+    referência omitida, modo autônomo   -> permitido
+    ```
+
+    The autonomous use of the Book — manual import, maintenance, writing with
+    no Task — stays permitted. Requiring association everywhere would be a
+    policy change, not a consequence of the integration; who requires it on the
+    supervised path is the caller, through ``require``.
+
+    A finished Task takes no new writes. Reopening is deliberately unavailable
+    (see the Issue): there is no bypass, and a new cycle needs a new Task.
+    """
+    if task_id is None:
+        if require:
+            raise BookError(
+                "TASK_REF_REQUIRED",
+                "this mode requires the mutation to carry a Task reference",
+            )
+        return None
+    try:
+        task = load_task(root, task_id)
+    except BookError as exc:
+        if exc.code == "TASK_NOT_FOUND":
+            raise BookError("TASK_REF_UNKNOWN", f"task {task_id} does not exist") from exc
+        raise
+    if task.get("state") == "finished":
+        raise BookError(
+            "TASK_FINISHED",
+            f"task {task_id} is finished and takes no new knowledge mutation",
+        )
+    return task_id
+
+
 def begin(root: Path, goal: str, project: str, *, domain: str | None = None, task_id: str | None = None, external_task_ref: str | None = None, now: str | None = None) -> dict[str, Any]:
     require_text(goal, "goal", maximum=2048); require_text(project, "project", maximum=256)
     if external_task_ref is not None:
