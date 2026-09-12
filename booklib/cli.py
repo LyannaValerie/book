@@ -11,7 +11,8 @@ from pathlib import Path
 from typing import Any
 
 from . import CASE_SCHEMA_VERSION, CONTENT_TRUST, TOOL_VERSION
-from .authoring import add_case_from_file, create_case, import_case, minimal_interactive
+from .authoring import add_case_from_file, create_case, import_case, minimal_interactive, revise
+from .authoring import challenge as challenge_case
 from .core import BookError, atomic_write, loads_json, read_json, utc_now
 from .events import append_event
 from .index import reindex
@@ -117,15 +118,17 @@ def dispatch(args: argparse.Namespace) -> tuple[Any, int]:
             result=create_case(root,payload_from(args,interactive=minimal_interactive),actor=args.actor,allow_similar=args.allow_similar,**guard)
         return result,0
     if args.command == "import-case":
-        result=import_case(root,args.input,allow_similar=args.allow_similar); append_event(root,"CASE_ADD",task_id=args.task,summary=result["id"],data={"case_id":result["id"]}); return result,0
+        guard=dict(task_id=args.task,require_task=args.require_task,operation_id=args.operation_id)
+        result=import_case(root,args.input,allow_similar=args.allow_similar,**guard); return result,0
     if args.command == "revise":
         temporary = None
         if args.patch: patch_path=args.patch
         else: temporary=stage_payload(root,"revision",payload_from(args)); patch_path=temporary
-        try: result=v0.revise_case(root,args.id,args.if_revision,patch_path,args.updated_at or utc_now(),args.updated_by or args.actor,args.reason)
+        guard=dict(task_id=args.task,require_task=args.require_task,operation_id=args.operation_id)
+        try: result=revise(root,args.id,args.if_revision,patch_path,args.updated_at or utc_now(),args.updated_by or args.actor,args.reason,**guard)
         finally:
             if temporary: temporary.unlink(missing_ok=True)
-        append_event(root,"CASE_REVISE",task_id=args.task,summary=args.id,data={"case_id":args.id}); return result,0
+        return result,0
     if args.command == "challenge":
         if args.challenge: challenge_path=args.challenge
         else:
@@ -135,13 +138,15 @@ def dispatch(args: argparse.Namespace) -> tuple[Any, int]:
             challenge={"id":"C-"+__import__('secrets').token_hex(5).upper(),"observed_at":semantic.get("observed_at"),"reported_by":args.updated_by or args.actor,"statement":statement,"evidence":semantic["evidence"],"references":semantic.get("references",[])}
             challenge_path=stage_payload(root,"challenge",challenge); temporary=challenge_path
         if args.challenge: temporary=None
-        try: result=v0.challenge_case(root,args.id,args.if_revision,challenge_path,args.updated_at or utc_now(),args.updated_by or args.actor,args.reason)
+        guard=dict(task_id=args.task,require_task=args.require_task,operation_id=args.operation_id)
+        try: result=challenge_case(root,args.id,args.if_revision,challenge_path,args.updated_at or utc_now(),args.updated_by or args.actor,args.reason,**guard)
         finally:
             if temporary: temporary.unlink(missing_ok=True)
-        append_event(root,"CASE_CHALLENGE",task_id=args.task,summary=args.id,data={"case_id":args.id}); return result,0
+        return result,0
     if args.command == "facet": return {"ok":True,"operation":"facet set","facets":set_facets(root,args.id,args.domain,args.view,synthetic=args.synthetic)},0
     if args.command == "relate":
-        result=add_relation(root,args.source,args.type,args.target,args.epistemic,args.oracle,args.actor); append_event(root,"RELATION_ADD",task_id=args.task,summary=result["relation"]["id"],data={"relation_id":result["relation"]["id"]}); return result,0
+        guard=dict(task_id=args.task,require_task=args.require_task,operation_id=args.operation_id)
+        result=add_relation(root,args.source,args.type,args.target,args.epistemic,args.oracle,args.actor,**guard); return result,0
     if args.command == "references":
         result=references(root,args.id,depth=args.depth); _record_access(root,args.task,"REFERENCE_FOLLOW",result,{"reference":args.id,"result_count":len(result["incoming"])+len(result["outgoing"])},args.id); note_loaded(root,args.task,[e["to"] for e in result["outgoing"]],followed=True); return result,0
     if args.command == "resolve":

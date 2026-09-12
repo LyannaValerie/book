@@ -194,6 +194,119 @@ def add_case_from_file(
     )
 
 
+def revise(
+    root: Path,
+    case_id: str,
+    expected: str,
+    patch_path: Path,
+    updated_at: str,
+    updated_by: str,
+    reason: str,
+    *,
+    task_id: str | None = None,
+    require_task: bool = False,
+    operation_id: str | None = None,
+) -> dict[str, Any]:
+    patch = require_object(v0.read_json(patch_path), "revision patch")
+    invalid = sorted(set(patch) - v0.EDITABLE_FIELDS)
+    if invalid or not patch:
+        raise BookError("PATCH_INVALID", "revision patch has invalid or no fields", {"invalid": invalid})
+
+    def plan() -> dict[str, Any]:
+        case = v0.find_case(root, case_id)
+        v0.require_current_revision(case, expected)
+        for key, value in patch.items():
+            case[key] = value
+        v0.next_revision(case, updated_at=updated_at, updated_by=updated_by, reason=reason)
+        v0.validate_case(case)
+        return {"case": case, "parent": expected}
+
+    def write(planned: dict[str, Any]) -> None:
+        _write_revision(v0.cases_dir(root) / f"{case_id}.json", planned["case"], planned["parent"])
+
+    def event(planned: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        return case_id, {"case_id": case_id, "revision": planned["case"]["revision"]["hash"]}
+
+    def result(planned: dict[str, Any]) -> dict[str, Any]:
+        return {"ok": True, "operation": "revise", "id": case_id, "revision": planned["case"]["revision"]["hash"], "parent_revision": expected}
+
+    return mutation.guarded(
+        root, kind="case_revise", event_kind="CASE_REVISE", task_id=task_id,
+        require_task=require_task, operation_id=operation_id,
+        request={"case_id": case_id, "expected": expected, "patch": patch, "reason": reason},
+        store_lock=lambda: v0.exclusive_book_lock(root),
+        plan=plan, write=write, event=event, result=result,
+    )
+
+
+def challenge(
+    root: Path,
+    case_id: str,
+    expected: str,
+    challenge_path: Path,
+    updated_at: str,
+    updated_by: str,
+    reason: str,
+    *,
+    task_id: str | None = None,
+    require_task: bool = False,
+    operation_id: str | None = None,
+) -> dict[str, Any]:
+    payload = v0.read_json(challenge_path)
+    v0.validate_challenge(payload)
+
+    def plan() -> dict[str, Any]:
+        case = v0.find_case(root, case_id)
+        v0.require_current_revision(case, expected)
+        if case["status"] in {"superseded", "historical"}:
+            raise BookError("STATUS_TRANSITION_INVALID", f"cannot challenge a {case['status']} case")
+        if any(item["id"] == payload["id"] for item in case["challenges"]):
+            raise BookError("CHALLENGE_ID_DUPLICATE", f"challenge id {payload['id']} already exists")
+        case["challenges"].append(payload)
+        case["status"] = "challenged"
+        v0.next_revision(case, updated_at=updated_at, updated_by=updated_by, reason=reason)
+        v0.validate_case(case)
+        return {"case": case, "parent": expected}
+
+    def write(planned: dict[str, Any]) -> None:
+        _write_revision(v0.cases_dir(root) / f"{case_id}.json", planned["case"], planned["parent"])
+
+    def event(planned: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        return case_id, {"case_id": case_id, "revision": planned["case"]["revision"]["hash"]}
+
+    def result(planned: dict[str, Any]) -> dict[str, Any]:
+        return {"ok": True, "operation": "challenge", "id": case_id, "status": planned["case"]["status"], "revision": planned["case"]["revision"]["hash"], "parent_revision": expected, "challenge_id": payload["id"]}
+
+    return mutation.guarded(
+        root, kind="case_challenge", event_kind="CASE_CHALLENGE", task_id=task_id,
+        require_task=require_task, operation_id=operation_id,
+        request={"case_id": case_id, "expected": expected, "challenge": payload, "reason": reason},
+        store_lock=lambda: v0.exclusive_book_lock(root),
+        plan=plan, write=write, event=event, result=result,
+    )
+
+
+def _write_revision(path: Path, planned_case: Any, parent_hash: str) -> None:
+    """Idempotent write of a NEW revision.
+
+    Three observable states, and only one of them is a surprise: the planned
+    content is already there (applied), the parent revision is there (apply
+    now), or something else is there — a change nobody accounted for, which
+    recovery must report instead of overwrite.
+    """
+    from .core import read_json
+    current = read_json(path)
+    if current == planned_case:
+        return
+    if current["revision"]["hash"] == parent_hash:
+        v0.atomic_write(path, planned_case)
+        return
+    raise mutation.Divergence(
+        f"{path} is at revision {current['revision']['hash']}, neither the intent's parent nor its result",
+        {"path": str(path), "parent": parent_hash},
+    )
+
+
 def _write_if_absent_or_equal(path: Path, value: Any, writer) -> None:
     """Idempotent write. A file that already holds exactly the planned content
     is the operation already applied; one that holds something else is a change
@@ -210,12 +323,22 @@ def _write_if_absent_or_equal(path: Path, value: Any, writer) -> None:
     writer(path, value)
 
 
-def import_case(root: Path, path: Path, *, allow_similar: bool = False) -> dict[str, Any]:
+def import_case(
+    root: Path,
+    path: Path,
+    *,
+    allow_similar: bool = False,
+    task_id: str | None = None,
+    require_task: bool = False,
+    operation_id: str | None = None,
+) -> dict[str, Any]:
     """Import either a V0 creation draft or an already canonical schema-1 case."""
     source = v0.read_json(path)
     revision = source.get("revision") if isinstance(source, dict) else None
-    case = v0.validate_case(source) if isinstance(revision, dict) and "hash" in revision else v0.prepare_new_case(source)
-    with v0.exclusive_book_lock(root):
+    prepared = v0.validate_case(source) if isinstance(revision, dict) and "hash" in revision else v0.prepare_new_case(source)
+
+    def plan() -> dict[str, Any]:
+        case = copy.deepcopy(prepared)
         corpus = v0.load_corpus(root)
         if any(old["id"] == case["id"] for old in corpus):
             raise BookError("CASE_ID_DUPLICATE", f"case id {case['id']} already exists")
@@ -224,8 +347,27 @@ def import_case(root: Path, path: Path, *, allow_similar: bool = False) -> dict[
         candidates = v0.similar_candidates(case, corpus)
         if candidates and not allow_similar:
             raise BookError("CASE_SIMILAR_CANDIDATES", "similar cases require an explicit decision", {"candidates": candidates})
-        v0.atomic_write(v0.cases_dir(root) / f"{case['id']}.json", case)
-    return {"ok": True, "operation": "import-case", "id": case["id"], "status": case["status"], "revision": case["revision"]["hash"], "similar_candidates": candidates}
+        return {"case": case, "candidates": candidates}
+
+    def write(planned: dict[str, Any]) -> None:
+        case = planned["case"]
+        _write_if_absent_or_equal(v0.cases_dir(root) / f"{case['id']}.json", case, v0.atomic_write)
+
+    def event(planned: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        case = planned["case"]
+        return case["id"], {"case_id": case["id"], "revision": case["revision"]["hash"]}
+
+    def result(planned: dict[str, Any]) -> dict[str, Any]:
+        case = planned["case"]
+        return {"ok": True, "operation": "import-case", "id": case["id"], "status": case["status"], "revision": case["revision"]["hash"], "similar_candidates": planned["candidates"]}
+
+    return mutation.guarded(
+        root, kind="case_import", event_kind="CASE_ADD", task_id=task_id,
+        require_task=require_task, operation_id=operation_id,
+        request={"source": source, "allow_similar": allow_similar},
+        store_lock=lambda: v0.exclusive_book_lock(root),
+        plan=plan, write=write, event=event, result=result,
+    )
 
 
 def minimal_interactive(input_fn=input, output_fn=print) -> dict[str, Any]:

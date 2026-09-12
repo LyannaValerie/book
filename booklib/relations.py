@@ -44,16 +44,57 @@ def validate_relation(edge: Any) -> dict[str, Any]:
     return edge
 
 
-def add_relation(root: Path, source: str, kind: str, target: str, epistemic: str, oracle: str | None, actor: str, now: str | None = None) -> dict[str, Any]:
+def add_relation(
+    root: Path,
+    source: str,
+    kind: str,
+    target: str,
+    epistemic: str,
+    oracle: str | None,
+    actor: str,
+    now: str | None = None,
+    *,
+    task_id: str | None = None,
+    require_task: bool = False,
+    operation_id: str | None = None,
+) -> dict[str, Any]:
+    from . import mutation
+
     semantic = {"from": source, "type": kind, "to": target, "epistemic": epistemic, "oracle": oracle}
-    with lock(root, "relations"):
+
+    def plan() -> dict[str, Any]:
         for existing in load_relations(root):
             if all(existing[key] == value for key, value in semantic.items()):
-                return {"ok": True, "operation": "relate", "relation": existing, "idempotent": True}
+                return {"edge": existing, "idempotent": True}
         base = {**semantic, "created_at": now or utc_now(), "created_by": actor}
-        edge = {"id": "R-" + digest(base)[:16].upper(), **base}; validate_relation(edge)
-        path = root / "relations" / f"{edge['id']}.json"; atomic_write(path, edge)
-    return {"ok": True, "operation": "relate", "relation": edge, "idempotent": False}
+        edge = {"id": "R-" + digest(base)[:16].upper(), **base}
+        validate_relation(edge)
+        return {"edge": edge, "idempotent": False}
+
+    def write(planned: dict[str, Any]) -> None:
+        if planned["idempotent"]:
+            return
+        edge = planned["edge"]
+        path = root / "relations" / f"{edge['id']}.json"
+        if path.exists():
+            if read_json(path) == edge:
+                return
+            raise mutation.Divergence(f"{path} exists with content that differs from the recorded intent")
+        atomic_write(path, edge)
+
+    def event(planned: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        return planned["edge"]["id"], {"relation_id": planned["edge"]["id"]}
+
+    def result(planned: dict[str, Any]) -> dict[str, Any]:
+        return {"ok": True, "operation": "relate", "relation": planned["edge"], "idempotent": planned["idempotent"]}
+
+    return mutation.guarded(
+        root, kind="relation_add", event_kind="RELATION_ADD", task_id=task_id,
+        require_task=require_task, operation_id=operation_id,
+        request=semantic,
+        store_lock=lambda: lock(root, "relations"),
+        plan=plan, write=write, event=event, result=result,
+    )
 
 
 def references(root: Path, identifier: str, *, depth: int = 1, maximum: int = 100) -> dict[str, Any]:
