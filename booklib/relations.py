@@ -63,37 +63,28 @@ def add_relation(
     semantic = {"from": source, "type": kind, "to": target, "epistemic": epistemic, "oracle": oracle}
 
     def plan() -> dict[str, Any]:
+        idempotent = False
+        edge = None
         for existing in load_relations(root):
             if all(existing[key] == value for key, value in semantic.items()):
-                return {"edge": existing, "idempotent": True}
-        base = {**semantic, "created_at": now or utc_now(), "created_by": actor}
-        edge = {"id": "R-" + digest(base)[:16].upper(), **base}
-        validate_relation(edge)
-        return {"edge": edge, "idempotent": False}
-
-    def write(planned: dict[str, Any]) -> None:
-        if planned["idempotent"]:
-            return
-        edge = planned["edge"]
-        path = root / "relations" / f"{edge['id']}.json"
-        if path.exists():
-            if read_json(path) == edge:
-                return
-            raise mutation.Divergence(f"{path} exists with content that differs from the recorded intent")
-        atomic_write(path, edge)
-
-    def event(planned: dict[str, Any]) -> tuple[str, dict[str, Any]]:
-        return planned["edge"]["id"], {"relation_id": planned["edge"]["id"]}
-
-    def result(planned: dict[str, Any]) -> dict[str, Any]:
-        return {"ok": True, "operation": "relate", "relation": planned["edge"], "idempotent": planned["idempotent"]}
+                edge, idempotent = existing, True
+                break
+        if edge is None:
+            base = {**semantic, "created_at": now or utc_now(), "created_by": actor}
+            edge = {"id": "R-" + digest(base)[:16].upper(), **base}
+            validate_relation(edge)
+        return {
+            "writes": [{"path": f"relations/{edge['id']}.json", "value": edge}],
+            "event": {"summary": edge["id"], "data": {"relation_id": edge["id"]}},
+            "result": {"ok": True, "operation": "relate", "relation": edge, "idempotent": idempotent},
+        }
 
     return mutation.guarded(
         root, kind="relation_add", event_kind="RELATION_ADD", task_id=task_id,
         require_task=require_task, operation_id=operation_id,
         request=semantic,
         store_lock=lambda: lock(root, "relations"),
-        plan=plan, write=write, event=event, result=result,
+        plan=plan,
     )
 
 

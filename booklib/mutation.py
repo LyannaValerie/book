@@ -27,7 +27,8 @@ from contextlib import AbstractContextManager
 from typing import Any, Callable
 
 from . import journal, tasks
-from .core import BookError
+from . import v0
+from .core import BookError, read_json
 from .events import append_event, classify_log, log_path
 
 
@@ -36,6 +37,30 @@ class Divergence(BookError):
 
     def __init__(self, message: str, details: Any | None = None):
         super().__init__("OPERATION_DIVERGED", message, details)
+
+
+def apply_writes(root: Path, writes: list[dict[str, Any]]) -> None:
+    """Aplica as escritas do plano, idempotentemente.
+
+    Três estados observáveis por arquivo, e só um é surpresa: já contém o
+    conteúdo planejado (aplicado), contém o pai declarado (aplicar agora), ou
+    contém outra coisa — mudança que ninguém contabilizou, que a recuperação
+    reporta em vez de sobrescrever.
+    """
+    for write in writes:
+        path = root / write["path"]
+        value = write["value"]
+        if path.exists():
+            current = read_json(path)
+            if current == value:
+                continue
+            parent = write.get("parent")
+            if parent is None or current.get("revision", {}).get("hash") != parent:
+                raise Divergence(
+                    f"{path} holds content that matches neither the intent's parent nor its result",
+                    {"path": write["path"]},
+                )
+        v0.atomic_write(path, value)
 
 
 def guarded(
@@ -49,16 +74,20 @@ def guarded(
     request: Any,
     store_lock: Callable[[], AbstractContextManager],
     plan: Callable[[], dict[str, Any]],
-    write: Callable[[dict[str, Any]], None],
-    event: Callable[[dict[str, Any]], tuple[str, dict[str, Any]]],
-    result: Callable[[dict[str, Any]], dict[str, Any]],
 ) -> dict[str, Any]:
     """Run one knowledge mutation under the protected protocol.
 
-    ``plan`` decides the artefact and every Book-generated value; it runs once,
-    inside the store lock, and its output is persisted in the intent. ``write``
-    applies it idempotently. ``event`` names the factual record. ``result`` is
-    what the caller gets back — and what a retry recovers verbatim.
+    ``plan`` decides everything the Book generates — identity, revision,
+    timestamps — and returns a SELF-CONTAINED plan:
+
+    ```text
+    {"writes": [{"path", "value", "parent"?}], "event": {"summary", "data"},
+     "result": {...}}
+    ```
+
+    Self-contained is what makes recovery generic: completing an interrupted
+    operation replays the stored plan instead of re-deciding anything, so the
+    outcome does not depend on who is running the recovery or when.
     """
     task_id = tasks.require_association(root, task_id, require=require_task)
     operation_id = operation_id or journal.new_operation_id()
@@ -67,9 +96,9 @@ def guarded(
         root, operation_id=operation_id, kind=kind, task_id=task_id, request=request
     )
     if intent["state"] == journal.CONFIRMED:
-        # Repetir uma operação já confirmada RECUPERA o resultado; não escreve
-        # nada de novo. Vale inclusive depois de a Task encerrar: recuperar não
-        # é escrever.
+        # Repetir operação já confirmada RECUPERA o resultado e não escreve
+        # nada. Vale inclusive depois de a Task encerrar: recuperar não é
+        # escrever.
         return {**intent["result"], "operation_id": operation_id, "recovered": True}
     if intent["state"] == journal.UNCERTAIN:
         raise BookError(
@@ -96,34 +125,56 @@ def guarded(
             planned = plan()
             intent["planned"] = planned
             journal.update(root, intent)
-        write(planned)
-    summary, data = event(planned)
+        apply_writes(root, planned["writes"])
+
     append_event(
         root,
         event_kind,
         task_id=task_id,
-        summary=summary,
-        data={**data, "operation_id": operation_id},
+        summary=planned["event"]["summary"],
+        data={**planned["event"]["data"], "operation_id": operation_id},
         idempotency_key=operation_id,
     )
-    confirmed = result(planned)
-    journal.resolve(root, operation_id, confirmed)
+    journal.resolve(root, operation_id, planned["result"])
     journal.adopt(root, len(estado["events"]))
-    return {**confirmed, "operation_id": operation_id}
+    return {**planned["result"], "operation_id": operation_id}
 
 
-def recover_pending(root: Path, completers: dict[str, Callable[[dict[str, Any]], dict[str, Any] | None]]) -> list[dict[str, Any]]:
-    """Complete every unresolved intent by the single declared rule.
+EVENT_KIND_BY_OPERATION = {
+    "case_add": "CASE_ADD",
+    "case_import": "CASE_ADD",
+    "case_revise": "CASE_REVISE",
+    "case_challenge": "CASE_CHALLENGE",
+    "relation_add": "RELATION_ADD",
+}
 
-    Idempotent completion when the intent and the verified pre-conditions
-    suffice; ``uncertain`` otherwise. The recovery carries its own record and
-    its own clock — it never backdates a confirmation the evidence cannot
-    support, and it never rewrites an event that is already intact.
+
+def recover(root: Path) -> dict[str, Any]:
+    """Completa toda intenção não resolvida pela regra única declarada.
+
+    Conclusão idempotente quando a intenção e as pré-condições verificadas
+    bastam; ``uncertain`` quando o estado observado diverge. A recuperação
+    carrega registro próprio, com o relógio dela: ela não antedata confirmação
+    que a evidência não sustenta, e não reescreve evento já íntegro — o
+    ``idempotency_key`` devolve o que existe em vez de duplicar.
     """
     def complete(record: dict[str, Any]) -> dict[str, Any] | None:
-        completer = completers.get(record["kind"])
-        if completer is None or record.get("planned") is None:
+        planned = record.get("planned")
+        if planned is None:
+            # Queda antes de decidir o plano: não há o que concluir, e nada foi
+            # escrito. Abortar é honesto e determinístico.
+            journal.abort(root, record["operation_id"], "interrupted before the plan was decided")
             return None
-        return completer(record)
+        apply_writes(root, planned["writes"])
+        append_event(
+            root,
+            EVENT_KIND_BY_OPERATION[record["kind"]],
+            task_id=record["task_id"],
+            summary=planned["event"]["summary"],
+            data={**planned["event"]["data"], "operation_id": record["operation_id"]},
+            idempotency_key=record["operation_id"],
+        )
+        return planned["result"]
 
-    return journal.recover(root, complete)
+    outcomes = journal.recover(root, complete)
+    return {"ok": True, "operation": "recover", "recovered": outcomes}

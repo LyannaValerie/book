@@ -40,7 +40,14 @@ def consistency(root: Path) -> dict[str, Any]:
     classificados: list[dict[str, Any]] = []
     inverificaveis: list[dict[str, Any]] = []
     sem_par: list[dict[str, Any]] = []
-    revisoes = {case["id"]: case["revision"]["hash"] for case in v0.load_corpus(root)}
+    try:
+        revisoes = {case["id"]: case["revision"]["hash"] for case in v0.load_corpus(root)}
+        corpus_legivel = True
+    except (BookError, v0.BookError):
+        # Corpus ilegível é falha de quem é dono dele, e `verify_corpus` já a
+        # reporta. Aqui ela apenas impede a correspondência, que fica sem
+        # conclusão em vez de virar um erro duplicado.
+        revisoes, corpus_legivel = {}, False
     for evento in eventos:
         if evento["kind"] not in {"CASE_ADD", "CASE_REVISE", "CASE_CHALLENGE"}:
             continue
@@ -50,6 +57,8 @@ def consistency(root: Path) -> dict[str, Any]:
             # Anterior à adoção, ou sem a evidência que o protocolo antigo não
             # produzia: classifica, não presume e não bloqueia por isso.
             (classificados if registrada is not None else inverificaveis).append(entrada)
+            continue
+        if not corpus_legivel:
             continue
         atual = revisoes.get(entrada["case_id"])
         if atual is None:

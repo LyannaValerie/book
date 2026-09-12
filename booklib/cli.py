@@ -21,6 +21,7 @@ from .maintenance import doctor, gc_candidates, migrate_v0, verify
 from .paths import explore, mark_path, search_paths
 from .references import resolve
 from .relations import add_relation, references
+from . import mutation
 from .retention import assess as retention_assess, record as retention_record, status as retention_status
 from .search import search_cases
 from .tasks import add_missing, add_state, begin, finish, load_task, note_loaded, receipt, set_next_probe, validate as validate_task
@@ -93,6 +94,7 @@ def build_parser() -> argparse.ArgumentParser:
     tf.add_argument("--covers", action="append", default=[], help="event id reconciled by this decision; repeatable")
     event = commands.add_parser("event"); es = event.add_subparsers(dest="event_command", required=True); ea = es.add_parser("add"); ea.add_argument("--kind", required=True); ea.add_argument("--summary", required=True); ea.add_argument("--task"); ea.add_argument("--event-key"); ea.add_argument("--source-reads", type=int, default=0); ea.add_argument("--tool-calls", type=int, default=0); ea.add_argument("--full-file-reads", type=int, default=0); ea.add_argument("--wall-time", type=float); ea.add_argument("--reverts", type=int, default=0)
     use = commands.add_parser("use"); use.add_argument("id"); use.add_argument("--as", dest="utility", choices=("support", "resolved"), required=True); use.add_argument("--task", required=True)
+    commands.add_parser("recover", help="complete or classify every unresolved knowledge mutation")
     retention = commands.add_parser("retention"); rs = retention.add_subparsers(dest="retention_command", required=True); ra = rs.add_parser("assess"); add_payload_options(ra); rr = rs.add_parser("record"); rr.add_argument("--task", required=True); rr.add_argument("--decision", choices=("new","revise","challenge","no-op"), required=True); rr.add_argument("--summary", required=True); rr.add_argument("--case"); rr.add_argument("--covers", action="append", default=[], help="event id this decision reconciles; repeatable")
     rst = rs.add_parser("status"); rst.add_argument("task")
     path = commands.add_parser("path"); ps = path.add_subparsers(dest="path_command", required=True); psearch = ps.add_parser("search"); psearch.add_argument("query", nargs="?", default=""); psearch.add_argument("--success", nargs="?", const=""); psearch.add_argument("--domain"); psearch.add_argument("--limit",type=int,default=50); pm = ps.add_parser("mark"); pm.add_argument("id"); pm.add_argument("--status", required=True); pm.add_argument("--reason", required=True); pm.add_argument("--evidence"); pe = ps.add_parser("explore"); pe.add_argument("--primary", required=True); pe.add_argument("--candidate", required=True); pe.add_argument("--budget", type=int, required=True)
@@ -174,6 +176,7 @@ def dispatch(args: argparse.Namespace) -> tuple[Any, int]:
         if args.wall_time is not None:data["wall_time"]=args.wall_time
         return append_event(root,kind,task_id=args.task,summary=args.summary,data=data,idempotency_key=args.event_key),0
     if args.command == "use": return append_event(root,"UTILITY",task_id=args.task,summary=args.id,data={"id":args.id,"utility":args.utility}),0
+    if args.command == "recover": return mutation.recover(root),0
     if args.command == "retention":
         if args.retention_command=="assess": return retention_assess(root,payload_from(args)),0
         if args.retention_command=="status": return retention_status(root,args.task),0

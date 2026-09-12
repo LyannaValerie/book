@@ -106,20 +106,14 @@ def create_case(
             case["id"] = new_case_id()
             facets["case_id"] = case["id"]
             v0.set_revision(case, number=1, parent_hash=None, updated_at=case["revision"]["updated_at"], updated_by=case["revision"]["updated_by"], reason=case["revision"]["reason"])
-        return {"case": case, "facets": facets, "candidates": candidates}
-
-    def write(planned: dict[str, Any]) -> None:
-        case = planned["case"]
-        _write_if_absent_or_equal(v0.cases_dir(root) / f"{case['id']}.json", case, v0.atomic_write)
-        _write_if_absent_or_equal(root / "catalog" / f"{case['id']}.json", planned["facets"], atomic_write)
-
-    def event(planned: dict[str, Any]) -> tuple[str, dict[str, Any]]:
-        case = planned["case"]
-        return case["id"], {"case_id": case["id"], "revision": case["revision"]["hash"]}
-
-    def result(planned: dict[str, Any]) -> dict[str, Any]:
-        case = planned["case"]
-        return {"ok": True, "operation": "add-case", "id": case["id"], "status": case["status"], "revision": case["revision"]["hash"], "generated": ["id", "schema_version", "status", "revision", "timestamps"], "similar_candidates": planned["candidates"]}
+        return {
+            "writes": [
+                {"path": f"cases/{case['id']}.json", "value": case},
+                {"path": f"catalog/{case['id']}.json", "value": facets},
+            ],
+            "event": {"summary": case["id"], "data": {"case_id": case["id"], "revision": case["revision"]["hash"]}},
+            "result": {"ok": True, "operation": "add-case", "id": case["id"], "status": case["status"], "revision": case["revision"]["hash"], "generated": ["id", "schema_version", "status", "revision", "timestamps"], "similar_candidates": candidates},
+        }
 
     return mutation.guarded(
         root,
@@ -131,9 +125,6 @@ def create_case(
         request={"payload": payload, "actor": actor, "allow_similar": allow_similar},
         store_lock=lambda: v0.exclusive_book_lock(root),
         plan=plan,
-        write=write,
-        event=event,
-        result=result,
     )
 
 
@@ -171,26 +162,18 @@ def add_case_from_file(
                 "lexically similar cases require an explicit new-case decision",
                 {"candidates": candidates, "hint": "use revise or repeat add-case with --allow-similar"},
             )
-        return {"case": case, "candidates": candidates}
-
-    def write(planned: dict[str, Any]) -> None:
-        case = planned["case"]
-        _write_if_absent_or_equal(v0.cases_dir(root) / f"{case['id']}.json", case, v0.atomic_write)
-
-    def event(planned: dict[str, Any]) -> tuple[str, dict[str, Any]]:
-        case = planned["case"]
-        return case["id"], {"case_id": case["id"], "revision": case["revision"]["hash"]}
-
-    def result(planned: dict[str, Any]) -> dict[str, Any]:
-        case = planned["case"]
-        return {"ok": True, "operation": "add", "id": case["id"], "revision": case["revision"]["hash"], "similar_candidates": planned["candidates"]}
+        return {
+            "writes": [{"path": f"cases/{case['id']}.json", "value": case}],
+            "event": {"summary": case["id"], "data": {"case_id": case["id"], "revision": case["revision"]["hash"]}},
+            "result": {"ok": True, "operation": "add", "id": case["id"], "revision": case["revision"]["hash"], "similar_candidates": candidates},
+        }
 
     return mutation.guarded(
         root, kind="case_add", event_kind="CASE_ADD", task_id=task_id,
         require_task=require_task, operation_id=operation_id,
         request={"source": source, "allow_similar": allow_similar},
         store_lock=lambda: v0.exclusive_book_lock(root),
-        plan=plan, write=write, event=event, result=result,
+        plan=plan,
     )
 
 
@@ -219,23 +202,18 @@ def revise(
             case[key] = value
         v0.next_revision(case, updated_at=updated_at, updated_by=updated_by, reason=reason)
         v0.validate_case(case)
-        return {"case": case, "parent": expected}
-
-    def write(planned: dict[str, Any]) -> None:
-        _write_revision(v0.cases_dir(root) / f"{case_id}.json", planned["case"], planned["parent"])
-
-    def event(planned: dict[str, Any]) -> tuple[str, dict[str, Any]]:
-        return case_id, {"case_id": case_id, "revision": planned["case"]["revision"]["hash"]}
-
-    def result(planned: dict[str, Any]) -> dict[str, Any]:
-        return {"ok": True, "operation": "revise", "id": case_id, "revision": planned["case"]["revision"]["hash"], "parent_revision": expected}
+        return {
+            "writes": [{"path": f"cases/{case_id}.json", "value": case, "parent": expected}],
+            "event": {"summary": case_id, "data": {"case_id": case_id, "revision": case["revision"]["hash"]}},
+            "result": {"ok": True, "operation": "revise", "id": case_id, "revision": case["revision"]["hash"], "parent_revision": expected},
+        }
 
     return mutation.guarded(
         root, kind="case_revise", event_kind="CASE_REVISE", task_id=task_id,
         require_task=require_task, operation_id=operation_id,
         request={"case_id": case_id, "expected": expected, "patch": patch, "reason": reason},
         store_lock=lambda: v0.exclusive_book_lock(root),
-        plan=plan, write=write, event=event, result=result,
+        plan=plan,
     )
 
 
@@ -266,61 +244,19 @@ def challenge(
         case["status"] = "challenged"
         v0.next_revision(case, updated_at=updated_at, updated_by=updated_by, reason=reason)
         v0.validate_case(case)
-        return {"case": case, "parent": expected}
-
-    def write(planned: dict[str, Any]) -> None:
-        _write_revision(v0.cases_dir(root) / f"{case_id}.json", planned["case"], planned["parent"])
-
-    def event(planned: dict[str, Any]) -> tuple[str, dict[str, Any]]:
-        return case_id, {"case_id": case_id, "revision": planned["case"]["revision"]["hash"]}
-
-    def result(planned: dict[str, Any]) -> dict[str, Any]:
-        return {"ok": True, "operation": "challenge", "id": case_id, "status": planned["case"]["status"], "revision": planned["case"]["revision"]["hash"], "parent_revision": expected, "challenge_id": payload["id"]}
+        return {
+            "writes": [{"path": f"cases/{case_id}.json", "value": case, "parent": expected}],
+            "event": {"summary": case_id, "data": {"case_id": case_id, "revision": case["revision"]["hash"]}},
+            "result": {"ok": True, "operation": "challenge", "id": case_id, "status": case["status"], "revision": case["revision"]["hash"], "parent_revision": expected, "challenge_id": payload["id"]},
+        }
 
     return mutation.guarded(
         root, kind="case_challenge", event_kind="CASE_CHALLENGE", task_id=task_id,
         require_task=require_task, operation_id=operation_id,
         request={"case_id": case_id, "expected": expected, "challenge": payload, "reason": reason},
         store_lock=lambda: v0.exclusive_book_lock(root),
-        plan=plan, write=write, event=event, result=result,
+        plan=plan,
     )
-
-
-def _write_revision(path: Path, planned_case: Any, parent_hash: str) -> None:
-    """Idempotent write of a NEW revision.
-
-    Three observable states, and only one of them is a surprise: the planned
-    content is already there (applied), the parent revision is there (apply
-    now), or something else is there — a change nobody accounted for, which
-    recovery must report instead of overwrite.
-    """
-    from .core import read_json
-    current = read_json(path)
-    if current == planned_case:
-        return
-    if current["revision"]["hash"] == parent_hash:
-        v0.atomic_write(path, planned_case)
-        return
-    raise mutation.Divergence(
-        f"{path} is at revision {current['revision']['hash']}, neither the intent's parent nor its result",
-        {"path": str(path), "parent": parent_hash},
-    )
-
-
-def _write_if_absent_or_equal(path: Path, value: Any, writer) -> None:
-    """Idempotent write. A file that already holds exactly the planned content
-    is the operation already applied; one that holds something else is a change
-    nobody accounted for, and overwriting it would destroy evidence."""
-    if path.exists():
-        from .core import read_json
-        current = read_json(path)
-        if current == value:
-            return
-        raise mutation.Divergence(
-            f"{path} exists with content that differs from the recorded intent",
-            {"path": str(path)},
-        )
-    writer(path, value)
 
 
 def import_case(
@@ -347,26 +283,18 @@ def import_case(
         candidates = v0.similar_candidates(case, corpus)
         if candidates and not allow_similar:
             raise BookError("CASE_SIMILAR_CANDIDATES", "similar cases require an explicit decision", {"candidates": candidates})
-        return {"case": case, "candidates": candidates}
-
-    def write(planned: dict[str, Any]) -> None:
-        case = planned["case"]
-        _write_if_absent_or_equal(v0.cases_dir(root) / f"{case['id']}.json", case, v0.atomic_write)
-
-    def event(planned: dict[str, Any]) -> tuple[str, dict[str, Any]]:
-        case = planned["case"]
-        return case["id"], {"case_id": case["id"], "revision": case["revision"]["hash"]}
-
-    def result(planned: dict[str, Any]) -> dict[str, Any]:
-        case = planned["case"]
-        return {"ok": True, "operation": "import-case", "id": case["id"], "status": case["status"], "revision": case["revision"]["hash"], "similar_candidates": planned["candidates"]}
+        return {
+            "writes": [{"path": f"cases/{case['id']}.json", "value": case}],
+            "event": {"summary": case["id"], "data": {"case_id": case["id"], "revision": case["revision"]["hash"]}},
+            "result": {"ok": True, "operation": "import-case", "id": case["id"], "status": case["status"], "revision": case["revision"]["hash"], "similar_candidates": candidates},
+        }
 
     return mutation.guarded(
         root, kind="case_import", event_kind="CASE_ADD", task_id=task_id,
         require_task=require_task, operation_id=operation_id,
         request={"source": source, "allow_similar": allow_similar},
         store_lock=lambda: v0.exclusive_book_lock(root),
-        plan=plan, write=write, event=event, result=result,
+        plan=plan,
     )
 
 
