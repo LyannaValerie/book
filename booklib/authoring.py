@@ -8,7 +8,7 @@ import string
 from pathlib import Path
 from typing import Any
 
-from . import journal, mutation
+from . import journal, mutation, tasks
 from .core import BookError, atomic_write, require_object, require_text, utc_now
 from .security import reject_sensitive
 from . import v0
@@ -88,8 +88,11 @@ def create_case(
     require_task: bool = False,
     operation_id: str | None = None,
 ) -> dict[str, Any]:
-    # A recusa por conteúdo é decidida antes de qualquer lock ou diretório:
-    # um payload rejeitado não deve deixar rastro de estrutura no acervo.
+    # A associação é conferida primeiro: é leitura barata, e deixa a ordem
+    # inequívoca — referência inválida nunca chega a preparar conteúdo.
+    tasks.require_association(root, task_id, require=require_task, allow_finished=True)
+    # A recusa por conteúdo vem em seguida, ainda antes de qualquer lock ou
+    # diretório: um payload rejeitado não deve deixar rastro no acervo.
     draft, facets = semantic_to_draft(payload, actor=actor, now=now)
     prepared = v0.prepare_new_case(draft)
 
@@ -143,6 +146,7 @@ def add_case_from_file(
     protected path would let a file argument walk around the association and
     the journal.
     """
+    tasks.require_association(root, task_id, require=require_task, allow_finished=True)
     source = v0.read_json(input_path)
     prepared = v0.prepare_new_case(source)
 
@@ -190,6 +194,7 @@ def revise(
     require_task: bool = False,
     operation_id: str | None = None,
 ) -> dict[str, Any]:
+    tasks.require_association(root, task_id, require=require_task, allow_finished=True)
     patch = require_object(v0.read_json(patch_path), "revision patch")
     invalid = sorted(set(patch) - v0.EDITABLE_FIELDS)
     if invalid or not patch:
@@ -230,6 +235,7 @@ def challenge(
     require_task: bool = False,
     operation_id: str | None = None,
 ) -> dict[str, Any]:
+    tasks.require_association(root, task_id, require=require_task, allow_finished=True)
     payload = v0.read_json(challenge_path)
     v0.validate_challenge(payload)
 
@@ -269,6 +275,7 @@ def import_case(
     operation_id: str | None = None,
 ) -> dict[str, Any]:
     """Import either a V0 creation draft or an already canonical schema-1 case."""
+    tasks.require_association(root, task_id, require=require_task, allow_finished=True)
     source = v0.read_json(path)
     revision = source.get("revision") if isinstance(source, dict) else None
     prepared = v0.validate_case(source) if isinstance(revision, dict) and "hash" in revision else v0.prepare_new_case(source)

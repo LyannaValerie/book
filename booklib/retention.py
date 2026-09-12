@@ -8,7 +8,7 @@ from typing import Any
 from .authoring import semantic_to_draft
 from .core import BookError, require_text
 from .events import append_event, load_events
-from . import journal, v0
+from . import journal, tasks, v0
 
 #: Os eventos que representam MUTAÇÃO DE CONHECIMENTO e por isso precisam ser
 #: reconciliados. Acesso e métrica não entram: não há o que reter neles.
@@ -96,6 +96,9 @@ def record(
 ) -> dict[str, Any]:
     if decision not in DECISIONS:
         raise BookError("RETENTION_DECISION_INVALID", "decision must be new, revise, challenge, or no-op")
+    # Registrar retenção é escrever no razão da Task; Task encerrada não
+    # recebe escrita nova, e a reabertura é deliberadamente indisponível.
+    tasks.require_association(root, task_id, require=True)
     events = load_events(root)
     validated = validate_covers(events, task_id, covers or [])
     data: dict[str, Any] = {"decision": decision, "case_id": case_id}

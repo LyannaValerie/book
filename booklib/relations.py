@@ -58,8 +58,9 @@ def add_relation(
     require_task: bool = False,
     operation_id: str | None = None,
 ) -> dict[str, Any]:
-    from . import mutation
+    from . import mutation, tasks
 
+    tasks.require_association(root, task_id, require=require_task, allow_finished=True)
     semantic = {"from": source, "type": kind, "to": target, "epistemic": epistemic, "oracle": oracle}
 
     def plan() -> dict[str, Any]:

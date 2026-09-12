@@ -36,7 +36,7 @@ def load_task(root: Path, task_id: str) -> dict[str, Any]:
     return task
 
 
-def require_association(root: Path, task_id: str | None, *, require: bool = False) -> str | None:
+def require_association(root: Path, task_id: str | None, *, require: bool = False, allow_finished: bool = False) -> str | None:
     """Validate the Task reference a knowledge mutation carries.
 
     Two distinct rules, and conflating them would change policy by accident:
@@ -68,7 +68,7 @@ def require_association(root: Path, task_id: str | None, *, require: bool = Fals
         if exc.code == "TASK_NOT_FOUND":
             raise BookError("TASK_REF_UNKNOWN", f"task {task_id} does not exist") from exc
         raise
-    if task.get("state") == "finished":
+    if task.get("state") == "finished" and not allow_finished:
         raise BookError(
             "TASK_FINISHED",
             f"task {task_id} is finished and takes no new knowledge mutation",

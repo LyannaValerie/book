@@ -89,7 +89,11 @@ def guarded(
     operation replays the stored plan instead of re-deciding anything, so the
     outcome does not depend on who is running the recovery or when.
     """
-    task_id = tasks.require_association(root, task_id, require=require_task)
+    # Existência da Task primeiro; o estado "encerrada" só depois de consultar
+    # o journal. Repetir uma operação já confirmada RECUPERA o resultado, e
+    # recuperar não é escrever — recusá-la por a Task ter encerrado confundiria
+    # repetição com escrita nova.
+    task_id = tasks.require_association(root, task_id, require=require_task, allow_finished=True)
     operation_id = operation_id or journal.new_operation_id()
 
     intent = journal.begin(
@@ -100,6 +104,9 @@ def guarded(
         # nada. Vale inclusive depois de a Task encerrar: recuperar não é
         # escrever.
         return {**intent["result"], "operation_id": operation_id, "recovered": True}
+    # Não é repetição: daqui para a frente é escrita nova, e Task encerrada não
+    # a recebe.
+    tasks.require_association(root, task_id, require=require_task)
     if intent["state"] == journal.UNCERTAIN:
         raise BookError(
             "OPERATION_UNCERTAIN",
