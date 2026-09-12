@@ -492,6 +492,32 @@ class A4Finalizacao(Base):
             with self.assertRaises(BookError):
                 entrada()
 
+    def test_retencao_durante_a_task_e_permitida(self) -> None:
+        """Controle POSITIVO: A4 não proíbe reter durante o trabalho. Ela
+        impede que uma decisão anterior SUBSTITUA a avaliação explícita da
+        tentativa de finalização — são coisas diferentes, e adiar toda retenção
+        para o fim não tem fundamento contratual."""
+        from booklib.authoring import create_case as criar
+        task = self.task()
+        primeiro = criar(self.root, semantic(), task_id=task)
+        adicao = [e for e in classify_log(log_path(self.root))["events"] if e["kind"] == "CASE_ADD"][0]["event_id"]
+
+        # reter no meio do trabalho, cobrindo o que já foi aprendido
+        retention_record(self.root, task, "new", "aprendizagem validada no meio", primeiro["id"], [adicao])
+
+        # e seguir trabalhando
+        segundo = criar(self.root, semantic("Outra dificuldade"), task_id=task, allow_similar=True)
+        adicao2 = [e for e in classify_log(log_path(self.root))["events"] if e["kind"] == "CASE_ADD"][1]["event_id"]
+        from booklib.retention import status
+        self.assertEqual(status(self.root, task)["uncovered"], [adicao2])
+
+        # na finalização, reconciliar o restante COM avaliação explícita
+        fim = finish(self.root, task, "done", assessment={
+            "decision": "new", "summary": "restante reconciliado", "case_id": segundo["id"], "covers": [adicao2],
+        })
+        self.assertEqual(fim["task"]["state"], "finished")
+        self.assertTrue(status(self.root, task)["reconciled"])
+
     def test_concorrencia_mutacao_antes_da_finalizacao(self) -> None:
         """Ordem serializada 1: a avaliação anterior perde validade."""
         task = self.task()
