@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .core import BookError, atomic_write, lock, read_json, require_text, utc_now
-from .events import append_event
+from .events import append_event, load_events
 from .security import reject_sensitive
 
 
@@ -34,6 +34,46 @@ def load_task(root: Path, task_id: str) -> dict[str, Any]:
     # active-Task update.
     task.setdefault("external_task_ref", None)
     return task
+
+
+def require_association(root: Path, task_id: str | None, *, require: bool = False, allow_finished: bool = False) -> str | None:
+    """Validate the Task reference a knowledge mutation carries.
+
+    Two distinct rules, and conflating them would change policy by accident:
+
+    ```text
+    referência fornecida e inexistente  -> TASK_REF_UNKNOWN
+    referência omitida, modo que exige  -> TASK_REF_REQUIRED
+    referência omitida, modo autônomo   -> permitido
+    ```
+
+    The autonomous use of the Book — manual import, maintenance, writing with
+    no Task — stays permitted. Requiring association everywhere would be a
+    policy change, not a consequence of the integration; who requires it on the
+    supervised path is the caller, through ``require``.
+
+    A finished Task takes no new writes. Reopening is deliberately unavailable
+    (see the Issue): there is no bypass, and a new cycle needs a new Task.
+    """
+    if task_id is None:
+        if require:
+            raise BookError(
+                "TASK_REF_REQUIRED",
+                "this mode requires the mutation to carry a Task reference",
+            )
+        return None
+    try:
+        task = load_task(root, task_id)
+    except BookError as exc:
+        if exc.code == "TASK_NOT_FOUND":
+            raise BookError("TASK_REF_UNKNOWN", f"task {task_id} does not exist") from exc
+        raise
+    if task.get("state") == "finished" and not allow_finished:
+        raise BookError(
+            "TASK_FINISHED",
+            f"task {task_id} is finished and takes no new knowledge mutation",
+        )
+    return task_id
 
 
 def begin(root: Path, goal: str, project: str, *, domain: str | None = None, task_id: str | None = None, external_task_ref: str | None = None, now: str | None = None) -> dict[str, Any]:
@@ -94,16 +134,64 @@ def validate(root: Path, task_id: str, oracle: str, outcome: str, *, passed: boo
     return {"ok": True, "operation": "task validate", "task_id": task_id, "validation": task["validation"]}
 
 
-def finish(root: Path, task_id: str, outcome: str) -> dict[str, Any]:
+def finish(
+    root: Path,
+    task_id: str,
+    outcome: str,
+    *,
+    assessment: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Encerrar é uma TENTATIVA identificada, não a leitura de um veredito velho.
+
+    A avaliação final é entrada explícita do chamador — decisão e justificativa.
+    Ela não é inferida de ``uncovered = []``: gerar um ``no-op`` automático
+    quando não há mutações recriaria exatamente o cumprimento ritual que este
+    gate existe para impedir. Ausência de mutações não dispensa a avaliação.
+
+    A conferência e a transição correm sob o MESMO lock de armazenamento que as
+    mutações. Uma escrita que se serialize antes invalida a avaliação e a
+    tentativa recomeça; uma que se serialize depois é recusada, porque a Task
+    já encerrou — as duas ordens são corretas, e é a serialização que decide.
+    """
+    from . import retention, v0
+
     require_text(outcome, "outcome", maximum=2048)
-    with lock(root, f"task-{task_id}"):
+    if assessment is None:
+        raise BookError(
+            "RETENTION_UNRECONCILED",
+            "finishing requires an explicit final retention assessment in this attempt",
+        )
+    decision = assessment.get("decision")
+    summary = assessment.get("summary")
+    if decision not in retention.DECISIONS:
+        raise BookError("RETENTION_DECISION_INVALID", "assessment.decision must be new, revise, challenge, or no-op")
+    require_text(summary, "assessment.summary", maximum=2048)
+
+    attempt = "AT-" + "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(12))
+    with v0.exclusive_book_lock(root), lock(root, f"task-{task_id}"):
         task = load_task(root, task_id)
         if task["state"] == "finished":
             return {"ok": True, "operation": "task finish", "task": task, "idempotent": True}
+        events = load_events(root)
+        mutations = retention._mutations(events, task_id)
+        covered = retention._covered(events, task_id)
+        declared = retention.validate_covers(events, task_id, assessment.get("covers") or [])
+        covered.update(declared)
+        uncovered = [event_id for event_id in mutations if event_id not in covered]
+        if uncovered:
+            raise BookError(
+                "RETENTION_UNRECONCILED",
+                "knowledge mutations of this task are not covered by a retention decision",
+                {"uncovered": uncovered},
+            )
+        data: dict[str, Any] = {"decision": decision, "case_id": assessment.get("case_id"), "attempt": attempt}
+        if declared:
+            data["covers"] = declared
+        append_event(root, "RETENTION", task_id=task_id, summary=summary, data=data)
         task.update(state="finished", finished_at=utc_now(), outcome=outcome)
         atomic_write(task_path(root, task_id), task)
-    append_event(root, "TASK_FINISH", task_id=task_id, summary=outcome, data={"outcome": outcome}, idempotency_key="finish")
-    return {"ok": True, "operation": "task finish", "task": task, "idempotent": False}
+        append_event(root, "TASK_FINISH", task_id=task_id, summary=outcome, data={"outcome": outcome, "attempt": attempt}, idempotency_key="finish")
+    return {"ok": True, "operation": "task finish", "task": task, "attempt": attempt, "idempotent": False}
 
 
 def note_loaded(root: Path, task_id: str | None, refs: list[str], *, followed: bool = False) -> None:

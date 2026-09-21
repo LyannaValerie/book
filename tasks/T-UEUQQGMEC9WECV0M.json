@@ -1,0 +1,24 @@
+{
+  "domain": "Pinker",
+  "external_task_ref": null,
+  "finished_at": "2026-08-27T02:07:44Z",
+  "followed_refs": [],
+  "goal": "Issue 528: eliminar ETXTBSY recorrente na publicacao do fixture de quarentena",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "Issue #528 implementada e verificada; PR 529 aberta aguardando checks e merge humano. Caso B-W81S5ABYTXTD retido; o Book nao tinha nada sobre ETXTBSY.",
+  "project": "LyannaValerie/pinker-v0",
+  "started_at": "2026-08-27T01:29:16Z",
+  "state": "finished",
+  "task_id": "T-UEUQQGMEC9WECV0M",
+  "validation": {
+    "oracle": "stress 300x16: 67 falhas antes, 0 depois; probe controlado 0 ETXTBSY sem forkers e 18/39/38 com 1/4/8; mutacao de sensibilidade vermelha; make ci exit 0 123 suites; revisao independente reproduziu 42/300 antes, 0/100 depois e 40/40 no mutante",
+    "outcome": "PASS",
+    "passed": true,
+    "summary": "Causa demonstrada como heranca de descritor de escrita no fork; corrigida por publicacao sem writer, sem retry nem sleep",
+    "validated_at": "2026-08-27T02:07:44Z"
+  }
+}

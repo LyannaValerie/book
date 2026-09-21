@@ -1,0 +1,73 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando show devolve um context ACTIVE de outra Task: esse e o caso do residuo pos-selo (B-GRWHF1EXY330), que pede retire antes do publish.",
+    "Nao se aplica a Task em modo RECOVERY/CONTINUATION, onde o active context existente deve ser preservado e a generation NAO deve ser incrementada."
+  ],
+  "cues": [
+    "forja-agentes provision",
+    "DENIED",
+    "nenhum active context publicado",
+    "nada a observar",
+    "forja-lifecycle publish",
+    "NEW_TASK",
+    "bootstrap",
+    "NO_ACTIVE_CONTEXT"
+  ],
+  "discriminating_probe": {
+    "action": "rodar `sudo -n /opt/pinker/bin/forja-lifecycle show` antes de interpretar a recusa do provision",
+    "observable": "status NO_ACTIVE_CONTEXT com context null (ausencia total) ou um context ACTIVE de outra Task (residuo da Task anterior)"
+  },
+  "environment": {
+    "profile": "athenna",
+    "repository": "LyannaValerie/pinker-v0",
+    "tooling": "forja-agentes 1.0.0, forja-lifecycle 1.0.0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "provision recusado com {\"status\": \"DENIED\", \"error\": \"nenhum active context publicado; nada a observar\"}; em seguida show devolveu {\"context\": null, \"status\": \"NO_ACTIVE_CONTEXT\"}; publish devolveu PUBLISHED com verified true e o provision seguinte devolveu PROVISIONED com slot a38 e worktree_created true.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a38/memory/checkpoint.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Em NEW_TASK, publique o proprio active context ANTES do primeiro provision, com generation 1, e confirme por `forja-lifecycle show` e por `forja-agentes observe`, nunca pelo relatorio do proprio comando que publicou. A recusa por ausencia e a recusa por context residual de Task anterior tem mensagens diferentes e remedios diferentes: ausencia pede publish, residuo pede retire seguido de publish. Publicar active context e ato de lifecycle, nao mutacao de conteudo, entao continua permitido em Task READ_ONLY cuja politica corrente exija provisionamento."
+  },
+  "id": "B-CFUXBQHKZU9V",
+  "observed_at": "2026-09-20T16:16:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Com NO_ACTIVE_CONTEXT, `sudo -n /opt/pinker/bin/forja-lifecycle publish --task <nova> --generation 1` devolveu status PUBLISHED com verified true, e o provision seguinte alocou o slot a38 com worktree_created true e state ACTIVE. `forja-agentes verify` retornou status OK com problems vazio. Nenhum slot alheio foi tocado."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "forja-agentes provision --task-id <nova> --branch <nova> recusa com {\"status\": \"DENIED\", \"error\": \"nenhum active context publicado; nada a observar\"}. A mensagem descreve a ausencia, nao a acao: ela nao diz que o proprio chamador deve publicar o seu active context ANTES de provisionar, nem que existe um broker para isso. Lida sozinha, ela sugere falta de autoridade ou um passo administrativo de terceiro."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a38/memory/checkpoint.json"
+  ],
+  "revision": {
+    "hash": "b6633089d79ff8ceb35c4496b7cda0de88606cf806c4ce91669ec34189b7f1e1",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-20T16:55:18Z",
+    "updated_by": "athenna"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "forja-agentes provision",
+      "forja-lifecycle publish",
+      "forja-lifecycle show"
+    ],
+    "conditions": [
+      "modo NEW_TASK: o agente nao tem Task anterior viva",
+      "forja-lifecycle show responde NO_ACTIVE_CONTEXT com context null",
+      "nenhum slot do agente esta ACTIVE de forma residual"
+    ]
+  },
+  "status": "candidate",
+  "title": "Sem active context publicado, forja-agentes provision recusa a Task NOVA e a mensagem nao nomeia o remedio"
+}

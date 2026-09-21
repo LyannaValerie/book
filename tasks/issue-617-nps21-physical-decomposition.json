@@ -1,0 +1,18 @@
+{
+  "domain": "Pinker",
+  "external_task_ref": "pinker:issue-617-nps21-physical-decomposition",
+  "finished_at": "2026-09-07T04:13:08Z",
+  "followed_refs": [],
+  "goal": "Executar a unidade NPS-2+1 da decomposição física de src/nav_projection_snapshot.rs preservando a autoridade dos snapshots históricos",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "NPS-2+1 executada e publicada: 1 261 LOC movidas de src/nav_projection_snapshot.rs para src/nav_projection_snapshot/{parser,tests}.rs, recomposicao byte a byte identica, API publica e autoridade preservadas, make ci verde, 10/10 sensitivity, review independente 0 blockers 0 majors, PR #618 com CI e Trama remotas verdes aguardando decisao humana",
+  "project": "pinker-v0",
+  "started_at": "2026-09-07T04:02:23Z",
+  "state": "finished",
+  "task_id": "issue-617-nps21-physical-decomposition",
+  "validation": null
+}

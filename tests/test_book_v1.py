@@ -205,7 +205,7 @@ class BookV1CliTests(unittest.TestCase):
         _, probe = self.cli("task", "next-probe", task, "--action", "inspect build", "--observable", "producer found", "--oracle", "source", "--authorized", "--bounded", "--discriminative", "--no-high-risk-gap"); self.assertTrue(probe["ready"])
         self.cli("event", "add", "--task", task, "--kind", "probe-result", "--summary", "producer found", "--tool-calls", "1")
         self.cli("task", "validate", task, "--oracle", "test", "--outcome", "PASS", "--passed")
-        self.cli("task", "finish", task, "--outcome", "validated")
+        self.cli("task", "finish", task, "--outcome", "validated", "--decision", "no-op", "--assessment", "nada reutilizavel nesta tentativa")
         _, result = self.cli("task", "receipt", task); self.assertTrue(result["ready"]); self.assertTrue(result["validation"]["passed"]); self.assertEqual(result["task"]["state"], "finished")
 
     def test_external_task_ref_links_without_sharing_identity(self) -> None:
@@ -331,7 +331,7 @@ class BookV1CliTests(unittest.TestCase):
     def _successful_trace(self, goal: str = "semantic runtime") -> str:
         case = self.add(semantic(goal)) if not (self.root / "cases").exists() else {"id": next((self.root / "cases").glob("*.json")).stem}
         _, started = self.cli("task", "begin", "--goal", goal, "--project", "repo", "--domain", "Pinker"); task = started["task"]["task_id"]
-        self.cli("--task", task, "search", "runtime"); self.cli("--task", task, "show", case["id"]); self.cli("event", "add", "--task", task, "--kind", "probe-result", "--summary", "observable", "--source-reads", "1", "--tool-calls", "2"); self.cli("task", "validate", task, "--oracle", "test", "--outcome", "PASS", "--passed"); self.cli("task", "finish", task, "--outcome", "done")
+        self.cli("--task", task, "search", "runtime"); self.cli("--task", task, "show", case["id"]); self.cli("event", "add", "--task", task, "--kind", "probe-result", "--summary", "observable", "--source-reads", "1", "--tool-calls", "2"); self.cli("task", "validate", task, "--oracle", "test", "--outcome", "PASS", "--passed"); self.cli("task", "finish", task, "--outcome", "done", "--decision", "no-op", "--assessment", "avaliacao final da tentativa")
         return task
 
     def test_success_trace_derives_path_cost_and_no_execution(self) -> None:
@@ -340,7 +340,7 @@ class BookV1CliTests(unittest.TestCase):
 
     def test_failure_trace_is_not_success_path(self) -> None:
         _, started = self.cli("task", "begin", "--goal", "semantic failure", "--project", "repo", "--domain", "Pinker"); task = started["task"]["task_id"]
-        self.cli("event", "add", "--task", task, "--kind", "probe-result", "--summary", "failed"); self.cli("task", "validate", task, "--oracle", "test", "--outcome", "FAIL"); self.cli("task", "finish", task, "--outcome", "failed")
+        self.cli("event", "add", "--task", task, "--kind", "probe-result", "--summary", "failed"); self.cli("task", "validate", task, "--oracle", "test", "--outcome", "FAIL"); self.cli("task", "finish", task, "--outcome", "failed", "--decision", "no-op", "--assessment", "avaliacao final da tentativa")
         _, result = self.cli("path", "search", "--success", "semantic"); self.assertEqual(result["count"], 0)
 
     def test_path_applicability_and_status_evidence(self) -> None:
@@ -354,7 +354,7 @@ class BookV1CliTests(unittest.TestCase):
     def test_p1_exploration_budget_never_executes(self) -> None:
         self._successful_trace("semantic primary")
         _, started = self.cli("task", "begin", "--goal", "semantic candidate", "--project", "repo", "--domain", "Pinker"); task = started["task"]["task_id"]
-        self.cli("event", "add", "--task", task, "--kind", "probe-result", "--summary", "alternative"); self.cli("task", "validate", task, "--oracle", "test", "--outcome", "PASS", "--passed"); self.cli("task", "finish", task, "--outcome", "done")
+        self.cli("event", "add", "--task", task, "--kind", "probe-result", "--summary", "alternative"); self.cli("task", "validate", task, "--oracle", "test", "--outcome", "PASS", "--passed"); self.cli("task", "finish", task, "--outcome", "done", "--decision", "no-op", "--assessment", "avaliacao final da tentativa")
         paths = derive_paths(self.root); self.assertEqual(len(paths), 2)
         result = explore(self.root, paths[0]["path_id"], paths[1]["path_id"], 0)
         self.assertEqual(result["decision"], "ABANDON_P1_RETURN_P0"); self.assertFalse(result["automatic_execution"])
@@ -401,19 +401,19 @@ class EndToEndTests(unittest.TestCase):
     def _successful_trace(self, goal: str = "semantic runtime") -> str:
         case = self.add(semantic(goal))
         _, started = self.cli("task", "begin", "--goal", goal, "--project", "repo", "--domain", "Pinker"); task = started["task"]["task_id"]
-        self.cli("--task", task, "search", "runtime"); self.cli("--task", task, "show", case["id"]); self.cli("event", "add", "--task", task, "--kind", "probe-result", "--summary", "observable", "--source-reads", "1", "--tool-calls", "2"); self.cli("task", "validate", task, "--oracle", "test", "--outcome", "PASS", "--passed"); self.cli("task", "finish", task, "--outcome", "done")
+        self.cli("--task", task, "search", "runtime"); self.cli("--task", task, "show", case["id"]); self.cli("event", "add", "--task", task, "--kind", "probe-result", "--summary", "observable", "--source-reads", "1", "--tool-calls", "2"); self.cli("task", "validate", task, "--oracle", "test", "--outcome", "PASS", "--passed"); self.cli("task", "finish", task, "--outcome", "done", "--decision", "no-op", "--assessment", "avaliacao final da tentativa")
         return task
     def test_e2e_empty_book_investigation_retention(self) -> None:
         _, started = self.cli("task", "begin", "--goal", "unknown shell failure", "--project", "ops", "--domain", "Bash"); task = started["task"]["task_id"]
         _, search = self.cli("--task", task, "search", "shell failure"); self.assertEqual(search["count"], 0)
         self.cli("task", "missing", task, "which startup mode?"); self.cli("event", "add", "--task", task, "--kind", "probe-result", "--summary", "non-interactive mode observed")
-        case = self.add(semantic("Non-interactive shell startup", "Bash")); self.cli("retention", "record", "--task", task, "--decision", "new", "--case", case["id"], "--summary", "new reusable distinction"); self.cli("task", "validate", task, "--oracle", "shell probe", "--outcome", "PASS", "--passed"); self.cli("task", "finish", task, "--outcome", "retained")
+        case = self.add(semantic("Non-interactive shell startup", "Bash")); self.cli("retention", "record", "--task", task, "--decision", "new", "--case", case["id"], "--summary", "new reusable distinction"); self.cli("task", "validate", task, "--oracle", "shell probe", "--outcome", "PASS", "--passed"); self.cli("task", "finish", task, "--outcome", "retained", "--decision", "no-op", "--assessment", "avaliacao final da tentativa")
         self.assertEqual(receipt(self.root, task)["task"]["state"], "finished")
 
     def test_e2e_navigation_case_probe_validation(self) -> None:
         case = self.add(); _, started = self.cli("task", "begin", "--goal", "runtime symptom", "--project", "repo", "--domain", "Pinker"); task = started["task"]["task_id"]
         _, listing = self.cli("--task", task, "list"); self.assertIn("Pinker", listing["children"])
-        self.cli("--task", task, "show", case["id"]); self.cli("task", "next-probe", task, "--action", "rebuild", "--observable", "hash", "--oracle", "test", "--authorized", "--bounded", "--discriminative", "--no-high-risk-gap"); self.cli("event", "add", "--task", task, "--kind", "probe-result", "--summary", "hash changed"); self.cli("task", "validate", task, "--oracle", "test", "--outcome", "PASS", "--passed"); self.cli("task", "finish", task, "--outcome", "done")
+        self.cli("--task", task, "show", case["id"]); self.cli("task", "next-probe", task, "--action", "rebuild", "--observable", "hash", "--oracle", "test", "--authorized", "--bounded", "--discriminative", "--no-high-risk-gap"); self.cli("event", "add", "--task", task, "--kind", "probe-result", "--summary", "hash changed"); self.cli("task", "validate", task, "--oracle", "test", "--outcome", "PASS", "--passed"); self.cli("task", "finish", task, "--outcome", "done", "--decision", "no-op", "--assessment", "avaliacao final da tentativa")
         self.assertTrue(receipt(self.root, task)["ready"])
 
     def test_e2e_trace_path_future_task(self) -> None:

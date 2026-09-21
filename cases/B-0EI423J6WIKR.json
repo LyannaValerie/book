@@ -1,0 +1,72 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não vale como desculpa para sonda gigante: o que se acrescenta é exatamente a condição que a cláusula de exceção consulta, e nada mais.",
+    "Se a regra não tem cláusula de exceção, a fonte mínima é a certa e enriquecê-la só esconde o que falhou."
+  ],
+  "cues": [
+    "alvo do mutante errado",
+    "ancora orfa",
+    "cobertura imaginaria",
+    "controle positivo",
+    "escape",
+    "fonte minima",
+    "gate cego",
+    "matriz de mutacao",
+    "mutante e oraculo",
+    "probe",
+    "sensibilidade",
+    "sonda"
+  ],
+  "discriminating_probe": {
+    "action": "enumerar as cláusulas que fazem a regra CEDER e conferir se a fonte da sonda aciona cada uma",
+    "observable": "cláusula que a sonda nunca aciona é um ponto cego do gate, não uma cláusula testada"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "S9 da suíte de sensibilidade da #505: com a sonda antiga o escape passava; com a sonda que carrega ligações homônimas a mesma injeção fica vermelha e volta ao verde revertida",
+      "source": "file:/pinker/artifacts/tasks/issue-505-intrinsic-inventory/sensitivity/resumo.tsv"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "injeção que reintroduz a cláusula de escape precisa deixar o gate vermelho",
+    "text": "Leia as cláusulas de exceção da regra e faça a sonda EXERCITÁ-LAS. Para cada `||` ou `if ... return Ok` no caminho da recusa, pergunte qual propriedade do arquivo o ativa, e gere uma fonte que a tenha. Mantenha as duas fontes lado a lado — a mínima e a que carrega a condição — para separar as causas de recusa. E prove por injeção: reintroduza o escape e exija vermelho; se continuar verde, a sonda é que está cega, não o código que está certo.\n\nNuma MATRIZ DE MUTACAO o mesmo cegamento aparece um nivel acima, e e mais facil de nao ver: cada mutante declara um teste-alvo, e essa DECLARACAO pode estar errada. O mutante fica verde nao porque o codigo resiste, mas porque o teste escolhido exercita outro ramo e nunca observa a propriedade que o mutante quebra. Medido na #536: um mutante que trocava a classificacao de diretorio inobservavel foi apontado para um teste que exercitava o caminho do `onerror`; o mutante nao tocava aquele caminho, a suite ficou verde, e a linha da matriz existia sem cobrir nada.\n\nMutante e oraculo sao um PAR e o par precisa ser verificado, nao declarado. Ao adicionar um mutante, rode-o isoladamente e confirme que o teste nomeado fica vermelho POR ELE; se ficar verde, ou o alvo esta errado ou falta o teste que observa aquele ramo — e nesse caso escreva o teste, nao troque o alvo por um que ja falha por outro motivo.\n\nCorolario de manutencao: mutante ancorado por texto literal da fonte fica orfao quando alguem refatora. Isso e preferivel a falhar em silencio (a suite deve ASSERTAR que a ancora existe), mas o custo cresce com o numero de mutantes; ancorar por no de AST e a alternativa quando a matriz cresce."
+  },
+  "id": "B-0EI423J6WIKR",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Na #505 a recusa de intrínseca global cedia a um censo léxico do arquivo inteiro. A sonda do gate emitia `pacote main; carinho principal() { mimo GRAFIA(); }` — arquivo sem nenhuma ligação —, então o censo estava sempre vazio e o gate NUNCA podia observar o escape. Uma revisão independente reproduziu o furo em três linhas: bastava um parâmetro homônimo numa função vizinha para 154 grafias canônicas voltarem a ser chamáveis a seco. Depois que a sonda passou a emitir a mesma chamada num arquivo COM ligações homônimas em função vizinha, a injeção que reintroduz o escape ficou vermelha."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um gate comportamental gera a fonte mais simples possível para provar que algo é recusado. Se a regra sob teste tem uma cláusula de exceção que depende de OUTRA coisa presente no arquivo, a fonte mínima nunca aciona essa cláusula, e o gate fica verde para sempre — inclusive quando a exceção está errada e engole a regra inteira."
+  },
+  "references": [],
+  "revision": {
+    "hash": "674d340e7be3adf1e229dcecd0c20efe9cd367f54d51037995aaddb1b22c33e1",
+    "number": 2,
+    "parent_hash": "cf89e846c483b6512ef1c4a6b2097b8bfb43dd83bdf8b5ca01e00f68a31afa7b",
+    "reason": "#536 rodadas 13-14: o cegamento da sonda reaparece na matriz de mutacao, onde o teste-alvo declarado pelo mutante pode nao observar a propriedade",
+    "updated_at": "2026-08-28T20:32:45Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "gates comportamentais",
+      "suites de sensibilidade"
+    ],
+    "conditions": [
+      "gate que compila/parseia uma fonte sintética para provar recusa",
+      "a regra sob teste cede a alguma condição do arquivo"
+    ]
+  },
+  "status": "candidate",
+  "title": "Fonte de sonda mínima demais não enxerga o escape que o gate existe para fechar"
+}

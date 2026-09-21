@@ -1,0 +1,67 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não vale quando o unknown persiste medido de fora: aí há processo real sem prova de ownership, e a investigação é outra.",
+    "Não confunda com CLEAN_NOOP cego a build fora do escopo registrado, que é outro defeito do mesmo comando."
+  ],
+  "cues": [
+    "fl",
+    "BLOCKED_BY_UNKNOWN_PROCESS",
+    "processo desconhecido",
+    "cwd",
+    "finalizacao",
+    "forja-limpar"
+  ],
+  "discriminating_probe": {
+    "action": "rodar `fl --report --json` de dentro e de fora do diretório da Task, sem terminar nada entre as duas medidas",
+    "observable": "unknown que cai a zero só por mudar o cwd do observador"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0",
+    "workflow": "finalizacao de Task da Forja"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Na finalização da #505: de dentro, BLOCKED_BY_UNKNOWN_PROCESS com unknown 1; de fora, CLEAN com unknown 0 e 8,2 GiB reclamados",
+      "source": "file:/pinker/state/tasks/issue-505-intrinsic-inventory/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "mesma medida repetida de fora do diretório da Task: unknown passa de 1 para 0 sem que nada seja terminado",
+    "text": "Invoque `fl` e `fl --report` de FORA do diretório que a Task possui — é o que a disciplina de finalização já pede, e este é o sintoma de ignorá-la. Antes de tratar `unknown` como resíduo, identifique o processo: se o número muda quando você troca o cwd da própria sessão, o desconhecido era você. Não mate processo com base em contagem sem identidade."
+  },
+  "id": "B-NYR8B1AU636B",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O processo desconhecido era o próprio shell que invocou o `fl`, porque o script de ambiente da Task faz `cd \"$TASKDIR\"` e todo comando da sessão passa a rodar com cwd dentro do diretório da Task. Rodar `fl --report` do lado de fora, no mesmo instante e sem matar nada, devolveu CLEAN com `unknown: []`. Rodar `fl` de fora completou com CLEAN e reclamou 8,2 GiB."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "`fl` termina em BLOCKED_BY_UNKNOWN_PROCESS com `unknown: 1` e `blocking: suspicious process lacks ownership proof`, sem nomear o processo. A leitura natural é que sobrou algo de um build ou de um teste, e a reação natural é caçar e matar processo — que é exatamente o erro."
+  },
+  "references": [],
+  "revision": {
+    "hash": "357111d5893924ac3093fe9b5130702c6a733e4127abb5a528992fde19ba3885",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-27T16:10:42Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "fl",
+      "finalizacao de Task"
+    ],
+    "conditions": [
+      "shell da sessão com cwd dentro do diretório da Task",
+      "script de ambiente que faz cd para o worktree"
+    ]
+  },
+  "status": "candidate",
+  "title": "fl BLOCKED_BY_UNKNOWN_PROCESS: o processo desconhecido é o seu próprio shell dentro da Task"
+}

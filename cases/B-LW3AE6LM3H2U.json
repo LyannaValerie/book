@@ -1,0 +1,97 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando target/pinker-exec ja existe: ai um AlreadyExists tem outra causa e merece investigacao propria.",
+    "Nao explica falha de um unico alvo rodado sozinho.",
+    "Nao autoriza mudar tests/common/native_process_sandbox.rs sem Task que peca: o remedio operacional e materializar a raiz antes."
+  ],
+  "cues": [
+    "AlreadyExists",
+    "File exists",
+    "diretorio do caso C2",
+    "target/pinker-exec",
+    "NativeArtifactDir::create",
+    "ExecutionSandbox",
+    "flake de cold start",
+    "worktree nova",
+    "cargo test paralelo"
+  ],
+  "discriminating_probe": {
+    "action": "rodar o MESMO alvo sozinho, imediatamente depois, sem mudar nada no codigo; e listar target/pinker-exec antes e depois",
+    "observable": "sozinho passa e o diretorio target/pinker-exec ja existe; a falha nao reaparece enquanto o diretorio existir"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Task #628, slot a26, worktree recem-provisionada em af8a8e9: um cargo test com 12 alvos deu `test result: FAILED. 15 passed; 1 failed` em c2_method_dispatch_authority_tests, com panic em tests/c2_method_dispatch_authority_tests.rs:346 vindo de NativeArtifactDir::create. O mesmo alvo sozinho, sem nenhuma alteracao, passou 16/16; o lote inteiro repetido passou 12/12 (616 testes).",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a26/logs/baseline-focused.log"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "ensure_real_directory faz symlink_metadata e, no ramo NotFound, fs::create_dir sem tolerar AlreadyExists.",
+      "source": "file:tests/common/native_process_sandbox.rs"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task #632, slot a27, worktree recem-provisionada em d5f7c96: primeiro cargo test paralelo com 10 alvos deu novamente `test result: FAILED. 15 passed; 1 failed` em c2_method_dispatch_authority_tests. target/pinker-exec nao existia antes. O mesmo alvo sozinho passou 16/16 tres vezes seguidas e o lote inteiro repetido passou 11/11 sem nenhuma alteracao de codigo. Materializar target/pinker-exec antes do primeiro lote eliminou o sintoma. Segunda ocorrencia independente, em outro slot e outro commit, com a mesma condicao de cold start.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a27/artifacts/RED-LEDGER.md"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task #634, slot a28, worktree recem-provisionada em db7e963: primeiro cargo test paralelo com 6 alvos deu `test result: FAILED. 15 passed; 1 failed` em c2_method_dispatch_authority_tests, com panic em tests/c2_method_dispatch_authority_tests.rs:346 vindo de NativeArtifactDir::create. target/pinker-exec nao existia antes. O mesmo alvo sozinho passou 16/16 imediatamente depois, sem nenhuma alteracao de codigo, e o lote seguinte passou 5/5. Terceira ocorrencia independente, em outro slot e outro commit, com a mesma condicao de cold start.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a28/artifacts/RED-LEDGER.md"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task #636, slot a29, worktree recem-provisionada em 5b5243e: primeiro cargo test paralelo com 11 alvos deu novamente `test result: FAILED. 15 passed; 1 failed` em c2_method_dispatch_authority_tests, com panic em tests/c2_method_dispatch_authority_tests.rs:346 vindo de NativeArtifactDir::create, ANTES de qualquer mutacao do corte. <worktree>/target/pinker-exec nao existia antes e passou a existir depois. O mesmo alvo sozinho passou 16/16 imediatamente depois, sem nenhuma alteracao de codigo, e o lote inteiro repetido passou 11/11 (626 testes). Quarta ocorrencia independente, em outro slot e outro commit, com a mesma condicao de cold start.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a29/artifacts/RED-LEDGER.md"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task #718, slot a40, worktree recem-provisionada em 815c4c9: o PRIMEIRO cargo test paralelo da worktree (dois alvos, --test issue_716_module_source_provenance_tests --test issue_658_u06_diagnostic_subject_tests) deu `test result: FAILED. 7 passed; 1 failed` em issue_658_u06_diagnostic_subject_tests::declaracao_invalida_reportada_e_a_primeira_em_ordem_de_leitura, enquanto a CI #1889 da main esta verde nesse mesmo commit. <worktree>/target/pinker-exec nao existia antes e passou a existir depois. O mesmo alvo sozinho passou 1/1 imediatamente depois, sem nenhuma alteracao, e o lote de dois alvos repetido passou 8/8 e 12/12. Quinta ocorrencia independente - e a PRIMEIRA em um alvo diferente de c2_method_dispatch_authority_tests, o que mostra que o sintoma e da raiz compartilhada e nao daquele arquivo de teste. Apenas dois alvos ja bastam para a corrida; a Task era READ_ONLY, entao nenhuma mutacao de corte podia explicar o vermelho.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a40/artifacts/convergence-verification-718.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Antes de investigar semantica, olhe ONDE o panic ocorreu: se e dentro do fixture (`NativeArtifactDir::create`, `ExecutionSandbox::create`) e nao no sujeito, nao e regressao do corte. Reproduza o alvo sozinho: passar sozinho e falhar so no primeiro lote paralelo de uma worktree nova identifica a corrida de cold start. Para nao pagar o diagnostico de novo, crie `target/pinker-exec` uma vez antes do primeiro `cargo test` da worktree, ou rode um alvo nativo isolado primeiro. Nao trate como baseline vermelho: a main pode estar verde na CI, que roda com o diretorio ja materializado. O conserto na origem seria tolerar AlreadyExists em `ensure_real_directory` e revalidar, mas isso e mudanca de produto e pertence a uma Task propria."
+  },
+  "id": "B-LW3AE6LM3H2U",
+  "observed_at": "2026-09-08T02:30:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "A causa nao esta no alvo que falhou nem no codigo sob teste. `ExecutionRootAuthority::prepare_at` chama `ensure_real_directory(<repo>/target)` e `ensure_real_directory(<repo>/target/pinker-exec)`, e essa funcao faz check-then-create nao atomico: `symlink_metadata` e, se NotFound, `fs::create_dir`, cujo erro AlreadyExists nao e tolerado. Cargo roda varios binarios de teste em paralelo; numa worktree nova todos veem NotFound ao mesmo tempo e um perde a corrida. O nome `exec-{pid}-{seq}` nao colide entre processos, entao o AlreadyExists nunca e do diretorio de execucao: e sempre da raiz compartilhada. Na segunda execucao a raiz ja existe e o sintoma some, o que faz o flake parecer resolvido pela mudanca seguinte."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um alvo de autoridade morre com `panicked at ...: diretorio do caso C2: Os { code: 17, kind: AlreadyExists, message: \"File exists\" }` na primeira execucao de uma worktree nova. A mensagem sai de dentro do fixture, com nome de teste de autoridade (C2), e parece defeito do corte que se acabou de fazer ou regressao da autoridade vigiada."
+  },
+  "references": [],
+  "revision": {
+    "hash": "757c784261971616336e35f9e096900698ac030e8ccf4ffc4fe9dd2c1a1fbec1",
+    "number": 5,
+    "parent_hash": "b8fcac4ec35c536c66dcca2fd4976ac206ae5ea3caaa20d0c019f935dcb6a679",
+    "reason": "quinta ocorrencia independente da corrida de cold start, primeira em alvo diferente de c2_method_dispatch_authority_tests (Task #718, slot a40)",
+    "updated_at": "2026-09-21T01:23:33Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "tests/common/native_process_sandbox.rs",
+      "tests/common/native_process.rs",
+      "target/pinker-exec",
+      "cargo test"
+    ],
+    "conditions": [
+      "worktree recem-provisionada, sem target/pinker-exec no disco",
+      "um unico cargo test com varios --test, que cargo executa em paralelo",
+      "pelo menos dois alvos usam NativeArtifactDir ou ExecutionSandbox"
+    ]
+  },
+  "status": "candidate",
+  "title": "Corrida de cold start em ensure_real_directory faz o primeiro cargo test paralelo morrer com AlreadyExists"
+}

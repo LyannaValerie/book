@@ -1,0 +1,76 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica a mutacoes cujo alvo e o proprio catalogo ou a propria deteccao de dessincronizacao.",
+    "Sincronizar o catalogo dentro do gate exige que o catalogo esteja em TOCAVEIS; sem isso a restauracao vira falso PASS."
+  ],
+  "cues": [
+    "RED_REASON_MATCHES_TARGET falso positivo",
+    "catalogo dessincronizado",
+    "E-NAV-VERIFY",
+    "EXIT_SOURCE antes do println",
+    "sensitivity cega",
+    "mutacao de diagnostico",
+    "nav sincronizar antes do gate",
+    "evidencia vazia em mutacao aprovada"
+  ],
+  "discriminating_probe": {
+    "action": "extrair a secao do diagnostico do oraculo MUTANTE e procurar nela o texto que a mutacao introduziu",
+    "observable": "o texto mutado esta ausente e no lugar dele ha o erro de catalogo dessincronizado; o exit e o do caminho de erro, nao o do caminho de sucesso"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Achado F1 da revisao adversarial #535 da #640, por codex-amara (cross-provider). Remediacao dirigida, sem tocar o produto: HEAD 3ca372016fbf2ae9b0ad116e46671b194280f77c inalterado antes e depois.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a31/artifacts/sensitivity-M8.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Versoes pre-correcao preservadas para comparacao do gate antigo com o novo.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a31/artifacts/sensitivity-v1-pre-F1.py"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Para provar sensibilidade a um diagnostico dentro de arquivo cartografado, o gate precisa ALCANCAR o caminho mutado: aplicar a mutacao, rodar `pink nav sincronizar` para o catalogo voltar a bater com o fonte, e so entao executar o comando. O RED deve exigir o texto mutado PRESENTE e o texto original AUSENTE na saida real, nunca o rotulo da secao. Incluir o catalogo em TOCAVEIS para a restauracao continuar valida. Verificar tambem que o filtro de evidencia nao descarta as linhas dos novos marcadores: um PASS com campo de evidencia vazio e o mesmo tipo de cegueira uma camada acima. Generalizacao: em repositorio com catalogo/indice derivado do fonte, QUALQUER mutacao textual dispara primeiro o guardiao do catalogo; a ordem de deteccao e parte do desenho do gate."
+  },
+  "id": "B-UOHK5USNO4B2",
+  "observed_at": null,
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "extrair a secao `nav-verificar` do oraculo MUTANTE e procurar nela o texto que a mutacao introduziu; depois reexecutar a mutacao sob um gate que sincroniza o catalogo antes de medir",
+    "text": "Task #640 (MAIN-1, ultima unidade fisica de src/main.rs, repo pinker-v0). Antes: secao `nav-verificar` do mutante com exit=5, 'E-NAV-VERIFY: 1 divergencia(s) encontrada(s)' e 'catalogo src/navigation.jsonl dessincronizado'; o texto mutado ausente. O marcador era a string 'nav-verificar' na lista SECOES_DIVERGENTES, satisfeita por qualquer causa de divergencia naquela secao. Depois de trocar por gate_diagnostico (build -> nav sincronizar -> nav verificar): VERIFICAR_EXIT=0, DIAGNOSTICO_MUTADO_PRESENTE=True, DIAGNOSTICO_ORIGINAL_AUSENTE=True, com base_hash 3d949c64c5dc1027cafb46a4bf970ebace20ed3350b70c554179f751ae14fcc7 e RESTORATION_HASH_MATCH real. A primeira reexecucao passou com o campo `evidencia` VAZIO, porque o filtro de evidencia so aceitava linhas de panic/erro/SECOES_DIVERGENTES: corrigido e reexecutado."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A mutacao M8 da #640 pretendia provar sensibilidade ao diagnostico de `nav verificar`. Editar o fonte tambem dessincroniza `src/navigation.jsonl`, entao `run_nav_verificar` retorna EXIT_SOURCE com 'catalogo dessincronizado' ANTES de alcancar o println mutado. O gate registrou OBSERVED_RED=true e RED_REASON_MATCHES_TARGET=true, mas o diagnostico alvo nunca foi executado: a prova de sensibilidade era cega."
+  },
+  "references": [],
+  "revision": {
+    "hash": "63c3392d39c6dc57bfd5c30b7f7313bb50b635183fc7366dc23986361eed64b7",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-09T01:49:59Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "harness de sensibilidade/mutacao",
+      "pink nav verificar",
+      "src/navigation.jsonl",
+      "decomposicao fisica #442"
+    ],
+    "conditions": [
+      "a mutacao de sensibilidade edita um println/diagnostico dentro de uma regiao cartografada",
+      "o gate mede divergencia de um oraculo que roda nav verificar sem sincronizar o catalogo antes",
+      "o marcador de RED_REASON e o rotulo da secao, nao o texto do diagnostico"
+    ]
+  },
+  "status": "candidate",
+  "title": "Mutacao de diagnostico em arquivo cartografado fica RED por catalogo dessincronizado, nao pelo diagnostico"
+}

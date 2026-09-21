@@ -1,0 +1,65 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao substitui o make ci completo quando ele puder rodar: os alvos posteriores doc-check, guard, docs-check, nav-check e change-history-check continuam obrigatorios."
+  ],
+  "cues": [
+    "make ci",
+    "fmt-check",
+    "clippy",
+    "type_complexity",
+    "primeiro alvo que falha",
+    "gate nao alcancado",
+    "red remoto evitavel",
+    "MAKE_CI_EXIT"
+  ],
+  "discriminating_probe": {
+    "action": "rodar por fora os gates baratos que vem depois do alvo que falhou, sem passar pelo make",
+    "observable": "cargo fmt --check e cargo clippy -D warnings acusam erros que o make ci nunca chegou a reportar"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Issue #525: make ci exit 2 em part_c por SUN_LEN, 83 suites ok; fmt-check e clippy nao executados. Rodados diretamente depois, ambos vermelhos por causa do diff da propria PR, e corrigidos antes do push.",
+      "source": "file:/pinker/artifacts/tasks/issue-525-process-accessor-authority/make-ci-order.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "GATE_SUITE_EXIT != PER_GATE_VERDICT. Quando um alvo cedo do make ci falha, nao conclua nada sobre os alvos seguintes: a suite reporta o primeiro fracasso, nao o conjunto. Rode por fora, em segundos, os gates baratos e independentes de ambiente antes de publicar qualquer PR: ./ci_env.sh cargo fmt --check, ./ci_env.sh cargo clippy --all-targets --all-features -- -D warnings e git diff --check. Sao exatamente os que o CI remoto tambem roda, e deixa-los para o remoto queima tentativa do orcamento de reds do #501 por defeito que custa dois minutos localmente."
+  },
+  "id": "B-6N2QI4VTT9TO",
+  "observed_at": "2026-08-26T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Makefile:57 define ci como preflight build check test fmt-check clippy doc-check guard docs-check nav-check change-history-check. Com test morrendo por SUN_LEN, fmt-check e clippy ficaram sem executar. Rodados diretamente, cargo fmt --check acusou duas divergencias, uma em cada arquivo alterado, e clippy recusou clippy::type_complexity sob -D warnings. Quem encontrou foi a revisao adversarial independente, que invocou os dois comandos por fora em vez de confiar no exit code do make."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "make ci saiu com codigo 2 numa falha ambiental do alvo test. A leitura natural foi 'o unico problema e o ambiente'. Mas make para no primeiro alvo que falha, e o alvo ci lista test antes de fmt-check e clippy: os dois nunca rodaram, e os dois estavam vermelhos por causa do proprio diff."
+  },
+  "references": [],
+  "revision": {
+    "hash": "98fe2c0ca1698e59ff6b8ea83ffa620fef85cc7529321f329cfe3822a316e5d6",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-27T00:01:42Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "Makefile",
+      "ci_env.sh"
+    ],
+    "conditions": [
+      "um alvo anterior a fmt-check falha, por ambiente ou por qualquer outro motivo"
+    ]
+  },
+  "status": "candidate",
+  "title": "make ci para no primeiro alvo e esconde fmt-check e clippy atras de uma falha ambiental de test"
+}

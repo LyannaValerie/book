@@ -1,0 +1,24 @@
+{
+  "domain": "Pinker",
+  "external_task_ref": null,
+  "finished_at": "2026-08-27T00:23:38Z",
+  "followed_refs": [],
+  "goal": "Issue 525: unificar tres identidades canonicas de acesso a argumento nomeado",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "Issue #525 implementada e verificada; PR 526 aberta e verde, aguardando merge humano. Dificuldades retidas: B-QOS3720QJJSH (novo), B-6N2QI4VTT9TO (novo), B-ZI6WVTHJ4QMK (revisado).",
+  "project": "LyannaValerie/pinker-v0",
+  "started_at": "2026-08-26T23:57:25Z",
+  "state": "finished",
+  "task_id": "T-HVGJ5RIUDCQB56Y1",
+  "validation": {
+    "oracle": "make ci exit 0 (123 suites) + issue492 com PINKER_EXIGE_NATIVO=1 + censo independente 163/151 -> 163/148 + tres checks remotos success na PR 526",
+    "outcome": "PASS",
+    "passed": true,
+    "summary": "Tres unificacoes canonicas implementadas numa autoridade central unica; IDENTITY_DELTA -3, UNRELATED_IDENTITY_DELTA 0",
+    "validated_at": "2026-08-27T00:23:38Z"
+  }
+}

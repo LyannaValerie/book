@@ -1,0 +1,80 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao vale quando o campo medido tambem participa do seletor em alguma rota: ai ele e identidade para efeito desta regra, ainda que o nome sugira conteudo.",
+    "Nao autoriza remover a fusao existente para identidade: ela continua sendo a resposta certa para o caso que a motivou.",
+    "Uma entrada que restaura identidade E o campo medido continua produzindo uma regra unica e atomica; o predicado separa gatilhos, nao proibe combinar restauracoes.",
+    "Nao generaliza para modelos em que as regras sao aplicadas em paralelo ou sem ordem canonica; ali o raciocinio de ordem precisa ser refeito do zero."
+  ],
+  "cues": [
+    "campo medido que nao e identidade",
+    "fusao de overrides da mesma regiao",
+    "dependencia de ordem de aplicacao",
+    "guarda from_ deixa de casar",
+    "restores_identity",
+    "uma regra dona do campo",
+    "summary nao e identidade"
+  ],
+  "discriminating_probe": {
+    "action": "aplicar a restauracao proposta e, em seguida, perguntar para cada outra regra da mesma regiao se o seletor dela ainda encontra a regiao",
+    "observable": "se alguma regra deixa de encontrar, o campo restaurado participa da selecao e o caso pede regra atomica; se todas continuam encontrando, basta garantir que so uma regra declare aquele campo"
+  },
+  "environment": {
+    "baseline": "68c39661ed4af4c33ab3766e1c7ee8b40b043701",
+    "repository": "LyannaValerie/pinker-v0",
+    "runner": "pink nav projecao reconciliar + cargo test"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Task issue-693-trama-ts-projection-summary-bridge. Com o gatilho por identidade e a regra unica por campo, a migracao real de summary sobre regioes reais reconstruiu 13/13 MATCH sem tocar byte de FROZEN. O mutante que faz `restores_identity()` incluir o campo de summary deixa vermelho o controle que afirma a nao-fusao; o mutante que remove a criacao da regra nova deixa vermelho o controle ponta a ponta.",
+      "oracle": "pink nav projecao verificar devolve MATCH nos treze snapshots, e a receita mantem as regras originais da regiao mais uma regra nova",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a20/artifacts/evidence/sensitivity.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Reproducao do blocker que motivou a capacidade, com o texto traduzido que a Task anterior de fato escreveu: duas regioes dao 13/13 E-SNAP-OVERRIDE-SUMMARY e uma da DRIFT, conforme exista ou nao guarda from_summary numa regra congelada.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a20/artifacts/evidence/real-blocker-repro.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "REMEDIO VALIDADO: separe os dois predicados no modelo, e nao no ponto de uso. A entrada do mapa ganhou `restores_identity()`, verdadeiro so para os campos que participam da selecao, e o gatilho da fusao passou a ser esse predicado em vez da mera existencia da entrada.\n\nPara o campo medido que nao e identidade, garanta que a restauracao viva em EXATAMENTE uma regra por regiao: a regra que ja restaura aquele campo tem a guarda movida para o valor corrente e o destino preservado, e a regiao que nao tem nenhuma recebe uma regra nova so com aquele par. Nenhuma outra regra da regiao e tocada. Assim nao ha duas regras disputando o mesmo campo e nenhuma ordem decide o resultado — sem precisar fundir nada.\n\nA pergunta generalizavel, ao acrescentar restauracao de um campo novo: *depois de aplicada, alguma outra regra deixa de encontrar a regiao?* Se sim, o problema e de selecao e pede atomicidade. Se nao, o problema e de exclusividade e pede uma unica regra dona daquele campo."
+  },
+  "id": "B-60CSGM679HJJ",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Issue #693, baseline 68c39661ed4af4c33ab3766e1c7ee8b40b043701: o campo novo era `summary`, medido pela projecao estavel junto com `key`, `domain` e `layer`. Restaura-lo nao muda qual regiao a regra seleciona: a chave continua a mesma, e toda regra que selecionava a regiao continua selecionando-a depois da restauracao. A dependencia de ordem que justificava a fusao simplesmente nao existe nesse caso.\n\nA armadilha simetrica tambem e real: deixar cada regra da regiao receber a restauracao do mesmo campo reintroduz a dependencia de ordem por outro caminho, porque a primeira regra a aplicar muda o valor e a guarda `from_<campo>` da segunda deixa de casar.\n\nCAUSA CONFIRMADA: o que cria dependencia de ordem nao e 'restaurar um campo medido', e sim 'restaurar um campo que participa da selecao'. Os dois conjuntos de campos se parecem — todos entram na medida — e por isso e facil tratar a medida como se fosse a identidade."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Uma capacidade anterior fundiu numa regra atomica todos os overrides que selecionam a mesma regiao quando o mapa restaura a identidade dela, porque restaurar a identidade tira a regiao do alcance das outras regras e o resultado passa a depender da ordem de aplicacao. Ao acrescentar a restauracao de um campo medido que NAO e identidade, a pergunta reaparece com a resposta invertida, e tratar os dois casos pelo mesmo gatilho — 'existe entrada de mapa para esta regiao' — funde receitas que ninguem pediu para fundir."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a20/state/checkpoint.yaml"
+  ],
+  "revision": {
+    "hash": "333f34d6749ffe329d5f880dc5a4f69ba048084934df11de08affd7b908a1c95",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-17T22:56:44Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "reconciliacao corrente-para-historico de receita de projecao",
+      "override-region com guarda from_* e destino to_*",
+      "fusao de overrides da mesma regiao"
+    ],
+    "conditions": [
+      "a projecao estavel mede varios campos da regiao",
+      "parte desses campos e identidade (o seletor da regra) e parte nao e",
+      "um mapa explicito declara a restauracao de um ou de outro"
+    ]
+  },
+  "status": "candidate",
+  "title": "Restaurar campo medido que nao e identidade nao cria dependencia de ordem, e por isso nao deve acionar a fusao de overrides"
+}

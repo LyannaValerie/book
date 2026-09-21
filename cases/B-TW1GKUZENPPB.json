@@ -1,0 +1,72 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não é o mesmo que a pergunta de política da #579 sobre trato próprio da unidade: ali não há perda de contexto.",
+    "Não tratar chamada QUALIFICADA dentro do corpo default como defeito: resolvê-la no ambiente da declarante é o contrato #517."
+  ],
+  "cues": [
+    "SourceId",
+    "UNKNOWN",
+    "prepass",
+    "contexto_de_import",
+    "corpo default",
+    "materializado",
+    "nivel_de_despacho",
+    "Proprio",
+    "fail-open",
+    "alcance"
+  ],
+  "discriminating_probe": {
+    "action": "fixture com trato declarado em módulo cujo default chama método de relação que NENHUMA das duas unidades importa, mais o controle com o mesmo trato declarado localmente",
+    "observable": "o caso cross-unit aceita (--check 0, --run com o valor da relação) enquanto o controle local recusa; a única variável é a travessia do prepass"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Task #645/U-04 sobre d2eb7d744e66114f66e35bca6e11468f8d964f6a: X5 --check 0 / --run 77 no baseline contra --check 1 / --run 1 no candidato; controles X5a e X5c recusam nos dois; leitura de src/pink_cli/modules.rs:243 (Lexer::new) e src/module_resolve.rs (nivel_de_despacho).",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a34/memory/baseline-and-after.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Ao investigar proveniência ou alcance de construto que atravessa import, verifique primeiro se o construto passou pelo prepass: ele é uma segunda leitura do arquivo, sem SourceMap, e tudo o que vem dele nasce UNKNOWN. Reatribua com Span::com_fonte_padrao, que nunca sobrescreve span que já reivindica fonte, de modo que corpo local e override explícito ficam intocados. Distinga índice de composição VAZIO (arquivo único, biblioteca — permissivo legítimo) de fonte ausente em índice não vazio (contexto perdido — tem de fechar)."
+  },
+  "id": "B-TW1GKUZENPPB",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "A #517 já resolvia os NOMES desse corpo no ambiente da unidade declarante, mas o ALCANCE de relação não consultava ambiente nenhum: dois regimes distintos no mesmo construto. Registrar o SourceId é condição necessária e não suficiente — a correção é carregar a unidade declarante até a decisão de alcance e fechar o ramo permissivo quando o índice de composição não é vazio."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "contexto_de_import lê o módulo vizinho com Lexer::new, e Lexer::new é SourceId::UNKNOWN. A árvore do trato importado — inclusive o corpo default que o parser copia para o materializador — chega com todo span sem unidade-fonte. Como nivel_de_despacho respondia Some(Proprio) quando não reconhecia a fonte, o corpo materializado alcançava toda relação carregada no programa, inclusive as que nem a unidade declarante nem a materializadora importaram."
+  },
+  "references": [],
+  "revision": {
+    "hash": "b47c7329d7df1baaadec51070beedb780e96d230d84ebf249c6759f4cf2a5c8d",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-10T02:43:54Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "src/pink_cli/modules.rs",
+      "src/module_resolve.rs",
+      "src/parser/mod.rs",
+      "nivel_de_despacho",
+      "tratos_visiveis_por_fonte"
+    ],
+    "conditions": [
+      "programa composto em que um trato é declarado num módulo e o impl é escrito noutra unidade",
+      "o corpo default é materializado cross-unit pelo parser do materializador"
+    ]
+  },
+  "status": "candidate",
+  "title": "Corpo default de trato importado chega sem SourceId porque o prepass usa Lexer::new, e o alcance de relação falhava aberto"
+}

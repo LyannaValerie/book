@@ -1,0 +1,87 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao vale para medir o pico exato post-mortem: /proc desaparece com o processo e a amostragem so da limite inferior. O que sobrevive e a ultima amostra COM campo Vm*.",
+    "VmHWM so aproxima os bytes escritos quando a realocacao estende in place; verifique isso pelo residuo constante de VmPeak antes de usar o proxy.",
+    "Nao generalize a leitura de cgroup: em runner hospedado o cgroup e do job, nao do processo."
+  ],
+  "cues": [
+    "VmPeak",
+    "VmHWM",
+    "/proc/<pid>/status",
+    "/proc/<pid>/limits",
+    "zumbi",
+    "zombie",
+    "RLIMIT_AS",
+    "GitHub Actions",
+    "runner hospedado",
+    "cargo test engole saida",
+    "upload-artifact",
+    "medicao sem perturbar o processo",
+    "pid reciclado"
+  ],
+  "discriminating_probe": {
+    "action": "Compare, na mesma linha de registro, o numero de leituras de /proc bem sucedidas com o numero de leituras que trouxeram VmPeak. Se as duas divergirem no fim de vida do processo, voce encontrou a janela de zumbi.",
+    "observable": "amostras > amostras_vm significa que houve leitura sem campo Vm*. Se o codigo emitisse 0 nesses casos, a distribuicao ganharia uma massa falsa em zero concentrada nos processos de vida mais curta."
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Cinco attempts do CI 33926154463 no mesmo SHA: por attempt 2168 linhas, 0 com zero espurio, amostras/amostras_vm = 16/15 nos casos de vida curta, evidenciando a leitura de zumbi descartada.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a10/artifacts/remoto"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Validacao de identidade do processo medido: VmPeak menos a soma das capacidades da 4164, 4120, 5056 e 5032 kB de base nas quatro configuracoes, batendo com o controle sleep nativo.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a10/artifacts/dossie-remoto-596.md"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Intrusao medida da instrumentacao no caso real: +1,3% de wall clock e -4,2% de RSS, ambos dentro da dispersao do proprio baseline; ~45 us por amostra num quantum de 10 ms que ja existia.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a10/artifacts/intrusao/analise.md"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "Task #596 sobre baseline 63eaed96, candidato db941283. Cinco attempts do mesmo run de CI: 2168 linhas por attempt, 0 zeros espurios apos a correcao, 1235-1505 linhas com VmPeak medido. Identidade validada por VmPeak - soma das capacidades = 4120..5056 kB de base nas quatro configuracoes medidas, batendo com o controle sleep de 5032 kB. Injecao temporaria e revertida de RLIMIT_AS=256 MiB reproduziu a assinatura alvo com signal 6 e a mensagem do alocador capturada.",
+    "text": "Meca do processo PAI, dentro de um laco de espera que ja exista, e nunca instrumente o processo medido. Quatro regras que a medicao precisa respeitar: (1) conte separadamente as leituras que trouxeram campo Vm* e emita null, nunca 0, quando nenhuma trouxe -- zumbi responde Ok sem Vm*; (2) leia o limite efetivo de /proc/<pid>/limits ('Max address space'), nao a constante da politica do proprio codigo, senao voce prova apenas que leu sua propria variavel; (3) ancore cada leitura no start time do processo (campo 22 de /proc/<pid>/stat) para que um pid reciclado nao eleve o maximo e transforme um limite inferior em sobrestimacao; (4) valide a identidade do processo medido conferindo VmPeak = base + soma das capacidades esperadas -- se o residuo for constante entre configuracoes, voce esta lendo o processo certo E o mremap do glibc estende in place, o que torna VmHWM um proxy utilizavel dos bytes efetivamente escritos. Para que a medicao de uma execucao VERDE sobreviva, escreva um registro em arquivo e adicione um passo `if: always()` no workflow que o imprima e o suba como artifact; nao confie em eprintln!, que o harness de teste engole quando o teste passa. Cuidado com cgroup: em runner hospedado o filho nao tem cgroup proprio, herda o do job -- memory.max e memory.events servem para excluir OOM de cgroup, mas memory.current mede a sessao inteira e nao e atribuivel ao processo."
+  },
+  "id": "B-WYBIRXOBXVZV",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Um processo zumbi ainda responde a /proc/<pid>/status com sucesso: a leitura retorna Ok e nao traz NENHUM campo Vm*, porque o mm ja foi liberado. Contar 'leitura bem sucedida' como 'amostra valida' produz VmPeak = 0 indistinguivel de medicao, e o vies atinge preferencialmente os processos de vida curta. Num corpus de 2168 execucoes, 52% das linhas carregavam esse zero espurio antes da correcao. Alem disso, `cargo test` so mostra a saida de testes que FALHAM, entao uma medicao de execucao verde e descartada e a ausencia de dado se confunde com ausencia do fenomeno."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Instrumentar um processo para medir seu proprio consumo altera o processo em estudo, e no caso de abort por falta de memoria a medicao nunca chega a ser emitida. Medir de fora parece resolver, mas /proc tem uma armadilha silenciosa e o CI descarta a saida de testes que passam."
+  },
+  "references": [
+    "trama:evidencia.processos.parte-d-native-step-4"
+  ],
+  "revision": {
+    "hash": "b68d894039a961fd1c26238f1a8fe6eb1d03264005b12e8c20de4f1adffa65d2",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-04T23:14:53Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "harness-de-testes-nativos",
+      "github-actions"
+    ],
+    "conditions": [
+      "e preciso medir espaco de enderecamento, RLIMIT ou pico de residencia de um processo filho",
+      "o processo medido nao pode ser perturbado porque ele proprio e o objeto do estudo",
+      "a medicao precisa sobreviver a morte do processo, inclusive por sinal"
+    ]
+  },
+  "status": "candidate",
+  "title": "Medir VmPeak e RLIMIT de um processo no CI hospedado: leia do pai, e nao conte zumbi como amostra"
+}

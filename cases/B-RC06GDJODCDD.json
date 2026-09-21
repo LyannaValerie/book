@@ -1,0 +1,76 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao use materialize-region aqui: essa e a rota para regiao REMOVIDA do catalogo corrente que o snapshot historico ainda possui (B-VQPA0OHIQZQB). Regiao acrescentada e o caso oposto, e a contagem sobe em vez de cair.",
+    "Nao edite from_hash na mao quando a rota de reconciliacao e aplicavel, e nunca recalibre regions, length ou fnv1a64 de snapshot FROZEN para fabricar verde.",
+    "VERIFY_AFTER_APPLY_FAILURE vem com written=true: o apply JA gravou os from_hash. Nao repita o apply nem reverta a receita inteira; o que falta e a declaracao das chaves novas."
+  ],
+  "cues": [
+    "E-SNAP-OVERRIDE-BASE",
+    "VERIFY_AFTER_APPLY_FAILURE",
+    "NO_CHANGE",
+    "exclude-key",
+    "expected_exclusions",
+    "expected_overrides",
+    "regiao nova",
+    "FROZEN",
+    "projecao reconciliar",
+    "nav_cartography_tests",
+    "base nao corresponde as proprias medidas",
+    "file_enforcement required"
+  ],
+  "discriminating_probe": {
+    "action": "rodar `pink nav projecao reconciliar` SEM --autorizar e comparar a contagem de regioes do catalogo antes e depois da mudanca",
+    "observable": "a contagem SOBE (747 -> 749) e o plano vem MECHANICALLY_RECONCILABLE listando apenas mutacoes recipe.from_*. Se depois do apply a verificacao continuar falhando e um novo plano vier NO_CHANGE, a causa nao e base deslocada: e chave nova ausente das exclusoes. Se a contagem CAISSE, o caso aplicavel seria o de regiao removida."
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Issue #680 / PR #682, HEAD 69c941a5bfd816de6f4e8182b9e17cfd8b7c9f1c, baseline e433aba3cfbfb3c9d8aac63663bb9995ffa9b1cf. Duas regioes novas (trama.simbolos.extracao em src/symbol_extraction.rs e evidencia.simbolos.extracao em tests/symbol_extraction_cli_tests.rs) levaram o catalogo de 747 para 749. reconciliar --autorizar 021023dc366c7de803fbc2b169c75073b2d8280e6f43f1e368d8e4e148645b6f escreveu 5 from_hash e devolveu VERIFY_AFTER_APPLY_FAILURE. Acrescentar os dois exclude-key e subir expected_exclusions levou projecao verificar a 27/27 MATCH. Em paralelo, 10 testes de nav_cartography_tests.rs precisaram de 23 literais atualizados com delta +1 ou +2, em 3 rodadas sucessivas.",
+      "source": "git:69c941a5bfd816de6f4e8182b9e17cfd8b7c9f1c"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "pink nav projecao verificar 27/27 MATCH e git status sem nenhum snapshot alterado, no HEAD 69c941a5bfd816de6f4e8182b9e17cfd8b7c9f1c de LyannaValerie/pinker-v0; PINKER_EXIGE_NATIVO=1 make ci exit 0",
+    "text": "reconciliar reancora apenas bases de override deslocadas por edicao de regiao ja existente; ele nao sabe declarar uma regiao que nao existia no instante historico. Para cada chave nova, acrescente na receita uma regra op = exclude-key com expected_matches = 1 e suba [reconstruction] expected_exclusions pelo mesmo numero de chaves. Isso e a rota de crescimento sancionada, nao edicao manual de from: o commit 4e146a3 fez exatamente isso para as duas regioes da #663. Ordem util: sincronizar, reconciliar em plano read-only, reconciliar --autorizar DIGEST para os from_hash, acrescentar os exclude-key, e so entao projecao verificar. Ortogonal e obrigatorio: tests/nav_cartography_tests.rs fixa contagens exatas de regiao por projecao historica, e uma regiao nova deixa cerca de 10 desses testes vermelhos em cascata, revelados em rodadas sucessivas porque cada teste para na primeira assercao; suba cada literal pelo delta exato (+1 quando o filtro conta so evidencia, +2 quando conta o total) e estenda a prosa enumerativa nomeando a Issue, como as unidades anteriores fizeram. Nenhum snapshot FROZEN e editado em nenhum passo. E nao existe a saida de omitir o marcador: a politica de cobertura da .pinker/cartography marca a raiz src com file_enforcement required."
+  },
+  "id": "B-RC06GDJODCDD",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Com as duas chaves novas declaradas em exclude-key e expected_exclusions de 263 para 265, pink nav projecao verificar devolveu 27/27 MATCH e nenhum arquivo .pinker/projections/*.toml apareceu modificado: so a receita mudou."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Uma Task acrescenta um arquivo-fonte novo em src/ com marcadores @pinker-nav, ou uma regiao nova num arquivo existente. Depois de pink nav sincronizar, pink nav projecao verificar devolve HARNESS_FAILURE nas projecoes FROZEN com E-SNAP-OVERRIDE-BASE. Rodar pink nav projecao reconciliar --autorizar DIGEST escreve os from_hash e ainda assim devolve VERIFY_AFTER_APPLY_FAILURE (written=true): a reconstrucao nao alcanca MATCH, e a verificacao seguinte passa a acusar que a base nao corresponde as proprias medidas. Um segundo reconciliar devolve NO_CHANGE, entao a rota mecanica esta esgotada sem resolver nada."
+  },
+  "references": [],
+  "revision": {
+    "hash": "90a72065b61cc1f52ea675399b8d754691f429ed6499f17de93add0e76fd8bd1",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-16T07:15:56Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "pink nav projecao",
+      "pink nav sincronizar",
+      "recipes",
+      "navigation",
+      "src/navigation.jsonl",
+      "tests/nav_cartography_tests.rs"
+    ],
+    "conditions": [
+      "Task ACRESCENTA uma regiao ao catalogo corrente, nao remove nem apenas modifica"
+    ]
+  },
+  "status": "candidate",
+  "title": "Regiao @pinker-nav nova quebra a reconstrucao FROZEN; reconciliar so reancora from_hash"
+}

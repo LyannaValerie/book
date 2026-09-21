@@ -1,0 +1,77 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica a contorno que nomeia o vocabulario da precedencia: esse o C2 pega, medido na mutacao vizinha M6, vermelha em nenhuma_fase_reintroduz_o_vocabulario_da_precedencia e em so_a_autoridade_de_selecao_consulta_o_alcance.",
+    "Nao se aplica a contorno que apaga a chamada: ali a contagem cai a zero e o C2 falha alto.",
+    "Nao confundir com B-PMX3MTN2S9ZV: la a mutacao aplicou nos bytes e nao mudou comportamento nenhum, e o veredito correto e 'mutacao inerte'. Aqui a mutacao muda comportamento de verdade, e o defeito e do guardiao especifico que nao o observa.",
+    "Nao confundir com B-7289834C7AF3: la o problema e vermelho a mais, do compilador em vez do guardiao. Aqui e vermelho a menos, no guardiao que a Task nomeia."
+  ],
+  "cues": [
+    "C2",
+    "method_dispatch",
+    "select_impl_method",
+    "contorno por grafia",
+    "ordem local",
+    "sensitivity M7",
+    "guardiao textual",
+    "contagem de consultas",
+    "autoridade chamada mas ignorada",
+    "decomposicao fisica"
+  ],
+  "discriminating_probe": {
+    "action": "inserir em src/semantic/calls.rs, imediatamente antes do match sobre select_impl_method, um candidates.sort_by por function_name seguido de return Ok do primeiro, e rodar primeiro o alvo C2 e depois as suites de composicao/heranca de impl",
+    "observable": "qual alvo fica vermelho e qual teste ele nomeia"
+  },
+  "environment": {
+    "backend": "interpreter+native",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Task #619 (SEM-1): M7 com alvo C2 exit 0 failures vazio; a mesma M7 com alvo d12_trait_default_methods_tests exit 101 nomeando homonimo_nao_qualificado_continua_ambiguo; aplicacao e restauracao provadas por sha256 no mesmo harness.",
+      "oracle": "cargo test --locked --test c2_method_dispatch_authority_tests contra cargo test --locked --test d12_trait_default_methods_tests, sob a mesma mutacao",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a22/artifacts/SENSITIVITY.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Nao registre a mutacao de contorno com o alvo C2: ela ficaria VERDE e a leitura natural seria 'guardiao cego por causa do corte', quando a lacuna e anterior e de outra natureza. Aponte a mutacao para o oraculo comportamental que realmente distingue o veredito — no Pinker, a suite que exercita homonimo nao qualificado sob impl herdado — e registre a lacuna do C2 como finding nao-bloqueante. Corolario geral: um guardiao textual que conta chamadas prova que a autoridade continua sendo chamada, nunca que o resultado dela continua sendo usado; so um oraculo comportamental fecha isso."
+  },
+  "id": "B-LFE2WJJJXR6J",
+  "observed_at": "2026-09-07T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "cargo test --test c2_method_dispatch_authority_tests: exit 0, 16 passaram, failures vazio. cargo test --test d12_trait_default_methods_tests: exit 101, nomeando homonimo_nao_qualificado_continua_ambiguo. Mesmo commit, mesma mutacao, provada aplicada e restaurada por sha256."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A suite C2 prova autoridade unica por dois meios textuais: proibir o vocabulario da precedencia (NivelDeDespacho, nivel_de_despacho, PorUnidadeImportada) e exigir exatamente uma chamada de select_impl_method e uma de select_representative por fase. Uma decisao local por grafia e ordem inserida ANTES da consulta escapa dos dois: ela nao nomeia nenhum termo proibido e nao muda a contagem, porque a consulta continua no codigo, apenas deixa de ser alcancada. O C2 fica inteiramente verde enquanto a fase voltou a decidir sozinha."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a22/artifacts/sensitivity.py"
+  ],
+  "revision": {
+    "hash": "aeadf1a7a4cc9ee29e69118a0bb0ce6c0e7fe8658319fe746e5995bc772657ae",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-07T12:54:20Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "tests/c2_method_dispatch_authority_tests.rs",
+      "src/semantic (modulo)",
+      "src/method_dispatch.rs",
+      "harness de sensibilidade/mutacao"
+    ],
+    "conditions": [
+      "a Task pede a mutacao 'bypass method_dispatch com decisao por grafia/ordem local -> RED'",
+      "o guardiao de autoridade e textual: conta consultas e proibe vocabulario de precedencia"
+    ]
+  },
+  "status": "candidate",
+  "title": "Guardiao C2 nao ve contorno por ordem/grafia inserido ANTES da consulta a autoridade de despacho"
+}

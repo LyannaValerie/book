@@ -1,0 +1,70 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica à mutação que ACRESCENTA (aridade): lá o artefato expandido conforma todos os sítios de uma vez e não há contaminação a neutralizar.",
+    "Neutralizar não substitui contar: um artefato em que a descida sintetiza chamadas novas continua contaminado depois da neutralização na representação anterior."
+  ],
+  "cues": [
+    "testemunha permissiva",
+    "direcao permissiva",
+    "RECUSA sob os dois estados",
+    "sitio canonico contamina",
+    "neutralizar sitios",
+    "oraculo metamorfico bidirecional",
+    "duplicata aditiva concorde",
+    "artefato do estagio validador"
+  ],
+  "discriminating_probe": {
+    "action": "construir a testemunha permissiva sem neutralizar os sítios canônicos e imprimir, por consumidor, o par (aceita sob a canônica, aceita sob a mutada)",
+    "observable": "com contaminação, o par é (false,false) para toda a coluna e a mensagem sob A1 nomeia um slot do programa original, não o da testemunha; sem contaminação, o par é (false,true) e a mensagem sob A0 nomeia o slot da testemunha"
+  },
+  "environment": {
+    "backend": "hosted",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Task #651, HEAD 50e56373990ff6bc07c0050361192e2aa338516f: direcao_permissiva_por_fato com 395 obrigações direcionais e 0 sem prova; P-F3 e P-F4 com a sequência causal de cinco estados, em que o estado 4 (duplicata + contrato mutado + mesma testemunha) lê (false,false) e o estado 3 (sem duplicata) lê (false,true).",
+      "oracle": "par (aceita sob A0, aceita sob A1) por consumidor, com duplicata aditiva concorde como controle positivo",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a37/artifacts/setimo-head/registro.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Numa prova metamórfica cuja mutação TROCA (e não acrescenta), a testemunha precisa ser a ÚNICA pergunta sobre aquela operação no artefato. Antes de inserir o sítio novo, neutralize todo sítio canônico: troque a chamada por um literal da classe de retorno dela quando houver literal; onde a chamada é o valor inteiro de um Let cuja classe não tem literal, só é neutralizável se ninguém ler o slot (aí retipe o local). Só SUBSTITUA, nunca remova, para que o índice de instrução do ponto de inserção continue válido. Conte os sítios de novo DEPOIS da descida: o lowering pode SINTETIZAR chamadas canônicas de volta num estágio posterior (desugarings de encaixe e de tentar fazem isso) e recontaminar exatamente os validadores que você ia perguntar — nesse caso descarte a leitura daqueles estágios e use um programa MÍNIMO, com a testemunha e nada mais, como testemunha complementar. Regra de leitura: RECUSA/RECUSA nunca é prova; é sinal de contaminação até que se meça o contrário."
+  },
+  "id": "B-HU48FW8U40QH",
+  "observed_at": "2026-09-11T00:00:00Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "leitura (aceita sob a canônica, aceita sob a mutada) por consumidor, sobre o mesmo artefato, com a mutação instalada por thread",
+    "text": "Task #651/U-01, sétimo HEAD. Mutação de F3 sobre `__pinker_internal_mapa_iterador_proxima_chave_bombom` (operando 0 de bombom para verso), testemunha com argumento verso inserida na sonda: ir_validate respondia RECUSA sob A0 e RECUSA sob A1. A recusa sob A1 não era da testemunha — era do sítio CANÔNICO que continuava no mesmo programa e passou a violar a variante ('cursor genérico possui argumento inválido [slot=%chave#0]'). A distribuição inteira era RECUSA/RECUSA: 128 células de F4/presença, 112 de F4/classe, 77 de F3/classe. Depois de neutralizar todo sítio canônico antes de inserir a testemunha, as mesmas células viraram RECUSA/ACEITA e a prova passou a existir."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A direção restritiva de um oráculo metamórfico (estreitar o contrato e exigir que o consumidor passe a recusar) não vê a cópia local ADITIVA e CONCORDE: o caminho da autoridade recusa primeiro, o observável muda sozinho, e a cópia sobrevive atrás dessa recusa. A metade que falta é a direção permissiva — uma testemunha ilegal sob o contrato canônico e legal sob o mutado. A construção óbvia, inserir o sítio novo numa sonda real e baixar as fases sob a autoridade mutada, lê RECUSA nos DOIS estados e não prova nada."
+  },
+  "references": [],
+  "revision": {
+    "hash": "809c553d3e755af32c2c37d0829e7340fa1414d189db1ea8f647c8c24aa3996c",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-11T19:05:52Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "src/internal_operations/metamorphic_oracle.rs",
+      "oráculo metamórfico de autoridade única"
+    ],
+    "conditions": [
+      "prova metamórfica que muta um contrato canônico e lê o veredito de consumidores sobre um artefato inteiro",
+      "mutação que TROCA a classe exigida em vez de acrescentar, de modo que os sítios canônicos ficam ilegais sob a variante"
+    ]
+  },
+  "status": "candidate",
+  "title": "Testemunha permissiva num oráculo metamórfico é contaminada pelos sítios canônicos que sobram no mesmo artefato"
+}

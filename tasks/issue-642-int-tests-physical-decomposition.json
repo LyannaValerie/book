@@ -1,0 +1,18 @@
+{
+  "domain": "modularizacao",
+  "external_task_ref": "pinker:issue-642-int-tests-physical-decomposition",
+  "finished_at": "2026-09-09T12:34:56Z",
+  "followed_refs": [],
+  "goal": "Executar a INT-TESTS (#601/INT-1 original): mover os módulos de teste de src/interpreter.rs para src/interpreter/tests.rs preservando comportamento, autoridade e cartografia.",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "INT-TESTS (#601/INT-1) executada e publicada como PR #643, CI #1795 e Trama #475 verdes, parada em PR_GREEN_AWAITING_HUMAN_DECISION. Book: 1 caso novo (B-OKW72761TZN0), 1 caso usado como remédio (B-QOS3720QJJSH, ponte da staticlib), 2 no-op.",
+  "project": "pinker-v0",
+  "started_at": "2026-09-09T12:11:19Z",
+  "state": "finished",
+  "task_id": "issue-642-int-tests-physical-decomposition",
+  "validation": null
+}

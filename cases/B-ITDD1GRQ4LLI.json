@@ -1,0 +1,72 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica a pub use: reexportacao publica nao e linta como nao usada.",
+    "Nao se aplica se a CI nao promove warnings a erro."
+  ],
+  "cues": [
+    "pub(crate) use",
+    "unused_imports",
+    "clippy -D warnings",
+    "reexportacao",
+    "decomposicao fisica",
+    "preservar caminho",
+    "move mecanico"
+  ],
+  "discriminating_probe": {
+    "action": "grep dos use crate::<modulo>:: nos outros arquivos de src/ e comparar com a lista reexportada",
+    "observable": "os itens reexportados sem ocorrencia fora do modulo sao exatamente os que o unused_imports acusa"
+  },
+  "environment": {
+    "repo": "pinker-v0",
+    "toolchain": "rustc stable"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "warning: unused imports: RawDocument, Scalar, Table, optional_text em src/nav_projection_snapshot.rs:51 com o bloco de doze; zero warnings com o bloco de oito",
+      "oracle": "cargo build --locked --lib",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a21/artifacts/EQUIVALENCIA.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Reexporte pub(crate) apenas para os itens que tem consumidor real fora do modulo; deixe os demais pub(crate) dentro do filho. A pergunta certa nao e 'este item era pub(crate) antes?' e sim 'algum outro modulo do crate o nomeia?' -- grep pelos use crate::<modulo>::{...} dos irmaos responde em um comando. E declare a decisao no relatorio de equivalencia: sumir com um caminho pub(crate) sem consumidor nao e mudanca de API publica, mas e uma diferenca observavel que uma review adversarial vai perguntar. Nota de mecanica: rustc nao linta pub use (reexportacao publica) por nao usado, mas linta pub(crate) use, entao a assimetria entre os dois blocos e esperada, nao um erro seu."
+  },
+  "id": "B-ITDD1GRQ4LLI",
+  "observed_at": "2026-09-07T04:00:00Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "cargo build --locked --lib e cargo clippy --all-targets --all-features -- -D warnings",
+    "text": "Task #617 (unidade NPS-1 de src/nav_projection_snapshot.rs, repo pinker-v0). O bloco pub(crate) use parser::{...} inicial listava doze itens; cargo build --lib acusou unused imports: RawDocument, Scalar, Table, optional_text -- os quatro sem consumidor fora do proprio filho. Os oito restantes sao consumidos por src/nav_projection_recipe.rs e nao acusam nada. Removidos os quatro, build e clippy ficam limpos, e nenhum caminho publico da lib muda: pub(crate) nao e API publica e os quatro nao tinham consumidor a perder."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Num move fisico, preservar caminho e o contrato: o pai reexporta o que desceu para que crate::modulo::X continue existindo. A tentacao e reexportar o conjunto inteiro dos itens que eram pub(crate) no pai, por simetria mecanica. Mas pub(crate) use de um item que nenhum outro modulo do crate consome e unused_imports, e o gate de CI roda clippy com -D warnings: o build quebra por uma linha que existe so para ser fiel."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a21/artifacts/EQUIVALENCIA.md"
+  ],
+  "revision": {
+    "hash": "0b02729a76abfdaa7869fae7f3f03906b15da54431cbf53386cec58e5fbdbcef",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "primeiro registro, validado na Task issue-617-nps21-physical-decomposition",
+    "updated_at": "2026-09-07T04:00:00Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "decomposicao fisica de modulo Rust (pai X.rs + X/filho.rs)",
+      "reexportacao pub(crate) use no pai",
+      "CI com cargo clippy -- -D warnings"
+    ],
+    "conditions": [
+      "itens pub(crate) do pai descem para o filho",
+      "o executor tenta preservar TODOS os caminhos pub(crate) por simetria"
+    ]
+  },
+  "status": "candidate",
+  "title": "Reexportar pub(crate) sem consumidor no crate quebra clippy -D warnings numa decomposicao fisica"
+}

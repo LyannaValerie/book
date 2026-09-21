@@ -1,0 +1,18 @@
+{
+  "domain": "forja",
+  "external_task_ref": "pinker:issue-536-forja-agentes-restructure",
+  "finished_at": "2026-08-29T00:35:55Z",
+  "followed_refs": [],
+  "goal": "Retomada da #536: fechar handshake adversarial final e reconciliar aprendizado das rodadas 10-14",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "Retomada da #536 encerrada por STOP_NOW da Founder no HEAD 32417bf, CI verde, sem merge. Rodadas 15-18 satisfizeram o gate adversarial sob excecao humana especifica da Issue. Retencao: B-SXVVQGNJBSZL rev5, B-0EI423J6WIKR rev2, USE em B-D8ZGPIE404RL.",
+  "project": "pinker-v0",
+  "started_at": "2026-08-28T20:32:09Z",
+  "state": "finished",
+  "task_id": "T-Y18FLK1QUBHEMK3A",
+  "validation": null
+}

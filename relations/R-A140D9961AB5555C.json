@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-09-05T05:06:51Z",
+  "created_by": "velina",
+  "epistemic": "OBSERVED",
+  "from": "B-CX0MJL9YDYOS",
+  "id": "R-A140D9961AB5555C",
+  "oracle": "B-JPDXDAT88X5I cobre takeover pelo mesmo agente; B-CX0MJL9YDYOS cobre o caso entre perfis distintos, onde o vinculo do slot nao acompanha o active context",
+  "to": "B-JPDXDAT88X5I",
+  "type": "references"
+}

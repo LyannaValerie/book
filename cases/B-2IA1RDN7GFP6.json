@@ -1,0 +1,92 @@
+{
+  "challenges": [
+    {
+      "evidence": [
+        {
+          "class": "OBSERVED",
+          "description": "PR #700 (merge 4547bd0) removeu o workflow trama.yml e a superficie DocSub::ImportarPr/run_doc_importar; o controle tests/trama_ci_tests.rs::nenhum_workflow_exige_bloco_pinker_change prova que nenhum workflow restante exige o bloco.",
+          "source": "file:/pinker/repo/pinker-v0/agentes/a25/artifacts/pr-body.md"
+        }
+      ],
+      "id": "C-B596AD9135",
+      "observed_at": "2026-09-18T19:10:00Z",
+      "references": [
+        "file:/pinker/repo/pinker-v0/agentes/a25/artifacts/pr-body.md"
+      ],
+      "reported_by": "velina",
+      "statement": {
+        "class": "ASSERTED",
+        "text": "A orientacao central deste caso deixou de ser executavel depois da TM/#698: o gate universal de bloco pinker-change foi retirado com .github/workflows/trama.yml e o comando pink doc importar-pr, inclusive o modo --check descrito aqui, nao existe mais. A premissa negativa continua valida como metodo (ler o workflow, nunca o subproduto em disco), mas hoje a leitura do workflow devolve o oposto: nenhum workflow exige o bloco, e PR novo sem bloco nao e reprovado por isso."
+      }
+    }
+  ],
+  "contraindications": [
+    "Nao se aplica a PR anterior ou igual ao baseline_pr de .pinker/doc.toml: esses sao recusados na importacao por politica forward-only e nao exigem o bloco.",
+    "Nao confundir com B-IKGYPEML77P7: la o defeito e de ORDEM - push antes de editar o corpo faz a validacao ler o corpo antigo. Aqui o corpo publicado nunca teve o bloco.",
+    "Editar o corpo reexecuta a validacao do corpo, nao a suite completa; nao use isso para tentar reverter um vermelho do check pesado."
+  ],
+  "cues": [
+    "E-CHANGE-BLOCK",
+    "pinker-change",
+    "Validacao somente-leitura",
+    "importar-pr",
+    "corpo do PR",
+    "baseline_pr 330",
+    "gate documental",
+    "modo check nao escreve"
+  ],
+  "discriminating_probe": {
+    "action": "ler o workflow em vez do diretorio: grep por importar-pr em .github/workflows/",
+    "observable": "o job roda 'pink doc importar-pr <N> --corpo pr-body.md --check', e o modo --check valida sem escrever"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "PR #648: 'Validacao somente-leitura' FAIL em 26s com E-CHANGE-BLOCK enquanto 'rust' passou em 6m24s; depois do bloco inserido, PASS no mesmo SHA sem push",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a35/memory/task.jsonl"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Para saber se um gate de corpo de PR esta ativo, leia o WORKFLOW, nunca o subproduto que ele deixaria em disco - um gate em modo somente-leitura nao deixa rastro por desenho. Valide o corpo antes de publicar com 'pink doc importar-pr <N> --corpo ARQ --check': o comando aceita N inexistente e devolve rc=0 com 'manifesto pr-N.yaml valido e ausente (seria criado)'. O enum de 'kind' e fechado - phase, hotfix, documentation, parallel-phase -; 'refactor' e recusado com E-CHANGE-SCHEMA, e as PRs de refatoracao e movimentacao fisica da campanha vem usando hotfix. Corrigir isso NAO exige push: editar o corpo da PR reexecuta so a validacao somente-leitura e preserva o verde do check pesado sobre o mesmo SHA."
+  },
+  "id": "B-2IA1RDN7GFP6",
+  "observed_at": "2026-09-10T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O gate esta ativo e obrigatorio. Ele falha com 'E-CHANGE-BLOCK / Bloco pinker-change ausente no corpo do PR' e exit 5. O diretorio nao cresce porque o CI valida em --check, que nunca grava o manifesto; a escrita so aconteceria numa importacao real. A ausencia de registros novos e consequencia do modo, nao do desuso."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Antes de publicar a PR, o agente checou se o bloco pinker-change ainda era exigido. O ultimo registro em .pinker/changes/ era pr-440, e as PRs recentes mergeadas nao acrescentaram arquivo nenhum ali. A leitura natural - mecanismo caiu em desuso - e falsa e custa uma rodada de CI vermelha."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a35/artifacts/pr-body.md"
+  ],
+  "revision": {
+    "hash": "880c38170bd239819e08b5a8010ad65999a43d179a5181a180022b710036650c",
+    "number": 2,
+    "parent_hash": "8099906971be4fc1985ff8cf7f69a5f8792c1124ae6b679810664b666d83e849",
+    "reason": "mecanismo aposentado pela TM/#698",
+    "updated_at": "2026-09-18T22:12:47Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      ".pinker/changes/",
+      ".pinker/doc.toml",
+      "pink doc importar-pr",
+      "workflow Validacao somente-leitura"
+    ],
+    "conditions": [
+      "PR posterior ao marco documental configurado em .pinker/doc.toml",
+      "o agente inspeciona .pinker/changes/ para decidir se o bloco e exigido"
+    ]
+  },
+  "status": "challenged",
+  "title": "Diretorio .pinker/changes parado num PR antigo nao prova que o gate do bloco pinker-change esta inativo"
+}

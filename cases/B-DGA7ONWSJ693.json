@@ -1,0 +1,75 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não vale quando a declaração nova precisa mesmo de um conceito novo a jusante: aqui a lista desaçucara para as unidades que o pipeline já consumia, e é isso que mantém RUNTIME_DELTA e ABI_DELTA em zero. Se o downstream precisar distinguir a forma agrupada, centralizar a leitura não basta.",
+    "Não confunda o leitor único com política de resolução. A função que lê a declaração não pode saber o que é família, o que é módulo real nem o que um membro significa; se ela começar a responder isso, a precedência migra para o parser errado.",
+    "Não estenda a gramática para aceitar formas vizinhas 'de graça'. `M.a, N.b`, vírgula final e vírgula depois de import inteiro precisam de recusa explícita, ou a lista vira gramática acidental."
+  ],
+  "cues": [
+    "prepass",
+    "gramatica duplicada",
+    "import seletivo",
+    "lista de membros",
+    "trazer",
+    "scanner de tokens",
+    "censo de nomes de topo",
+    "desacucaramento",
+    "multi import",
+    "fronteira sintatica"
+  ],
+  "discriminating_probe": {
+    "action": "injetar 'o leitor da declaracao para na primeira virgula' e 'o prepass registra apenas o primeiro membro', confirmando por diff que a injecao aplicou antes de ler qualquer gate",
+    "observable": "a suite preexistente pode continuar verde — ela nao mede a dimensao nova; o gate dirigido precisa ficar vermelho nas duas injecoes, e voltar verde apos a reversao"
+  },
+  "environment": null,
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Censo mecânico das 417 fontes .pink: 674 declarações seletivas viraram 282 com 161 agrupadas, e os membros seletivos ficaram invariantes em 674 antes e depois — o invariante que separa 'agrupou' de 'apagou linha'. Veredito de --check por arquivo idêntico antes e depois (366 OK / 51 negativos)",
+      "source": "file:/pinker/worktrees/tasks/issue-505-intrinsic-inventory/agentes/issue-505-intrinsic-inventory/memory/censo-after.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Sob a injeção S11 (prepass vê só o primeiro membro) a suíte part_g preexistente saiu 0 (verde) e só a suíte nova saiu 101 (vermelha)",
+      "source": "file:/pinker/worktrees/tasks/issue-505-intrinsic-inventory/agentes/issue-505-intrinsic-inventory/memory/sensitivity.json"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "22 gates dirigidos verdes; 6 injeções de sensibilidade (S10-S15) todas detectadas, cada uma confirmada por diff antes da leitura; suíte completa 3217/0; make ci EXIT=0 com todos os alvos alcançados",
+    "text": "Antes de estender a gramática de uma declaração, faça o inventário mecânico de QUEM casa aquele formato de token — `grep` pela keyword, não pela função que você pretende editar. Para cada leitor encontrado, pergunte se ele responde certo para a forma nova, e por qual razão: 'correto por acidente do formato antigo' é uma resposta que exige conserto igual a 'errado'. Prefira centralizar a leitura a acrescentar um gate de consistência entre leitores: o gate mede divergência depois que ela existe, a leitura única impede que exista. Deixe o caminho de diagnóstico separado e incapaz de aceitar, para que as formas recusadas tenham mensagem própria em vez de caírem num 'esperado ;' genérico. E não confie na suíte antiga como evidência: sob a injeção que fazia o prepass ver só o primeiro membro, a suíte de import preexistente ficou VERDE, porque ela não podia observar uma dimensão que não existia quando foi escrita."
+  },
+  "id": "B-DGA7ONWSJ693",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Dos quatro leitores, dois continuavam corretos por acidente e um ficava silenciosamente errado. O que classifica módulo real vs família built-in só extrai o NOME DO MÓDULO, então acertava lendo o primeiro membro; o de import inteiro exigia `;` no terceiro token e por isso já excluía a forma com vírgula. O censo de identidades de topo, porém, inseria UM símbolo: `b` e `c` de `trazer M.a, b, c;` ficariam fora do censo, invisíveis para a precedência, e o import passaria a sombrear a si mesmo — a forma agrupada deixaria de ser equivalente à separada exatamente nos membros que o prepass não viu. O remédio não é um teste de consistência entre os leitores: é fazer existir um leitor só. Uma função que devolve (módulo, membros) por índices de token vira a autoridade sintática única, os prepasses passam a consumi-la, e o caminho de cursor do parser sobrevive apenas para produzir o diagnóstico das formas recusadas — nunca para aceitar."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Acrescentar uma lista à declaração de import (`trazer M.a, b, c;` equivalente a três imports separados) parece ser uma mudança de uma linha no laço do parser. O laço, porém, não era o único leitor: a mesma forma `KwTrazer Ident Dot Ident` era casada por três varreduras de token independentes, cada uma respondendo a uma pergunta diferente e todas escritas quando a declaração só podia ter um membro."
+  },
+  "references": [],
+  "revision": {
+    "hash": "f54afe55cc1006b4f4768e885385d30132a81b2b3769264ea6b1e7c290efc231",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-27T20:53:35Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "parser",
+      "prepasses de import",
+      "censo de identidades de topo"
+    ],
+    "conditions": [
+      "declaração cuja forma tokenizada é reconhecida em mais de um lugar do compilador",
+      "existem prepasses que leem o fluxo de tokens ANTES do parse para responder o que o parser não pode saber sozinho"
+    ]
+  },
+  "status": "candidate",
+  "title": "Estender a gramática de uma declaração: procure os prepasses que casam o mesmo formato de token antes de tocar o parser"
+}

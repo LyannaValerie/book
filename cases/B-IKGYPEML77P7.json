@@ -1,0 +1,60 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica a gate que valida a árvore: ali o corpo do PR é irrelevante.",
+    "Não vale como desculpa para bloco ausente de verdade: se a execução mais nova também falha, o conteúdo é que está errado."
+  ],
+  "cues": [
+    "E-CHANGE-BLOCK",
+    "bloco pinker-change ausente",
+    "validacao do corpo do PR",
+    "workflow edited",
+    "corpo do PR desatualizado no CI",
+    "vermelho que some sozinho",
+    "pink doc importar-pr --check",
+    "validar corpo do PR localmente"
+  ],
+  "discriminating_probe": {
+    "action": "comparar created_at da execução vermelha com updated_at do PR e listar as execuções do mesmo SHA por evento",
+    "observable": "a execução vermelha é anterior à edição do corpo e existe uma execução posterior, disparada por `edited`, com conclusão verde"
+  },
+  "environment": {
+    "component": "CI",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "run 33132508261 (pull_request, criada 01:19:33) falhou com E-CHANGE-BLOCK; PR updated_at 01:19:42; run 33132517934 (criada 01:19:45) concluiu success. Mesmo SHA 5c91448.",
+      "oracle": "gh api actions/runs?head_sha= e gh api pulls/538 --jq .updated_at",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a01/memory/events.jsonl"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Quando o gate valida o corpo do PR e não a árvore, edite o corpo ANTES do push, ou aceite que a execução do push vai falhar e espere a execução disparada pelo `edited`. Antes de tratar o vermelho como defeito, compare o timestamp de criação da execução com o `updated_at` do PR: execução mais velha que a edição leu conteúdo que não existe mais.\n\nMelhor ainda: valide o bloco localmente antes de publicar. O comando exato neste repositório é `pink doc importar-pr <N> --corpo <arquivo> --check --repo .`, que não escreve nada e responde `manifesto pr-N.yaml válido e ausente (seria criado)` quando o corpo está correto. Ele aceita um N que ainda não existe no GitHub, então dá para rodá-lo com o corpo em mãos antes mesmo de abrir a PR — o que transforma um vermelho remoto inevitável em verificação local de custo zero."
+  },
+  "id": "B-IKGYPEML77P7",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "A validação dispara em `synchronize` (push) e em `edited` (corpo). O push cria a execução com o snapshot do corpo daquele instante. Medido: execução do push criada em 01:19:33 leu o corpo sem o bloco e falhou; o edit do corpo ocorreu em 01:19:42; a execução disparada pelo edit, criada em 01:19:45, leu o corpo com o bloco e passou. Duas execuções do MESMO SHA, com conclusões opostas, por causa de nove segundos."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um workflow que valida o CORPO do PR falha logo depois de um push, mesmo quando o corpo correto já foi escrito. A leitura natural é que a correção não funcionou, e a reação natural é editar de novo ou mexer no código — quando o que está errado é a ordem entre as duas ações."
+  },
+  "references": [],
+  "revision": {
+    "hash": "4b395806c45296190cd7b32cacdcd36801fad9e29b920615d98716f71fc46b1e",
+    "number": 2,
+    "parent_hash": "3bc743102dc6c58cb09969a4acef2b55a0111fcdabe7dd107bc5a15279c03a31",
+    "reason": "Task #610: nomear o comando exato de validacao local e registrar que ele aceita um N inexistente, evitando o vermelho remoto",
+    "updated_at": "2026-09-06T12:37:30Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": null,
+  "status": "candidate",
+  "title": "Push antes de editar o corpo do PR faz a validação ler o corpo antigo"
+}

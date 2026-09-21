@@ -1,0 +1,67 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Piso numerico global nao substitui piso por par nem por celula: o total sobrevive a troca de uma aresta por outra."
+  ],
+  "cues": [
+    "cobertura por sentinela",
+    "outra operacao do mesmo fato",
+    "piso por par",
+    "piso por celula declarada",
+    "dominio e a autoridade",
+    "aresta removida sem ficar vermelho",
+    "iterar autoridade vezes fatos"
+  ],
+  "discriminating_probe": {
+    "action": "hard-codear o fato para uma operacao que NAO e a sentinela, no mesmo consumidor e no mesmo ramo; e, separadamente, remover uma aresta da tabela de cobertura",
+    "observable": "com cobertura por sentinela as duas mutacoes ficam verdes; com dominio iterado e pisos, a primeira cai no par correspondente e a segunda cai no piso"
+  },
+  "environment": {
+    "backend": "hosted",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Task #651: 31 operacoes x 5 fatos = 155 pares, 151 provados e 4 estruturalmente nao aplicaveis nomeados, 0 sem classificacao; 534 arestas descobertas e provadas, 0 sem prova; I25 (aresta removida) e I49 (coluna removida) RED pelos pisos.",
+      "oracle": "cobertura_exaustiva_do_dominio_por_fato com pisos por par e por celula",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a37/state/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Cobertura de prova metamorfica nao se declara: deriva-se. Itere o dominio da autoridade contra os fatos e classifique CADA par, com a razao do nao-aplicavel lida do contrato e nunca do teste. E acrescente pisos, porque auditoria sem piso perde arestas sem ficar vermelha: um piso por par (algum decisor obrigado acompanhou) e um por celula declarada (cada decisor tem aresta provada em cada fato que diz consultar). O teste de que os pisos funcionam e mutar a propria tabela de cobertura para remover uma aresta e uma coluna, e exigir vermelho nos dois casos."
+  },
+  "id": "B-NA23JJ1DAZJZ",
+  "observed_at": "2026-09-11T00:00:00Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "replay dos doze escapes materiais contra a cobertura nova, mais duas mutacoes que REMOVEM cobertura",
+    "text": "Task #651/U-01, de acb6ac6 para 8c1b344. Remedio em tres partes: (1) a prova terminal ITERA a autoridade x fatos e classifica cada par em provado ou estruturalmente nao aplicavel com razao derivada do proprio contrato — nenhuma sentinela define o universo, e operacao nova sem testemunha deixa a cobertura vermelha; (2) piso por PAR: um par so conta como provado se algum decisor foi obrigado a acompanhar e acompanhou, o que impede que a superficie de decisao encolha em silencio; (3) piso por CELULA declarada: cada decisor precisa de aresta provada em cada fato que declara consultar, o que impede que uma coluna inteira evapore com a suite verde. Depois disso, 12/12 escapes RED, e as duas mutacoes de remocao de cobertura (aresta e coluna) ficaram RED pelos pisos."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Com o mecanismo metamorfico correto, a cobertura foi declarada por uma sentinela por fato: uma operacao escolhida a dedo cuja mutacao todo consumidor tem de acompanhar. O fechamento dirigido passou doze reimplementacoes locais: bastava hard-codear o fato para uma operacao DIFERENTE da sentinela, dentro do mesmo consumidor e do mesmo ramo, para ficar verde. Pior, a tabela de cobertura podia perder arestas sem que nada caisse."
+  },
+  "references": [],
+  "revision": {
+    "hash": "d54c9201241a05d8f6dcfa96dcee990cca6130c1b7fce11219d1cd8016abb033",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-11T22:48:54Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "src/internal_operations/metamorphic_oracle.rs"
+    ],
+    "conditions": [
+      "oraculo metamorfico cujo mecanismo ja esta validado",
+      "cobertura declarada por uma sentinela por fato"
+    ]
+  },
+  "status": "candidate",
+  "title": "Cobertura metamorfica por sentinela escolhida a dedo deixa escapar decisao local sobre OUTRA operacao do mesmo fato"
+}

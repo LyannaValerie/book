@@ -1,0 +1,83 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica a unidade que move somente modulos de teste: o grupo (a) continua correto lendo o pai, e a #610 deliberadamente nao o repontou.",
+    "Complementa B-DFJ5RHVJRYPY em vez de substitui-lo: la o dano e o deslocamento do marcador de truncamento por `#[cfg(test)] mod filho;`, aqui o marcador nao se move e o dano vem da producao ter mudado de arquivo.",
+    "Nao confunda com B-D3R0F3WSMJYR: la o sintoma e E-SNAP-PATH-ALTERADO e o remedio mora na receita de projecao; aqui nada na Trama reclama."
+  ],
+  "cues": [
+    "PATH_GUARDIANS_BLIND",
+    "OG-1",
+    "fonte_de_modulo",
+    "backend_s_producao",
+    "censo de arquivo inteiro",
+    "include_str! do monolito",
+    "pinker_formatar_verso_",
+    "irmao de producao",
+    "repoint de oraculo",
+    "mutacao plantada no irmao"
+  ],
+  "discriminating_probe": {
+    "action": "para cada leitor listado por `grep -rn 'src/X.rs' tests/`, plantar no irmao recem-criado exatamente o padrao proibido que aquele leitor procura, e rodar so o alvo dele",
+    "observable": "o alvo fica vermelho (mantem alcance) ou verde (perdeu alcance)"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0",
+    "toolchain": "rustc 1.78.0, edition 2021"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Sensitivity M1..M9 da #612, com aplicacao e restauracao provadas por hash; M9 (sufixo plantado no irmao) VERMELHA depois do repoint do D7 e VERDE antes dele.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a19/artifacts/sensitivity.log"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Revisao independente cross-provider da #612: um unico MAJOR, exatamente o leitor de grupo (b).",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a19/artifacts/review-535-rodada-ampla.log"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "A lista de leitores vem de `grep -rn 'src/X.rs' tests/`, nunca de `grep -rn 'cfg(test)' tests/`. Depois classifique cada um: (a) trunca no primeiro #[cfg(test)] e quer producao — reaponte para a concatenacao das partes produtivas do modulo; (b) le o arquivo inteiro sem truncar — reaponte para a concatenacao integral do modulo, que e o alcance que ele tinha; (c) recorta um bloco ancorado num nome de funcao — nao mexa se o bloco ficou no pai, porque a ancora falha ALTO se um dia sair. Um mesmo arquivo de teste pode ter leitores de dois grupos: no D7 as duas extracoes ancoradas continuam lendo o pai e so o censo global desce no modulo; repontar o arquivo inteiro seria mudanca sem causa. Feche cada repoint com uma mutacao plantada no irmao e uma execucao do alvo — verde nao prova alcance, so mutacao plantada prova."
+  },
+  "id": "B-I97TSDE6ETAF",
+  "observed_at": "2026-09-06T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Na Task #612 (BS-2 de src/backend_s.rs) o repoint inicial cobriu os tres leitores do grupo (a) e passou por cima de tests/d7_formatar_verso_adult_tests.rs, que faz um censo global de sufixos de pinker_formatar_verso_ sobre include_str!(\"../src/backend_s.rs\"). A funcao render_call_site, onde um sufixo novo caberia, foi junto no move. Medido: com o censo lendo so o pai, plantar pinker_formatar_verso_9 em src/backend_s/render_abi.rs fica VERDE; lendo o modulo inteiro, fica VERMELHO. O achado saiu da revisao independente, nao da execucao."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Ao repontar os oraculos de um monolito decomposto, a busca natural e pelo padrao que os define — o truncamento no primeiro #[cfg(test)]. Essa busca encontra o grupo (a) e para ali. O grupo (b), que le o arquivo inteiro por include_str! para uma assercao negativa global, nao casa com esse padrao e fica de fora do repoint sem que nada reclame: o teste continua compilando, continua verde, e simplesmente deixou de olhar para o codigo que mudou de arquivo."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a19/artifacts/bs2.diff",
+    "file:/pinker/repo/pinker-v0/agentes/a13/artifacts/INVENTARIO-601.md"
+  ],
+  "revision": {
+    "hash": "55c15efede0bba341029d38b83f784615cca487730d5168ca1a54c5a9009ff6c",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-06T18:42:56Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "modularizacao fisica",
+      "tests/common/fonte_de_modulo.rs",
+      "d7_formatar_verso_adult_tests",
+      "c1_intrinsic_registry_tests",
+      "part_g_familia_superficie_tests",
+      "issue497_abi_symbol_isolation_tests"
+    ],
+    "conditions": [
+      "unidade fisica move PRODUCAO de um monolito src/X.rs para um irmao src/X/filho.rs",
+      "existem oraculos estruturais que leem src/X.rs por caminho literal"
+    ]
+  },
+  "status": "candidate",
+  "title": "Enumere os leitores do monolito pelo caminho do arquivo, nao pelo padrao do corte: o censo de arquivo inteiro nao aparece na busca por #[cfg(test)]"
+}

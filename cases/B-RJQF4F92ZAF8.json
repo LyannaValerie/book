@@ -34,7 +34,7 @@
   ],
   "guidance": {
     "class": "ASSERTED",
-    "text": "Exporte CARGO_TARGET_DIR para o slot registrado da Task antes do primeiro build — recuperado do fl --report (kind:cache) ou do observador atual, nunca concatenado a partir do TASK_ID — e confirme a cobertura com fl --report. CLEAN_NOOP é resultado terminal legítimo do finalizador, inclusive quando os recursos já foram finalizados ou reclamados numa passagem anterior autorizada: ausência de bytes NÃO é prova de vazamento. A suspeita só se justifica sob a conjunção: primeira finalização após um build conhecido desta Task, sem limpeza autorizada anterior, slot de cache registrado e esperado, e bytes_before = 0 — então SUSPECT_UNCOVERED_BUILD, investigar antes de encerrar. O fl não está errado quando reporta CLEAN_NOOP: o build é que pode nunca ter entrado no escopo que ele sabe liberar."
+    "text": "O principio permanece: CLEAN_NOOP e resultado terminal legitimo, inclusive quando os recursos ja foram reclamados numa passagem anterior autorizada. Ausencia de bytes NAO e prova de vazamento, e nao se deve fabricar trabalho para transformar o status em CLEAN. A suspeita so se justifica sob a conjuncao: primeira finalizacao apos um build conhecido desta Task, sem limpeza autorizada anterior, slot de cache registrado e esperado, e bytes_before = 0 — entao SUSPECT_UNCOVERED_BUILD, investigar antes de encerrar.\n\nA mecanica citada abaixo e HISTORICA. O finalizador `fl` e o slot de cache recuperado de `fl --report (kind:cache)` pertenciam ao layout aposentado pela Issue #536 e nao existem mais como autoridade corrente. Hoje o layout de Task e um root unico observado, e a cobertura se confirma pelo observador corrente da Forja, nunca por concatenacao a partir do TASK_ID.\n\nA causa estrutural do sintoma esta em [[B-MZIASE5A2H40]]: quando quem provisiona e quem finaliza mantem listas separadas, um build gravado fora do escopo registrado e o resultado esperado, nao o acidente. Onde uma unica tabela de recursos alimenta provisionamento e finalizacao, esse descompasso deixa de ser escrivivel — e a leitura correta de CLEAN_NOOP deixa de depender de vigilancia."
   },
   "id": "B-RJQF4F92ZAF8",
   "observed_at": "2026-08-26T00:00:00Z",
@@ -50,11 +50,11 @@
     "book:B-ZI6WVTHJ4QMK"
   ],
   "revision": {
-    "hash": "75ea0abab1bf767c00caef775aff5def56f1ba341261d9a017407651ae650a08",
-    "number": 2,
-    "parent_hash": "fb3cbc23655b4bca3eaf7a4606736ae388728e973384b43bc0ad22f4586ee744",
-    "reason": "review do Guia na PR #524: CLEAN_NOOP estava generalizado; vira condicao discriminante",
-    "updated_at": "2026-08-26T18:26:27Z",
+    "hash": "cfa5aaae70145d819982d244f81cc1295f36d5814af55510dd8e06fcb0576a67",
+    "number": 3,
+    "parent_hash": "75ea0abab1bf767c00caef775aff5def56f1ba341261d9a017407651ae650a08",
+    "reason": "fl e o slot de cache do layout antigo foram aposentados pela #536; principio preservado, mecanica marcada como historica, causa estrutural apontada",
+    "updated_at": "2026-08-28T00:44:47Z",
     "updated_by": "amara"
   },
   "schema_version": 1,

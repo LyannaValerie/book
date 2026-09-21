@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-09-03T04:07:37Z",
+  "created_by": "velina",
+  "epistemic": "ASSERTED",
+  "from": "B-QI61VCL1T4I9",
+  "id": "R-1776E62D570BF95D",
+  "oracle": "os dois cobrem harness de mutacao; este trata da restauracao entre rodadas, aquele do custo por mutante",
+  "to": "B-RDK70RINUAW4",
+  "type": "references"
+}

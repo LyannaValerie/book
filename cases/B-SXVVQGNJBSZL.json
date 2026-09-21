@@ -1,0 +1,77 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica a caminho puramente informativo, onde degradar é correto.",
+    "Bloquear por toda ilegibilidade pode tornar a operação impossível num host multiusuário; nesse caso declare o ESCOPO da prova na própria saída em vez de fingir cobertura total."
+  ],
+  "cues": [
+    "alias de modulo",
+    "allowlist fechada",
+    "allowlist vazia",
+    "ausencia de evidencia",
+    "capacidade de recusar",
+    "conversao de predicado",
+    "corrigi num lugar e faltou no outro",
+    "defesa contornavel",
+    "escopo calculado",
+    "escopo do gate",
+    "except OSError continue",
+    "fail-open",
+    "fecho transitivo",
+    "ficou mais permissivo apos a correcao",
+    "gate por lista de nomes",
+    "gate que certifica sem ler",
+    "gate sintatico",
+    "isencao estrutural",
+    "oraculo comportamental",
+    "oraculo comportamental de comando",
+    "prova de ausencia",
+    "segue symlink",
+    "sentinela de chamada",
+    "symlink pendente",
+    "varredura de except"
+  ],
+  "discriminating_probe": {
+    "action": "listar todos os `except` dentro das funções que geram a prova e verificar, para cada um, se o caminho de erro adiciona incerteza ao resultado ou apenas continua",
+    "observable": "existe pelo menos um `except` cujo ramo de erro não altera o valor devolvido pela função de prova"
+  },
+  "environment": {
+    "component": "Forja",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Issue #536: rodadas adversariais 1, 2 e 3 encontraram o mesmo fail-open em readlink(cwd/exe/root), listdir(fd) e readlink(fd) de processos_no_root, alem de mountpoints devolvendo set() vazio. A varredura final dos except nas funcoes de prova mostrou 13 sites, todos reclassificados.",
+      "oracle": "enumeracao mecanica dos except por funcao apos a correcao",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a01/memory/adversarial-round3.jsonl"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Ao corrigir um fail-open, nao corrija o site: varra a classe. Enumere TODO `except` e todo ramo de erro das funcoes que produzem prova e classifique cada um em tres categorias — (a) corrida legitima, e so `FileNotFoundError`/ENOENT qualifica; (b) dado cosmetico que nao entra na prova; (c) evidencia, que precisa contaminar o resultado com incerteza em vez de sumir. Prefira capturar a excecao estreita e deixar as demais subirem, e prove a varredura por enumeracao mecanica em vez de leitura.\n\nAmplie a varredura alem do `except`: o mesmo fail-open se disfarca de `if not X: continue`, de `return []` quando um diretorio nao existe, e de codigo de retorno ignorado. Qualquer ramo que faca a funcao concluir ausencia sem ter olhado pertence a mesma classe.\n\nE o alvo mais provavel da proxima instancia e o codigo que voce acabou de escrever para DETECTAR o problema. Medido em cinco rodadas adversariais consecutivas sobre a mesma ferramenta: as duas ultimas instancias estavam nas funcoes adicionadas para encontrar residuo — um detector de worktree orfa que pulava symlink, tipo inesperado e marcador ausente, isto e, exatamente os estados residuais que ele existia para achar. Depois de escrever um detector, aplique a varredura a ele primeiro.\n\nRodadas 8-10 sobre a mesma ferramenta acrescentaram a licao sobre a DEFESA, nao sobre o defeito. Ao escrever o gate que impede a classe de voltar, duas coisas o esvaziam por construcao:\n\n(1) ESCOPO ENUMERADO A MAO ENVELHECE. Um gate que lista as funcoes criticas por NOME cobre o codigo do dia em que foi escrito. A rodada 10 passou por um desses com um helper externo trivial, e mostrou que tres provas reais do caminho destrutivo — a que prova ausencia de symlink nos componentes, a que exige as raizes e a que lista os slots — nunca estiveram na lista. Derive o escopo: fecho transitivo de chamadas a partir das entradas, computado da propria fonte, para que uma funcao nova entre no gate ao ser chamada e nao quando alguem lembrar. Isencao pode existir, mas declarada com motivo e testada (a isenta nao pode chamar quem destroi).\n\n(2) GATE SINTATICO NAO PROVA PROPRIEDADE COMPORTAMENTAL. `any(raise)` e `any(.append)` no corpo do `except` parecem provar que o erro chega ao chamador; nao provam. Passam um `raise` morto sob `if False` e um `append` numa lista descartada, e recusam `return [*achados, msg]`, que e tratamento correto — falso negativo e falso positivo na mesma heuristica. A propriedade e observavel: force a inspecao a falhar e exija o erro no VALOR DEVOLVIDO. Mantenha a regra sintatica como tripwire barato, declarada como tripwire, e deixe o oraculo comportamental decidir.\n\nRodada 11 fechou o argumento sobre ESCOPO, e a conclusao inverte o conselho anterior. Foram tres escopos e tres fugas na mesma ferramenta: predicado literal (rodada 8), lista de sete nomes (rodada 10) e fecho transitivo derivado da fonte (rodada 11, furado por `ALIAS_EXISTE = Path.exists` no nivel do modulo, que entra na decisao sem criar aresta de chamada). O que se repete nao e a forma da fuga; e a existencia de um ESCOPO CALCULADO. Enquanto houver uma regra dizendo quais funcoes sao criticas, existe uma forma de alcancar a funcao que a regra nao modela.\n\nEntao pare de calcular escopo: varra o MODULO INTEIRO e trate a excecao como allowlist fechada. Medido nesta ferramenta, o custo e baixo — sob escopo total, so quatro funcoes de 55 usavam o predicado, e duas eram genuinamente de relatorio. E mais barato varrer tudo e isentar duas do que manter para sempre a regra que decide o que varrer.\n\nE a isencao precisa de prova ESTRUTURAL, nao declarativa. \"Tem motivo escrito e nao chama funcao de remocao\" foi contornado isentando a propria funcao que decide a autorizacao — ela nao chama remocao, quem chama e o comando acima dela. O discriminante correto entre relatorio e decisao e a capacidade de RECUSAR: uma funcao que levanta o erro de recusa decide, e nao pode ser isenta, por mais report-only que o motivo escrito afirme.\n\nCorolario para oraculo comportamental: exija tambem que o produtor tenha sido CHAMADO. Um oraculo que injeta falha no produtor e verifica o resultado fica verde se o consumidor parar de chamar o produtor e passar a reportar tudo — a falha injetada nunca ocorre e o resultado \"esperado\" aparece por outro motivo. Sentinela de chamada mais controle positivo.\n\nRodada 12 cobrou o preco da propria correcao, e este e o aviso mais caro deste caso: CONVERTER PREDICADO PARA A PRIMITIVA TRI-STATE NAO E MECANICO. `exists()`/`is_dir()` SEGUEM symlink; `lstat` e a familia tri-state construida sobre ele NAO seguem. Onde o codigo dizia \"se ausente, crie\" e a criacao validava o ocupante, um symlink pendente deixou de contar como ausente, o ramo inteiro foi pulado, e com ele a recusa: o comando passou a responder exit 0 PROVISIONED onde o baseline respondia exit 20 DENIED. A ferramenta ficou MAIS PERMISSIVA por causa da correcao de fail-open, e a suite inteira continuou verde.\n\nAo converter, escreva as tres perguntas lado a lado: o que o predicado antigo respondia, o que o novo responde, e o que o RAMO faz com cada resposta. Se o ramo antigo era \"se ausente, crie\", a versao corrigida precisa de TRES saidas — criar, reusar e RECUSAR o ocupante invalido — porque o ocupante invalido morria por efeito colateral do ramo de criacao, nunca por checagem propria. Prova minima: rode o comando REAL nos dois SHAs contra o estado intermediario (symlink pendente, arquivo no lugar de diretorio) e compare exit code. Divergencia e regressao ate prova em contrario.\n\nE o corolario sobre ISENCAO, depois de tres regras espertas contornadas (lista de nomes, fecho transitivo, guarda declarativa): nao escreva a quarta. Esvazie a allowlist. As duas funcoes que pareciam report-only nao eram — uma levantava o erro de recusa TRANSITIVAMENTE, e a prova so via `raise` direto; a outra engolia OSError e subcontava os bytes que a Task publica como evidencia do que apagou. Onde nenhum tripwire sintatico decide (globals, setattr, vars, lambda), a defesa que resta e ORACULO COMPORTAMENTAL DE COMANDO: estado inobservavel tem de produzir recusa observavel, seja qual for o caminho pelo qual o predicado entrou."
+  },
+  "id": "B-SXVVQGNJBSZL",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Numa autoridade de destruição de recursos, o mesmo fail-open apareceu três vezes na mesma função em três rodadas adversariais consecutivas: primeiro no readlink de cwd/exe/root, depois no listdir de /proc/PID/fd, por fim no readlink de cada descritor — que seguia com `continue` sem marcar o processo como ilegível, de modo que nem o modo estrito bloqueava por ele. Uma quarta instância vivia numa função irmã (`mountpoints`), que devolvia conjunto vazio em OSError e fazia a guarda certificar ausência de mount a partir de leitura que nunca ocorreu."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Uma função fail-closed converte 'não consegui ler' em 'não há nada'. O defeito é encontrado e corrigido no ponto que a revisão apontou. Rodadas seguintes encontram o MESMO defeito em outro `except` da mesma função, e cada rodada corrige apenas o site denunciado."
+  },
+  "references": [],
+  "revision": {
+    "hash": "1bcc03e3b6d57fb97fcc948646749c87c1174cd99025adbfd42beacf5ad39da0",
+    "number": 5,
+    "parent_hash": "f97b34e25cec6db15b612634c84ac7da48a7a724a67a84b1d661c3bd32fab3bf",
+    "reason": "rodada 12: a correcao do fail-open introduziu regressao permissiva (exists segue symlink, lstat nao); e a terceira regra esperta de isencao foi contornada, entao a allowlist foi esvaziada",
+    "updated_at": "2026-08-28T18:48:06Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": null,
+  "status": "candidate",
+  "title": "Fail-open corrigido num call site sobrevive nos irmãos da mesma função"
+}

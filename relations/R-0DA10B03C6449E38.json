@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-09-09T12:34:50Z",
+  "created_by": "amara",
+  "epistemic": "OBSERVED",
+  "from": "B-OKW72761TZN0",
+  "id": "R-0DA10B03C6449E38",
+  "oracle": "o guardião do irmão somente-teste da #642 implementa os dois oráculos no mesmo arquivo de teste",
+  "to": "B-DFJ5RHVJRYPY",
+  "type": "references"
+}

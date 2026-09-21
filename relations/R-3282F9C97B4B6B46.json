@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-08-31T23:59:19Z",
+  "created_by": "velina",
+  "epistemic": "OBSERVED",
+  "from": "B-KWGYCISOV2ZD",
+  "id": "R-3282F9C97B4B6B46",
+  "oracle": "B-FE43ZWR28GUQ da a derivacao por log integral que serve de controle positivo quando a passagem isolada fica suspeita",
+  "to": "B-FE43ZWR28GUQ",
+  "type": "references"
+}

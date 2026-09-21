@@ -1,0 +1,10 @@
+{
+  "case_id": "B-QE69B829HMWW",
+  "domain": "Pinker",
+  "synthetic": false,
+  "updated_at": "2026-09-18T22:12:27Z",
+  "views": [
+    "Pinker/CLI",
+    "Pinker/Migration"
+  ]
+}

@@ -8,7 +8,13 @@
     "total vivo",
     "retain_membership_base",
     "literais congelados",
-    "regioes"
+    "regioes",
+    "nav_cartography_tests FAILED",
+    "left 611 right 609",
+    "a convergencia da Onda 8 exige exatamente",
+    "catalogo dessincronizado",
+    "navigation_catalog_not_current STALE",
+    "regiao cartografada nova"
   ],
   "discriminating_probe": {
     "action": "ler o comentário do total vivo e verificar quais asserções derivam de catálogo filtrado por membership histórico",
@@ -22,11 +28,16 @@
       "class": "OBSERVED",
       "description": "Oito asserções falharam com delta +1; registrar a chave no filtro reduziu para duas, que eram o total vivo e a contagem viva por camada",
       "source": "file:/pinker/state/tasks/issue-522-pre-505-native-parity-repair/checkpoint.yaml"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task #608 (INT-1, PR #609) confirma em segunda instancia, com delta +2: as duas keys novas (interpreter.memoria.estado-enderecavel, interpreter.intrinsecos.despacho-hospedado) derrubaram oito testes; total vivo 609->611 e duas linhas em retain_membership_base bastaram. 35/35 verdes, 13/13 projecoes FROZEN MATCH, make ci final 3325/3325. No mesmo candidato, reapontar quatro guardioes textuais deixou o catalogo STALE e bloqueou `pink verificar` ate um segundo `nav sincronizar`.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a17/logs/make-ci-3.log"
     }
   ],
   "guidance": {
     "class": "ASSERTED",
-    "text": "Diante de N falhas de contagem com o mesmo delta, registre a chave nova no filtro de membership primeiro e rode de novo. O que sobrar é o escopo corrente e só esse pode ser incrementado. Nunca incremente literal de reconstrução histórica para obter verde."
+    "text": "Diante de N falhas de contagem com o mesmo delta, registre a chave nova no filtro de membresia historica primeiro e rode de novo. O que sobrar e o escopo corrente e so esse pode ser incrementado. Nunca incremente literal de reconstrucao historica para obter verde, e nunca toque em `.pinker/projections/*.toml` FROZEN: o remedio de caminho mora na receita mutavel, com `expect_file` corrente e `to_file` historico, e os contadores da receita sao independentes dos das snapshots. Corolario medido separadamente: reapontar um oraculo textual que mora DENTRO de uma regiao cartografada muda o hash daquela regiao; rode `pink nav sincronizar` de novo depois de editar qualquer arquivo de teste cartografado e antes do gate final, senao `pink verificar --diff origin/main` bloqueia com navigation_catalog_not_current mesmo tendo dado ok antes."
   },
   "id": "B-UVBZ8KXSRKJD",
   "observed_at": "2026-08-26T00:00:00Z",
@@ -40,12 +51,12 @@
   },
   "references": [],
   "revision": {
-    "hash": "e3dd5d8ad8d3ed2f8fce962575b314ae127d1a3c8f540ce3d33757ed7693e751",
-    "number": 1,
-    "parent_hash": null,
-    "reason": "created through semantic authoring",
-    "updated_at": "2026-08-26T05:48:15Z",
-    "updated_by": "velina"
+    "hash": "e196273cb9c8544423ec961a1681d71413c4980382a328a8e9af7afc5a09d28a",
+    "number": 2,
+    "parent_hash": "e3dd5d8ad8d3ed2f8fce962575b314ae127d1a3c8f540ce3d33757ed7693e751",
+    "reason": "segunda instancia confirmando (#608/PR609); acrescenta o corolario do catalogo STALE apos reapontar guardiao cartografado",
+    "updated_at": "2026-09-06T04:49:22Z",
+    "updated_by": "amara"
   },
   "schema_version": 1,
   "scope": {

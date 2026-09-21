@@ -1,0 +1,86 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando as duas implementacoes divergem hoje: ai a unidade e correcao de comportamento, nao consolidacao de autoridade, e a preservacao observavel deixa de ser o criterio.",
+    "Nao autoriza empurrar para o contrato compartilhado a superficie inteira do dominio; U-08 moveu a unidade de contagem e indexacao e deixou busca, divisao, substituicao e caixa onde estavam.",
+    "Nao diz nada sobre cobertura de cartografia do crate novo: um contrato sob runtime/ nasce fora das raizes oficiais e permanece explicitamente nao validado (B-1AT0Q9MBPAV5, #709).",
+    "Nao substitui evidencia nativa dirigida: paridade com metade nativa pulada em silencio continua sendo o risco da #527 e de B-QOS3720QJJSH."
+  ],
+  "cues": [
+    "contrato puro compartilhado",
+    "duas autoridades semanticas",
+    "interpretador e runtime nativo",
+    "AUTHORITY_CONSOLIDATION",
+    "paridade nao constrange autoridade compartilhada",
+    "ABI publica inalterada",
+    "pinker_verso_contract",
+    "LAW-08",
+    "oraculo estrutural",
+    "DESCRIPTIVE_CURRENT"
+  ],
+  "discriminating_probe": {
+    "action": "declarar a regra uma vez num crate puro sob runtime/ (sem I/O, sem tipo do compilador, sem ABI, recebendo &str), fazer os dois consumidores chamarem essa declaracao, e entao injetar no contrato compartilhado a mutacao classica (usar o indice logico como deslocamento de byte) observando o que o teste de paridade responde",
+    "observable": "a paridade continua verde sob a mutacao no contrato compartilhado, porque os dois consumidores erram juntos; so um oraculo com valor esperado proprio sobre texto discriminante (ASCII + latino pre-composto + escalar fora do BMP + sequencia combinante) fica vermelho"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Diff de d066563: runtime/pinker_rt/src/lib.rs perde verso_codepoint_byte_offset e passa a chamar pinker_verso_contract; nenhuma assinatura no_mangle extern C alterada; src/interpreter/hosted_intrinsics.rs chama a mesma declaracao.",
+      "source": "git:d066563dca978d90e846ca5a7f46b20f459ba3a0"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "10 controles e 6 injecoes de sensibilidade, com MUTANTS_PERSISTED=false, registrados no fechamento de U-08.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a30/artifacts/u08-controls-and-sensitivity.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Evidencia nativa estrita no FINAL_HEAD com native_executed=true, exit e stdout identicos nos dois modos e sha256 da libpinker_rt.a registrado.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a30/artifacts/logs/law08-strict-native-evidence.log"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Numa consolidacao de autoridade, trate o teste de paridade existente como evidencia que muda de significado no momento da consolidacao, nao como gate herdado. Antes: ele detectava divergencia entre duas decisoes. Depois: as duas decisoes viraram uma, e paridade verde passa a ser consequencia estrutural, nao observacao. Mantenha o teste (ele ainda pega uma reintroducao de decisao local) mas acrescente duas coisas: um oraculo com valor esperado proprio sobre texto que discrimine a regra, e injecoes de sensibilidade feitas dentro do contrato compartilhado, provando que a mutacao la deixa o conjunto vermelho. Duas verificacoes baratas separam o ganho real (uma autoridade) da ilusao (dois consumidores que concordam porque compartilham o mesmo defeito). Sobre a forma: um contrato puro que recebe o minimo comum aos dois lados (&str) consolida a decisao sem tocar ABI publica nem representacao fisica, que continuam podendo divergir."
+  },
+  "id": "B-7K5R5MKQ8AOF",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Em 0975663 / main d066563: a declaracao unica em pinker_verso_contract (tamanho_em_escalares, escalar_em, fronteira_de_escalar) passou a ser consumida pelo interpretador e pelo pinker_rt; verso_codepoint_byte_offset local desapareceu dos dois lados; nenhum simbolo no_mangle extern C mudou de assinatura e o layout [u64 len][bytes] do verso ficou intacto. O diff no runtime e so troca de corpo de funcao. CI na main pos-merge verde (run 35478568229). O teste de paridade foi mantido como oraculo de LAW-08 com papel DESCRIPTIVE_CURRENT e acompanhado de controles com valor esperado independente e de injecoes de sensibilidade aplicadas no proprio contrato, nao nos consumidores."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A regra 'indice e tamanho de verso contam Unicode scalar values' era decidida duas vezes: o interpretador com chars().count() e char_indices(), o runtime nativo varrendo bytes que nao sao continuacao UTF-8 mais um verso_codepoint_byte_offset local. Mesmo resultado, duas autoridades. O teste de paridade interpretador-vs-nativo passava e era lido como prova da regra. Ele nunca provou a regra: provava so que os dois lados concordavam, o que e vacuamente verdadeiro se ambos errarem igual, e que tambem continua verdadeiro depois da consolidacao, quando os dois lados passam a compartilhar qualquer defeito do contrato unico."
+  },
+  "references": [
+    "book:B-1AT0Q9MBPAV5"
+  ],
+  "revision": {
+    "hash": "e5afc2c79b8dd643e075c9c0b44b80cc286e58ad1b5732f7a558cc6c42d40ee2",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-20T01:23:35Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "runtime/pinker_verso_contract/src/lib.rs",
+      "runtime/pinker_rt/src/lib.rs",
+      "src/interpreter/hosted_intrinsics.rs",
+      "tests/law08_text_counting_parity_tests.rs"
+    ],
+    "conditions": [
+      "uma mesma regra semantica existe duas vezes porque um consumidor nao pode depender do outro (runtime nativo nao pode depender do crate do compilador)",
+      "as duas implementacoes concordam por comentario e por teste de paridade, nao por construcao",
+      "a unidade e AUTHORITY_CONSOLIDATION: o comportamento observavel deve ser preservado"
+    ]
+  },
+  "status": "candidate",
+  "title": "Consolidar a regra duplicada num contrato puro reduz duas decisoes a uma, mas o teste de paridade que provava a concordancia deixa de provar correcao"
+}

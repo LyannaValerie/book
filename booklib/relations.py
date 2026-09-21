@@ -44,16 +44,49 @@ def validate_relation(edge: Any) -> dict[str, Any]:
     return edge
 
 
-def add_relation(root: Path, source: str, kind: str, target: str, epistemic: str, oracle: str | None, actor: str, now: str | None = None) -> dict[str, Any]:
+def add_relation(
+    root: Path,
+    source: str,
+    kind: str,
+    target: str,
+    epistemic: str,
+    oracle: str | None,
+    actor: str,
+    now: str | None = None,
+    *,
+    task_id: str | None = None,
+    require_task: bool = False,
+    operation_id: str | None = None,
+) -> dict[str, Any]:
+    from . import mutation, tasks
+
+    tasks.require_association(root, task_id, require=require_task, allow_finished=True)
     semantic = {"from": source, "type": kind, "to": target, "epistemic": epistemic, "oracle": oracle}
-    with lock(root, "relations"):
+
+    def plan() -> dict[str, Any]:
+        idempotent = False
+        edge = None
         for existing in load_relations(root):
             if all(existing[key] == value for key, value in semantic.items()):
-                return {"ok": True, "operation": "relate", "relation": existing, "idempotent": True}
-        base = {**semantic, "created_at": now or utc_now(), "created_by": actor}
-        edge = {"id": "R-" + digest(base)[:16].upper(), **base}; validate_relation(edge)
-        path = root / "relations" / f"{edge['id']}.json"; atomic_write(path, edge)
-    return {"ok": True, "operation": "relate", "relation": edge, "idempotent": False}
+                edge, idempotent = existing, True
+                break
+        if edge is None:
+            base = {**semantic, "created_at": now or utc_now(), "created_by": actor}
+            edge = {"id": "R-" + digest(base)[:16].upper(), **base}
+            validate_relation(edge)
+        return {
+            "writes": [{"path": f"relations/{edge['id']}.json", "value": edge}],
+            "event": {"summary": edge["id"], "data": {"relation_id": edge["id"]}},
+            "result": {"ok": True, "operation": "relate", "relation": edge, "idempotent": idempotent},
+        }
+
+    return mutation.guarded(
+        root, kind="relation_add", event_kind="RELATION_ADD", task_id=task_id,
+        require_task=require_task, operation_id=operation_id,
+        request=semantic,
+        store_lock=lambda: lock(root, "relations"),
+        plan=plan,
+    )
 
 
 def references(root: Path, identifier: str, *, depth: int = 1, maximum: int = 100) -> dict[str, Any]:

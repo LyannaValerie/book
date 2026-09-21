@@ -1,0 +1,12 @@
+{
+  "case_id": "B-ACHM9T7TIDFG",
+  "domain": "Pinker",
+  "synthetic": false,
+  "updated_at": "2026-09-18T07:06:47Z",
+  "views": [
+    "pinker-v0",
+    "pinker-v0/Trama",
+    "pinker-v0/ProjectState",
+    "pinker-v0/Testes"
+  ]
+}

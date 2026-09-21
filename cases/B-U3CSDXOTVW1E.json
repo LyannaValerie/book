@@ -1,0 +1,70 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando o novo executor e o mesmo perfil UNIX: ali nao ha conflito de dono.",
+    "Nao autoriza apagar nada fora do padrao *.lock, nem o target inteiro, nem alterar dono ou permissao de forma recursiva.",
+    "Se existir arquivo nao-gravavel que nao seja lock, isso e outro problema e merece parada, nao remocao."
+  ],
+  "cues": [
+    "failed to create or modify target/doc/.lock",
+    "couldn't generate documentation Permission denied",
+    "os error 13 no doc-check",
+    "locks 0600 do executor anterior",
+    "target herdado apos failover",
+    "gate tardio quebra depois de build e testes verdes"
+  ],
+  "discriminating_probe": {
+    "action": "listar os arquivos do target que pertencem ao executor anterior e nao concedem escrita ao grupo, e conferir se todos sao *.lock",
+    "observable": "o diretorio e group-writable mas os arquivos de lock sao 0600; a contagem de nao-.lock e zero, o que autoriza a remocao como recurso efemero"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Red 1 da targeted closure da #640, com o trecho do runner e nota de integridade sobre a parte do log que a reexecucao sobrescreveu.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a31/artifacts/red-1-doc-lock-permission.txt"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Depois de transferir o executor, trate o `target` herdado como recurso EPHEMERAL da Task, que agora esta sob o contexto ativo do novo executor. Antes de rodar o gate longo, remova os locks orfaos: `find <target> ! -user <voce> ! -perm -g+w -type f -name '*.lock' -delete`. Verifique ANTES que nenhum arquivo nao-gravavel esta fora do padrao *.lock; se houver, pare e reporte em vez de apagar. Nao apague o target inteiro (desperdicia o build), nao mude dono nem permissao recursivamente, e nao use sudo -u para o perfil anterior. Se o gate ainda recusar, o problema nao e este."
+  },
+  "id": "B-U3CSDXOTVW1E",
+  "observed_at": null,
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "find <target> ! -user <novo agente> ! -perm -g+w -type f, separando os que nao terminam em .lock; depois reexecutar o gate",
+    "text": "Task #640, slot a31, transferencia velina -> amara. O diretorio target/ e group-writable (drwxrws---), mas os arquivos de lock do cargo nascem 0600 (-rw-------), sem bit de grupo: o novo executor le o diretorio e nao consegue tocar o arquivo. Varredura: 323 arquivos do executor anterior sem g+w, e ZERO deles fora do padrao *.lock (target/doc/.lock mais os debug/incremental/*/s-*.lock). cargo build, clippy e cargo test sobrevivem porque tratam os locks incrementais de outro modo; so o rustdoc aborta. Remover os 323 locks e reexecutar deixou o gate verde (exit 0, 140 secoes ok)."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Apos transferir o executor de uma Task, `PINKER_EXIGE_NATIVO=1 make ci` falha tarde, no alvo doc-check, com `error: couldn't generate documentation: Permission denied (os error 13)` e `failed to create or modify <target>/doc/.lock`. Build, fmt, clippy e a suite inteira ja passaram, entao o vermelho nao parece de permissao: parece do ultimo alvo. O caso de failover entre agentes (B-CX0MJL9YDYOS) afirma que o novo executor opera normalmente fora dos comandos de layout, o que e verdade para git/push/PR e incompleto para o build herdado."
+  },
+  "references": [],
+  "revision": {
+    "hash": "bd7cf301e762d4d75684063fe45f772546efc940a0ccab8bafd749100b6a3db4",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-09T11:29:54Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "forja-agentes",
+      "TASK_BUILD (agentes/<slot>/target)",
+      "cargo doc / rustdoc",
+      "cargo incremental"
+    ],
+    "conditions": [
+      "a Task continua sob outro agente (perfil UNIX distinto) com o mesmo task root",
+      "o executor anterior ja rodou build/test e deixou o diretorio target populado",
+      "o novo executor esta no mesmo grupo pinker-agents, mas os arquivos de lock nasceram com modo 0600"
+    ]
+  },
+  "status": "candidate",
+  "title": "Depois do failover entre agentes, o target herdado tem locks privados do executor anterior e quebra um gate tardio"
+}

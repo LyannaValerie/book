@@ -1,0 +1,18 @@
+{
+  "domain": "modulos/tratos",
+  "external_task_ref": "pinker:issue-649-u03b-relation-reachability",
+  "finished_at": "2026-09-10T12:56:09Z",
+  "followed_refs": [],
+  "goal": "Remediar G649-01 — separar alcance de precedência na U-03B",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "G649-01 fechado pelo revisor cross-provider; residual G649-01-R1 (PREC-3) confirmado e corrigido; caso novo B-I7HCTUGZO2U1 retido",
+  "project": "pinker-v0",
+  "started_at": "2026-09-10T12:56:09Z",
+  "state": "finished",
+  "task_id": "issue-649-u03b-g649-remediation",
+  "validation": null
+}

@@ -1,0 +1,99 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando o mesmo agente retoma a propria Task: ali basta manter a geracao e nao ha DENIED de vinculo.",
+    "Nao autoriza sudo -u <outro agente> nem edicao manual do vinculo do slot; possuir credencial nao e autorizacao.",
+    "Nao autoriza retirar o active context de um agente que ainda esteja executando: confirme que o executor anterior parou.",
+    "Nao autoriza provisionar Task ou slot novo, nem apagar o worktree herdado, para obter um vinculo limpo."
+  ],
+  "cues": [
+    "task root pertence ao agente",
+    "DENIED comando mutante de layout",
+    "failover entre agentes",
+    "quota esgotada do executor anterior",
+    "active context transferido mas slot recusa",
+    "dubious ownership no worktree herdado",
+    "slot binding nao reatribuivel",
+    "generation incrementada",
+    "context residual do executor anterior permanece ACTIVE"
+  ],
+  "discriminating_probe": {
+    "action": "depois de publicar o active context da Task para o novo executor, rodar um comando mutante idempotente de layout, por exemplo forja-agentes state --task-id <task> --set ACTIVE, e comparar o agente citado no erro com o campo agent de agentes/<slot>/task.json",
+    "observable": "sai DENIED com \"task root pertence ao agente '<anterior>', nao a '<atual>'\" enquanto sudo -n /opt/pinker/bin/forja-lifecycle show ja mostra a Task correta sob o novo agente: prova que o context transferiu e o vinculo nao"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Task issue-602-parser-par-x, slot a14 provisionado por amara em 2026-09-05T04:01:34Z. Failover para velina por esgotamento de quota do executor anterior. retire do context residual de issue-600 e publish --task issue-602-parser-par-x --generation 2 confirmados pelo observador canonico; em seguida forja-agentes state --task-id issue-602-parser-par-x --set ACTIVE devolveu {\"status\": \"DENIED\", \"error\": \"task root pertence ao agente 'amara', nao a 'velina'\"} com exit 20, enquanto observe, env e verify continuaram funcionando e o worktree em b15026cf permaneceu limpo e intacto.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a14/state/checkpoint.yaml"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "A recusa vem da comparacao entre binding['agent'] e o chamador na autoridade de layout, num ponto sem comando de reatribuicao correspondente.",
+      "source": "file:/pinker/playground/ferramentas-agente/forja_agentes.py"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task issue-626-ir4-physical-decomposition, slot a25, direcao inversa (velina -> amara, geracao 1 -> 2) em 2026-09-08T00:40Z. Confirmada a mesma assimetria e, desta vez, tambem no fim da Task: com PR #627 aberta e os dois checks remotos verdes no head 32f60211, `forja-agentes seal` e `forja-agentes state --set REVIEW` sairam DENIED com a mesma mensagem, enquanto `forja-agentes verify` respondeu status OK com zero problems e o slot listado como ACTIVE. O terminal PR_GREEN_AWAITING_HUMAN_DECISION foi alcancado inteiro; o que ficou pendente foi so o EXECUTION_SEAL, registrado como bloqueio em vez de contornado.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a25/state/checkpoint.yaml"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task issue-697-trama-ta-historical-archive, slot a24, terceira ocorrencia e terceiro perfil (amara -> athenna, geracao 1 -> 2) em 2026-09-18T06:42Z. git recusou o worktree herdado com dubious ownership e safe.directory resolveu. sudo -n /opt/pinker/bin/forja-lifecycle publish --task issue-697-trama-ta-historical-archive --generation 2 publicou e o observador canonico confirmou. O context residual do executor anterior foi limpo com sudo -n /opt/pinker/bin/forja-contexto-ativo retire --agent amara --task issue-697-trama-ta-historical-archive, que arquivou em /pinker/state/active/history/amara/. forja-agentes observe/env/verify seguiram OK e forja-agentes state --task-id <task> --set ACTIVE devolveu DENIED \"task root pertence ao agente 'amara', nao a 'athenna'\" com exit 20.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a24/memory/checkpoint.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task issue-697-trama-ta-historical-archive, slot a24, fecho do bloqueio em 2026-09-18T10:24Z. O EXECUTION_SEAL ficara DENIED para athenna porque o vinculo nomeia amara. Quando amara voltou a operar a Task, publicou o proprio active context e rodou forja-agentes seal --apply no mesmo slot: status SEALED, 16136934889 bytes recuperados (target 15964815985, tmp 172102917, scratch 15987), worktree/memory/state/artifacts preservados, HEAD 51de2900de3c89e727fb1bab9753b9ccd3e22bac e branch inalterados, forja-agentes verify OK com zero problems e o slot passou de ACTIVE para SEALED. Nenhuma reatribuicao de vinculo foi necessaria nem existe.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a24/memory/checkpoint.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task issue-711-u09a-machine-relaxed-params-load-bearing, slot a31, quinta ocorrencia (velina -> athenna, geracao 1 -> 2) em 2026-09-20T03:31Z. Confirmados o safe.directory do passo 3 e a sequencia retire administrativo + forja-lifecycle publish --generation 2. Incremento novo: ao 'liquidar' o ownership do passo privilegiado, chown athenna:pinker-agents em /pinker/state/active/agents/athenna.json quebrou a autoridade — forja-contexto-ativo show e forja-lifecycle show passaram a responder {\"error\": \"autoridade nao pertence a root: ...\"}. Restaurar chown root:root devolveu ACTIVE imediatamente. Os 100 arquivos pre-existentes do historico ja eram root:root: e invariante de integridade, nao convencao frouxa.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a31/artifacts/remediation/adv-u09a-001-reconstruction.md"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "sudo -n /opt/pinker/bin/forja-lifecycle show devolve a Task correta sob o novo agente com a geracao incrementada, forja-agentes observe/env/verify continuam OK para o slot herdado, e um comando mutante de layout no mesmo slot devolve DENIED citando o agente do vinculo",
+    "text": "Trate failover entre agentes como transferencia de executor, nao de propriedade fisica do slot.\n\n1. Recupere o estado factual antes de mutar: forja-agentes observe --task-id <task>, o checkpoint em <TASK_ROOT>/state e a memoria em <TASK_ROOT>/memory.\n2. Revalide o worktree herdado contra o checkpoint (HEAD, tree, branch, git status). Divergencia e CHECKPOINT_REALITY_MISMATCH e classifica antes de qualquer mutacao.\n3. Se git recusar com 'dubious ownership', o remedio e git config --global --add safe.directory <worktree>. O diretorio e do outro agente mas o grupo pinker-agents tem escrita; nao mude dono nem permissao recursivamente.\n4. Transfira o executor pelo broker, sempre com caminho absoluto e via sudo:\n   sudo -n /opt/pinker/bin/forja-lifecycle show\n   sudo -n /opt/pinker/bin/forja-lifecycle retire\n   sudo -n /opt/pinker/bin/forja-lifecycle publish --task <task> --generation <anterior+1>\n   O retire e do proprio chamador; antes dele confirme que a Task que ele abandona TERMINOU (ver B-GRWHF1EXY330).\n   O context do executor ANTERIOR nao sai por ai: ele fica ACTIVE apontando para a mesma Task. Para limpa-lo use o writer administrativo, que aceita agente e Task explicitos e arquiva o registro:\n   sudo -n /opt/pinker/bin/forja-contexto-ativo retire --agent <anterior> --task <task>\n   So depois de confirmar que o executor anterior realmente parou: nenhum processo com cwd no task root, nenhum build ou teste vivo.\n5. Assuma que state/seal/retire de layout ficarao DENIED naquele slot. Isso nao impede alcancar PR_GREEN_AWAITING_HUMAN_DECISION, porque git, push e PR nao passam por forja-agentes. Registre o bloqueio de finalizacao no relatorio em vez de contorna-lo.\n\nNao edite agentes/<slot>/task.json na mao, nao rode nada como o outro agente via sudo -u e nao provisione um slot novo para 'consertar' o vinculo: qualquer um dos tres quebra a identidade persistente da Task ou impersona outro perfil.\n\nO EXECUTION_SEAL bloqueado pelo vinculo nao se perde: ele fica pendente. Quando o agente nomeado em agentes/<slot>/task.json voltar a operar a Task, ele publica o proprio active context e roda forja-agentes seal --apply naquele slot normalmente. Registre o bloqueio como pendencia do executor substituto em vez de contornar o vinculo, e feche-o depois pelo agente vinculado; o selo so recupera efemero reproduzivel, entao fecha-lo tarde nao custa evidencia.\n\n6. Nao aplique a liquidacao de ownership do passo privilegiado aos arquivos de active context. /pinker/state/active/agents/<agente>.json e /pinker/state/active/history/**/*.json sao root:root por integridade: a autoridade recusa o registro quando ele nao pertence a root, exatamente para que o agente descrito nao possa forjar o proprio contexto. Tirar root dali derruba forja-contexto-ativo show e forja-lifecycle show com 'autoridade nao pertence a root'; o conserto e devolver chown root:root. A regra geral de deixar dono != root e grupo pinker-agents vale para artefatos compartilhados de trabalho, nao para registros de autoridade."
+  },
+  "id": "B-CX0MJL9YDYOS",
+  "observed_at": "2026-09-05T05:00:13Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Active context e vinculo de slot sao registros separados com autoridades separadas. O active context vive em /pinker/state/active/agents/<agente>.json, o broker forja-lifecycle o escreve com identidade derivada do sudo original, e ele aceita qualquer task_id valido: retire seguido de publish --task <task> --generation <n+1> transfere o executor sem tocar no worktree. O vinculo do slot vive em agentes/<slot>/task.json, e escrito uma unica vez pelo provision e nao tem comando de reatribuicao: forja_agentes.py compara binding['agent'] com o chamador e recusa qualquer mutacao quando diferem. Consequencia pratica: apos failover entre agentes o novo executor le (observe, env, verify), opera git no worktree, faz push e abre PR normalmente, mas nao consegue rodar state --set, seal nem retire naquele slot. O contexto do agente anterior tambem permanece ACTIVE, porque forja-lifecycle retire so retira o do proprio chamador."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Depois de um failover entre perfis diferentes, publicar o active context da Task para o novo executor funciona, mas todo comando mutante de layout continua recusado. forja-agentes responde DENIED com 'task root pertence ao agente X, nao a Y'. A mensagem parece dizer que o takeover falhou, quando na verdade dois vinculos distintos estao em jogo."
+  },
+  "references": [],
+  "revision": {
+    "hash": "3e2477b85c594d5e0d7e90c12af705f3e28cdbacba7ce36a3199f295c4b0b16e",
+    "number": 5,
+    "parent_hash": "dafa5b0e70640d7e71b75b7079eea6de3d8f8890bb4a17abc269732950b165c0",
+    "reason": "quinta ocorrencia: a liquidacao de ownership nao se aplica ao active context, que e root:root por integridade",
+    "updated_at": "2026-09-20T04:05:22Z",
+    "updated_by": "athenna"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "forja-agentes",
+      "forja-lifecycle",
+      "active-context",
+      "slot-binding"
+    ],
+    "conditions": [
+      "a Task foi provisionada por um agente e precisa continuar sob OUTRO agente (perfil UNIX distinto)",
+      "o executor anterior parou por quota, interrupcao ou indisponibilidade",
+      "o task root segue ACTIVE e o trabalho no worktree precisa ser preservado"
+    ]
+  },
+  "status": "verified",
+  "title": "Failover entre agentes distintos move o active context mas nao o vinculo do slot"
+}

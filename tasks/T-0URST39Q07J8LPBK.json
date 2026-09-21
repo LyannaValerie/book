@@ -1,0 +1,33 @@
+{
+  "domain": "trama",
+  "external_task_ref": "pinker:#551",
+  "finished_at": null,
+  "followed_refs": [],
+  "goal": "Fechar o gap #551: reconstruir snapshot congelado quando a regiao historica foi removida",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [
+    "B-VQPA0OHIQZQB",
+    "B-L82QTHN2Z9EI",
+    "B-N6RVQSYWV8SR",
+    "B-T0OWGBV7U0U8",
+    "B-H3B1WS9KVE7Q",
+    "B-M5T31AWWT14D",
+    "B-GLJZSQ39GD56",
+    "B-UVBZ8KXSRKJD",
+    "B-GL30XP625RKU",
+    "B-RHSK3050R6VG",
+    "B-EPYSTACF4LNX",
+    "B-FJ6O9FMPY79O",
+    "B-LQCHKQ7ORV8Y",
+    "B-TA8TMF8B0H5S"
+  ],
+  "missing": [],
+  "next_probe": null,
+  "outcome": null,
+  "project": "pinker-v0",
+  "started_at": "2026-08-30T21:23:45Z",
+  "state": "active",
+  "task_id": "T-0URST39Q07J8LPBK",
+  "validation": null
+}

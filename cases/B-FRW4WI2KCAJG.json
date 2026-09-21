@@ -1,0 +1,66 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Do not use FIONREAD if observing it would consume bytes or if the tested platform lacks Linux pipe semantics.",
+    "Do not infer a requested input length from unrelated argv; verify the child actually receives the side-channel value.",
+    "Do not use a shared native test sandbox to infer scheduler robustness from concurrent test processes."
+  ],
+  "cues": [
+    "fixed sleep",
+    "causal synchronization",
+    "FIONREAD",
+    "pipe pressure",
+    "SIGPIPE test"
+  ],
+  "discriminating_probe": {
+    "action": "observe FIONREAD on the child stdin without calling read; pass the intended byte count through a test-only inherited environment variable",
+    "observable": "for a small write, buffered bytes reach the full count; for a larger write, buffered bytes reach the actual pipe capacity"
+  },
+  "environment": {
+    "applicability": "Linux only",
+    "baseline": "58968822f338a239786b8753ad99fc0bb76d51d9",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Issue #558 focused matrix, sensitivity protocol, CPU load probe, and warm before/after measurements.",
+      "oracle": "tests/hotfix_r5_sigpipe_tests.rs",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/issue-558-evidence.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "When a test child must not consume stdin, do not replace a fixed wait with a shorter wait or polling deadline. Derive an event from the transport: full expected occupancy proves a fitting write completed, and full actual capacity proves a larger writer is under pressure. Keep this test-only and declare any OS-specific interface."
+  },
+  "id": "B-FRW4WI2KCAJG",
+  "observed_at": "2026-09-01T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "In Issue #558, the Linux helper waited on observable pipe occupancy, not time. S1 immediate exit, S2 stdin drain, S3 early release, S4 restored sleep, and S5 removed SIGPIPE guard all turned declared tests red; the focused matrix passed under CPU saturation."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A fixed child sleep made a SIGPIPE matrix depend on elapsed scheduler time instead of proving that a parent write had completed or reached pipe pressure."
+  },
+  "references": [],
+  "revision": {
+    "hash": "53d4cf00faf2702b50496f08cade3e63e1f174d87a5247cdcf5c5bfb670c55d5",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-01T01:19:21Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "test helpers that keep a child alive while a parent writes stdin"
+    ],
+    "conditions": [
+      "Linux test may observe pipe state without consuming stdin"
+    ]
+  },
+  "status": "candidate",
+  "title": "Fixed time is not causal synchronization for a non-consuming pipe child"
+}

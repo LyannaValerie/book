@@ -1,0 +1,18 @@
+{
+  "domain": "development",
+  "external_task_ref": "pinker:#542",
+  "finished_at": null,
+  "followed_refs": [],
+  "goal": "Issue 542: decompor e reduzir agent_runner_tests",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": null,
+  "project": "pinker-v0",
+  "started_at": "2026-08-30T05:23:58Z",
+  "state": "active",
+  "task_id": "T-YNCFSQRBLWOTAYUD",
+  "validation": null
+}

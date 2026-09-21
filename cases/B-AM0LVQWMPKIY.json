@@ -1,0 +1,75 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando a unidade pedida e um dos seis alvos obrigatorios: para esses os JSON sao completos e autoritativos."
+  ],
+  "cues": [
+    "EVIDENCE_INSUFFICIENT",
+    "inventario",
+    "601",
+    "units.json",
+    "unit_costs.json",
+    "region_matrix.json",
+    "NPS-1",
+    "NPS-2",
+    "decomposicao fisica",
+    "artifact derivado"
+  ],
+  "discriminating_probe": {
+    "action": "listar os ids de units.json e contar os arquivos que os artifacts JSON cobrem; depois procurar a unidade pelo nome no documento em prosa",
+    "observable": "os JSON cobrem exatamente os alvos obrigatorios e a unidade procurada aparece so na revisao do texto"
+  },
+  "environment": {
+    "campaign": "#442",
+    "repo": "pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "units.json tem 25 ids e nenhum NPS; INVENTARIO-601.md linhas 816-840 dao regiao, range, LOC, custo de visibilidade e arquivo-alvo das duas unidades",
+      "oracle": "leitura direta dos dois artifacts",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a13/artifacts/INVENTARIO-601.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Antes de reportar EVIDENCE_INSUFFICIENT sobre artifacts de inventario, procure a unidade no documento em prosa, nao so nos JSON. Os JSON de um inventario costumam ser a saida de um script que varreu um conjunto declarado de alvos; uma unidade descoberta depois, ou fora daquele conjunto, vive na revisao do texto e nao volta para o JSON. O sinal barato de que e esse o caso: os JSON cobrem exatamente N arquivos e a unidade que voce procura e de um arquivo N+1. Verifique tambem se o documento se corrige em algum ponto -- foi a correcao que criou as duas unidades da #617. Ausencia num artifact derivado e evidencia sobre o artifact, nunca prova de que o fato nao foi medido."
+  },
+  "id": "B-AM0LVQWMPKIY",
+  "observed_at": "2026-09-07T04:00:00Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "grep -rn NPS nos artifacts de agentes/a13; python -c 'json.load(units.json)' listando ids; conferencia dos ranges contra os marcadores do arquivo em HEAD",
+    "text": "Task #617 (unidade NPS-2+1 de src/nav_projection_snapshot.rs, repo pinker-v0). NPS-1 e NPS-2 nascem na secao 9 do INVENTARIO-601.md, na correcao que o proprio documento faz ao seu rascunho: a unica decisao arquitetural que ele havia tomado sem medir era manter nav_projection_snapshot.rs grande alegando coesao, e a medicao a falsifica. A secao da a definicao factual completa: regiao trama.snapshots.parser em 1173-2275 (1 103 LOC, 3 simbolos de fronteira) para nav_projection_snapshot/parser.rs, e o mod de teste em 3204-3361 (158 LOC) para nav_projection_snapshot/tests.rs. Os dois ranges bateram sem deslocamento no baseline f038af9, e 1103+158 = 1261 reproduz exatamente o controle historico LOC_MOVED ~= 1261 citado pela Issue."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Uma Task de unidade fisica manda recuperar o corte de units.json, unit_costs.json e region_matrix.json, e parar com EVIDENCE_INSUFFICIENT se os artifacts nao sustentarem a combinacao. Os tres JSON cobrem apenas os seis alvos obrigatorios do inventario (interpreter, ir, parser, semantic, backend_s, main): units.json lista 25 ids, de INT-1 a MAIN-5, e nenhum NPS. Buscar NPS neles devolve vazio, e um executor literal reporta EVIDENCE_INSUFFICIENT sobre evidencia que existe."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a13/artifacts/INVENTARIO-601.md",
+    "file:/pinker/repo/pinker-v0/agentes/a21/artifacts/EQUIVALENCIA.md"
+  ],
+  "revision": {
+    "hash": "c70878d31cd2b1b0e69ef9f0a13e7472491b4436aecd5c2dbaee92939bda887d",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "primeiro registro, validado na Task issue-617-nps21-physical-decomposition",
+    "updated_at": "2026-09-07T04:00:00Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "inventario de decomposicao fisica da #601",
+      "artifacts units.json / unit_costs.json / region_matrix.json",
+      "campanha #442"
+    ],
+    "conditions": [
+      "a Task manda recuperar a definicao factual do corte dos artifacts da #601",
+      "a unidade pedida nao e uma dos seis alvos obrigatorios do inventario"
+    ]
+  },
+  "status": "candidate",
+  "title": "NPS-1 e NPS-2 do inventario da #601 existem so no INVENTARIO-601.md, nao nos artifacts JSON"
+}

@@ -1,0 +1,87 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao vale contra defeito de ordenacao propriamente dita: ali a entrada em ordem real e exatamente o caso que se quer proteger, e vale manter um controle separado sobre ela.",
+    "Nao autoriza descartar o controle sobre agregado: ele continua sendo o detector barato de mudanca nao intencional; o que ele nao pode e servir de prova por campo.",
+    "Tabela por campo nao substitui a rodada de mutacao; ela so torna os mutantes de drop observaveis. Sem executar os mutantes, a tabela e mais uma suite verde sem sensibilidade medida.",
+    "Nao generaliza para campos cujo valor legitimo do grupo seja sempre o do primeiro registro por contrato declarado; nesse caso 'primeiro vence' e a regra, e o controle deve afirmar isso explicitamente."
+  ],
+  "cues": [
+    "mutante de drop fica verde",
+    "mesclagem campo a campo",
+    "hash agregado como oraculo",
+    "entrada tirada da receita real",
+    "primeiro do grupo vence por acidente",
+    "controle orientado a tabela",
+    "sensibilidade 11/11 RED",
+    "absorb_override"
+  ],
+  "discriminating_probe": {
+    "action": "reordenar o grupo de entrada do controle para que o registro doador do campo sob teste seja o ultimo, e reexecutar o controle sem nenhuma mutacao",
+    "observable": "se o controle continuar verde apenas na ordem original e ficar vermelho na ordem invertida, a asercao mede a ordem da entrada; um controle que prova a mesclagem fica verde nas duas ordens e vermelho sob o mutante de drop daquele campo"
+  },
+  "environment": {
+    "baseline": "ce0ff64b85fd4e798beea4ee68488416d98ce172",
+    "repository": "LyannaValerie/pinker-v0",
+    "runner": "cargo test + harness de sensibilidade por mutante"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Fechamento do vao M8 na Task issue-685-trama-tp-projection-metadata-rename. Antes: 6 controles, mutante M2 (drop do hash na mesclagem) sem controle que o visse. Depois do controle orientado a tabela em tests/nav_projection_cli_tests.rs, sem tocar em codigo de producao: 11 campos, 11 mutantes de drop, 11 RED, 0 persistidos.",
+      "oracle": "cada mutante de drop de campo deixa vermelha a linha da tabela correspondente, e a rodada reporta persisted=0",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a12/artifacts/evidence/sensitivity-postmerge-2.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Origem do achado: revisao adversarial dirigida (CODEX_TERRA, esforco alto) sobre o head 67f0eed, FINDING-02, que classificou sete bracos de absorb_override como invisiveis a mutacao ao lado da asercao por to_hash.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a12/artifacts/adversarial-report-postmerge-2.txt"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Segunda direcao da mesma cegueira, na Task issue-693-trama-ts-projection-summary-bridge: um mutante causal pode ficar invisivel nao por ordem dos dados, mas porque o controle escolhido nunca alcanca o ramo onde o mutante mora. O mutante que sobrescrevia o destino historico preservado foi apontado para o controle que afirma justamente essa preservacao e leu verde; o construtor mutado so e alcancado quando a entrada tambem restaura identidade, e o controle certo era o da entrada combinada. A regra pratica e escolher o controle pelo caminho de execucao do mutante, nao pelo nome da propriedade.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a20/artifacts/evidence/sensitivity.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "REMEDIO VALIDADO: um unico controle orientado a tabela que percorre todos os campos mesclados, com uma linha por campo. Cada linha monta a entrada de proposito para que o doador daquele campo NAO seja o primeiro do grupo, e afere aquele campo isoladamente, nao o agregado. Em #685 a tabela cobriu 11 campos e a rodada de sensibilidade ficou 11/11 RED com 0 mutantes persistidos (head ce0ff64), contra 6 controles anteriores que deixavam sete bracos invisiveis.\n\nA regra generalizavel tem duas partes. Primeira: quando um controle usa dados reais como entrada, pergunte qual propriedade dos dados esta segurando a asercao; se a resposta for 'a ordem', o controle mede a ordem e nao a regra. Segunda: agregado (hash, contagem, comprimento, capsula) serve para detectar que algo mudou, nunca para provar que um campo especifico foi mesclado; a prova por campo exige asercao por campo. O sinal de alarme e a assimetria entre o numero de campos que a funcao mescla e o numero de campos que a suite nomeia."
+  },
+  "id": "B-4U7FMGI1K59M",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Issue #685, head 67f0eed2fae9674a25c4223a58b2aae14c5838a7: o contrato previa o mutante M2, que apaga a propagacao do hash durante a mesclagem. Nenhum dos controles existentes ficou vermelho. A investigacao mostrou que toda receita publicada coloca a regra portadora de hash na primeira posicao do grupo de coalescencia, de modo que a ordem da entrada mascarava o defeito. Sete bracos de absorb_override estavam na mesma situacao.\n\nCAUSA CONFIRMADA: dados de producao nao sao entrada adversarial. A ordem dos registros dentro do grupo e um acidente da receita, nao uma garantia; enquanto o doador de um campo for o primeiro do grupo, mesclagem e 'primeiro vence' sao indistinguiveis, e o agregado nao separa as duas hipoteses."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A funcao de absorcao mescla campo a campo os registros duplicados de uma mesma regiao. A suite cobre a funcao com entradas tiradas das receitas publicadas e afere o resultado pelo hash agregado. Um mutante que apaga a mesclagem de um campo individual continua verde: nas receitas reais o registro que carrega aquele campo ja e o primeiro do grupo, entao 'mesclar' e 'ficar com o primeiro' produzem exatamente o mesmo agregado. A cobertura parece completa por contagem de controles e nao prova nada sobre a maioria dos campos."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a12/artifacts/evidence/sensitivity-postmerge-3.txt",
+    "file:/pinker/repo/pinker-v0/agentes/a12/state/checkpoint.yaml"
+  ],
+  "revision": {
+    "hash": "3ee334157f9097590a385f80a76880e794c4073f47340d0b901552b3a0d0f61f",
+    "number": 2,
+    "parent_hash": "fe1f2ab052f9ad2cd368f116e29e9e68c8f9f214797d2095507be3e42e7c8c13",
+    "reason": "segunda direcao: mutante invisivel porque o controle nao alcanca o ramo mutado",
+    "updated_at": "2026-09-17T22:57:29Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "coalescencia de overrides por regiao resolvida",
+      "suite de controle derivada das receitas publicadas",
+      "harness de sensibilidade por mutante de drop"
+    ],
+    "conditions": [
+      "varios registros da mesma regiao sao absorvidos num unico override",
+      "o controle usa como entrada as receitas reais do repositorio",
+      "a asercao final compara um agregado (hash, contagem, capsula) e nao campo a campo"
+    ]
+  },
+  "status": "candidate",
+  "title": "Controle montado sobre a receita real nao separa mesclagem de 'o primeiro vence', e o mutante de drop de campo fica invisivel"
+}

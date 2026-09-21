@@ -1,0 +1,84 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando a fonte original nao sobrevive ao cutover: sem autoridade preservada nao ha onde ancorar, e a proveniencia declarada passa a ser a unica evidencia disponivel.",
+    "Nao autoriza ressuscitar o mecanismo de reconstrucao aposentado para ler as medidas: um leitor pequeno e especifico da secao [measures] basta, e um leitor frouxo confundiria [[rules]] com medida.",
+    "Nao promete confinamento fisico: a politica de path e lexica, e symlink no disco pertence ao estagio de apply, nao a uma verificacao somente leitura.",
+    "Nao se aplica a campo cuja capacidade continua viva: retirar um campo do contrato so e honesto quando a capacidade foi mesmo aposentada, e ai exige migracao explicita de schema."
+  ],
+  "cues": [
+    "indice do arquivo declara as proprias medidas",
+    "verificador confere payload contra o indice",
+    "recalibracao coerente de payload e indice",
+    "terceira aresta so existe no teste",
+    "controle de suite nao e garantia de produto",
+    "iterar index.entries nao ve o que foi omitido",
+    "metadata_path e payload_path como string livre",
+    "root.join de path nao validado",
+    "campo vazio que simula capacidade aposentada"
+  ],
+  "discriminating_probe": {
+    "action": "aplicar o mutante coerente: mudar os bytes do payload e, em seguida, ajustar no indice regions, length, fnv1a64 e sha256 para concordarem com os novos bytes; depois rodar o verificador de produto, nao a suite",
+    "observable": "verificacao ancorada apenas no indice responde INTACT (exit 0); verificacao ancorada no [measures] preservado responde ALTERED (exit 5) com divergencias nomeadas frozen_regions, frozen_length e frozen_fnv1a64"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Review independente na PR #699 registrou TA-R1 (ancoragem ausente), TA-R2 (conjunto historico incompleto), TA-R3 (confinamento de path) e TA-R4 (campo fantasma projection_overrides_required) sobre este HEAD revisado; a remediacao ficou em git:51de2900de3c89e727fb1bab9753b9ccd3e22bac.",
+      "source": "git:682ca31fc47122219d396c7ca6a7181dd9b7e57f"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Mutante M1 removeu as comparacoes frozen_regions/frozen_length/frozen_fnv1a64 de verify_outcome: o controle r1_recalibracao_coerente_de_payload_e_indice_nao_e_intacta ficou RED (1 falha em 22). Mutante M2 removeu require_complete_coverage de load: 3 falhas em 22. Mutante M3 enfraqueceu require_canonical_path: 2 falhas em 22. Todos revertidos, MUTANTS_PERSISTED = FALSE.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a24/memory/controls.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "docs/development/projection-snapshots-contract.md afirmava literalmente 'A terceira aresta ... e controle da suite, nao da CLI', descrevendo por escrito o defeito que a review encontrou.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a24/worktree/docs/development/projection-snapshots-contract.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Quando um cutover materializa o que antes era derivado, pergunte explicitamente QUEM decide integridade em tempo de execucao. Um indice escrito pelo proprio cutover e copia, e copia nunca e autoridade daquilo que copia: ancore a verificacao na fonte preservada que sobreviveu ao cutover, e faca o indice ser obrigado a repetir os literais dela. Duas perguntas fecham o resto. Primeira: o verificador enumera o conjunto a partir da autoridade do conjunto, ou a partir da propria lista que esta verificando? Iterar a lista nao detecta omissao; exija correspondencia um-para-um contra a autoridade enumerada, e recuse tambem arquivo estranho nessa autoridade, senao retirar um estado da historia e so renomear uma extensao. Segunda: os paths declarados sao validados antes do primeiro acesso ao disco? Use a primitiva de path ja validada do proprio repositorio em vez de escrever um parser mais fraco, e quando o naming permitir mapeamento exato exija o path canonico da propria entrada, nao apenas um path inocente. E trate como sinal o documento de contrato que descreve uma invariante como controle de suite: essa frase costuma ser a confissao escrita do defeito."
+  },
+  "id": "B-E4WHZ0GF0P84",
+  "observed_at": "2026-09-18T08:05:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Tres defeitos irmaos, todos da mesma causa: a copia escrita no cutover virou a autoridade em tempo de execucao. (1) Editar o payload e depois editar o indice para concordar com ele fechava sozinho, e pink nav projecao verificar respondia INTACT com a historia recalibrada. (2) Verificar iterando apenas index.entries nao tem como notar o que o indice deixou de declarar: retirar uma entrada junto com o seu payload deixava as restantes INTACT. (3) metadata_path e payload_path eram strings arbitrarias consumidas por root.join, sem confinamento. O mutante que acrescenta um registro ao payload e recalibra regions/length/fnv1a64/sha256 no indice foi aceito como INTACT antes da remediacao, e sai 5 depois dela."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "No cutover de TA/#697 a historia da cartografia deixou de ser reconstruida e passou a ser bytes materializados em .pinker/archive/, com um index.toml declarando regions, length, fnv1a64 e sha256 de cada estado. verify_entry media o payload contra esse indice e lia o TOML FROZEN preservado apenas para conferir metadata_sha256. A revisao independente apontou que a terceira aresta — o indice ainda dizer o que o [measures] congelado sempre disse — existia somente como assercao da suite, e o proprio documento de contrato afirmava isso por escrito: 'e controle da suite, nao da CLI'."
+  },
+  "references": [],
+  "revision": {
+    "hash": "0f0c3b4ada5ac24f6bf035a97c11c1e087d04636e9b7552af084ab2fa67f96d4",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-18T07:59:34Z",
+    "updated_by": "athenna"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "cutover arquitetural",
+      "arquivo historico",
+      "verificacao de integridade",
+      "suite de testes",
+      "trama"
+    ],
+    "conditions": [
+      "a Task substitui reconstrucao derivada por bytes materializados",
+      "um indice escrito no cutover passa a declarar as medidas que antes eram derivadas",
+      "a autoridade original dessas medidas continua preservada no repositorio"
+    ]
+  },
+  "status": "candidate",
+  "title": "Cutover que materializa uma autoridade derivada deixa a copia decidindo integridade, e o controle da terceira aresta fica na suite"
+}

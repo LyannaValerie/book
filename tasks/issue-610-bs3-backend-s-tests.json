@@ -1,0 +1,24 @@
+{
+  "domain": "Pinker/Navegacao",
+  "external_task_ref": "pinker:issue-610-bs3-backend-s-tests",
+  "finished_at": "2026-09-06T12:41:33Z",
+  "followed_refs": [],
+  "goal": "Executar BS-3: mover os dois mods de teste de src/backend_s.rs para src/backend_s/tests.rs preservando C1, C5, lowering, ABI e Trama",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "PR_GREEN_AWAITING_HUMAN_DECISION: PR #611 aberta sem merge, CI e Trama remotos verdes no 3df7416",
+  "project": "pinker-v0",
+  "started_at": "2026-09-06T12:09:08Z",
+  "state": "finished",
+  "task_id": "issue-610-bs3-backend-s-tests",
+  "validation": {
+    "oracle": "PINKER_EXIGE_NATIVO=1 make ci, sensitivity M0..M6, revisao independente cross-provider, CI e Trama remotos no head 3df7416",
+    "outcome": "todos verdes; blockers 0, majors 0",
+    "passed": true,
+    "summary": "BS-3 executada e publicada na PR #611",
+    "validated_at": "2026-09-06T12:41:33Z"
+  }
+}

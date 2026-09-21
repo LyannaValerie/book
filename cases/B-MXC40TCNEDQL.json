@@ -1,0 +1,68 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao vale para mudanca que ALTERA o diagnostico de proposito: ali o diff diferencial e o inventario do que mudou, nao um gate verde.",
+    "Nao construa o baseline no checkout-mae: use `git archive` para um diretorio do scratch da Task e um CARGO_TARGET_DIR proprio, senao a Task mutou o repo-mae depois do provisionamento.",
+    "Grafia que a superficie publica nao torna chamavel nao entra no probe; conte-as e diga por que, em vez de deixar o total silenciosamente menor."
+  ],
+  "cues": [
+    "PUBLIC_BEHAVIOR_CHANGE",
+    "diagnostico byte a byte",
+    "binario do baseline",
+    "diff diferencial",
+    "cobertura textual da suite",
+    "pink --check"
+  ],
+  "discriminating_probe": {
+    "action": "git archive <baseline> | tar -x -C <scratch>/baseline; construir com CARGO_TARGET_DIR proprio; rodar `pink --check` do baseline e do HEAD sobre o mesmo programa e comparar stdout+stderr com o caminho do arquivo normalizado",
+    "observable": "diferenca de byte em qualquer par revela mudanca de superficie publica que nem a suite nem a leitura do diff pegariam"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "107 grafias, 203 casos de aridade e tipo, zero divergencia entre o pink do baseline 658cb1be e o pink do HEAD da Task",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a04/artifacts/diff-diagnosticos-c1.json"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "artifacts/diff-diagnosticos-c1.json: 107 grafias, 203 casos, identico=true, com o binario do baseline reportando binary_commit igual ao SHA do baseline.",
+    "text": "Quando a Task troca a FORMA como um diagnostico e montado, e nao o seu conteudo, meça a cobertura textual da suite antes de acreditar nela: conte quantas grafias tem assercao de texto exato e compare com quantas mudaram de caminho de codigo. Se a cobertura for parcial, construa o binario do baseline dentro do namespace da Task e faca o diff diferencial — e o unico oraculo que nao compartilha premissa com a implementacao nem com a revisao estatica. Normalize o caminho do arquivo temporario na saida antes de comparar, senao todo caso diverge por ruido."
+  },
+  "id": "B-MXC40TCNEDQL",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Construir o binario do baseline no namespace da propria Task e comparar `pink --check` das duas pontas custa cerca de um minuto e cobre a superficie inteira. Dois erros bastam por grafia e nao precisam de literal complicado: a checagem de aridade dispara antes de qualquer argumento ser tipado, entao N+1 literais escalares servem para todas; e a checagem de tipo dispara no argumento 1, entao basta trocar o literal do primeiro parametro. Resultado: 107 grafias, 203 casos, zero divergencia de byte."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Uma Task substitui 110 blocos manuais de checagem semantica por uma checagem generica dirigida por tabela. A suite fica verde e a comparacao estatica do texto das mensagens tambem fecha, mas nenhuma das duas prova que o compilador emite os mesmos bytes: a suite so assere o texto exato de 52 das 110 grafias, e a comparacao estatica e uma segunda derivacao do mesmo raciocinio que produziu o codigo."
+  },
+  "references": [],
+  "revision": {
+    "hash": "d7c544cad98b0f0057a5922063e1cf87e6547133bd22eca7ae787515e934d2c4",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-03T20:19:19Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "diagnosticos",
+      "semantic",
+      "superficie publica",
+      "harness de paridade com baseline"
+    ],
+    "conditions": [
+      "Task substitui blocos manuais por checagem dirigida por tabela e precisa afirmar PUBLIC_BEHAVIOR_CHANGE = NONE"
+    ]
+  },
+  "status": "candidate",
+  "title": "Consolidar tabela de fase e barato; provar que o diagnostico nao mudou exige o binario do baseline"
+}

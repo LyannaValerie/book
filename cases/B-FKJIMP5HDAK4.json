@@ -1,0 +1,77 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao serve para justificar apertar o validador: se o contrato aceito designa PRESERVATION, apertar e o risco nomeado, nao a entrega.",
+    "Nao vale quando a unidade de fato pede compatibilidade estrita; ai a tabela removida e so metade do trabalho e a projecao tambem precisa mudar."
+  ],
+  "cues": [
+    "excecao removida mas comportamento igual",
+    "Unknown aceita qualquer tipo",
+    "criterio derivado da assinatura",
+    "zero excecoes justificadas",
+    "type_to_stack",
+    "ensure_compatible"
+  ],
+  "discriminating_probe": {
+    "action": "enumerar toda a funcao de projecao de tipo e todo ponto que injeta o curinga, e contar as posicoes afetadas na base e no candidato",
+    "observable": "delta zero de posicoes curinga prova que a unidade mudou politica de excecao, nao comportamento de compatibilidade"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "censo das quatro autoridades que produzem compatibilidade Unknown efetiva, com contagem base/HEAD (22 de 179 posicoes nos dois lados, delta 0)",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a37/artifacts/probes/machine-unknown-compatibility.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "achado adversarial ADV-U09B-001 e triagem do Guide que o classificou como BLOCKING_TASK_CONTRACT_EVIDENCE com product_regression = NOT_ESTABLISHED",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a37/memory/adversarial.jsonl"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "documento de criterio corrigido, que separa politica de excecao de comportamento de compatibilidade e retira as tres afirmacoes falsas",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a37/artifacts/u09b-criterion.md"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "contar, nos dois commits, quantas posicoes de parametro declaradas projetam para o valor curinga; se o delta e zero, nenhuma afirmacao de estrita discriminacao pode ser feita",
+    "text": "Separe explicitamente quatro autoridades antes de escrever a evidencia: (1) a politica de excecao explicita da tabela, (2) a projecao de tipo declarado para tipo de pilha, (3) o curinga de compatibilidade, (4) qualquer autoridade que injete o curinga por fora da assinatura. Diga qual delas a unidade mudou e afirme das outras que nao mudaram, com contagem medida nos dois lados. A frase segura e 'excecoes explicitas de grafia/posicao = 0'; a frase insegura e 'nenhuma excecao' ou 'le a assinatura e nada mais'. E antes de apertar o comportamento para tornar a prosa verdadeira, leia o contrato aceito: se ele diz PRESERVATION e carrega uma invariante do tipo 'nenhum programa hoje aceito passa a ser recusado', apertar a projecao VIOLA o contrato em vez de cumpri-lo."
+  },
+  "id": "B-FKJIMP5HDAK4",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Em #712/U-09B a remocao de machine_relaxed_params eliminou 10 excecoes explicitas de posicao, e mesmo assim 22 das 179 posicoes de parametro declaradas continuaram projetando para StackValueType::Unknown, numero identico na base e no candidato. Alem disso os tres acessores de saida_processo seguem inseridos com um vec![Unknown] fixo, fora de qualquer assinatura declarada. O achado MAJOR ADV-U09B-001 atacou exatamente a frase da evidencia, nao o codigo: introduced_by_candidate = FALSE, product_regression = NOT_ESTABLISHED."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Uma unidade formal remove uma tabela explicita de excecoes de um validador e a evidencia descreve o resultado como 'nenhuma excecao' e 'a maquina le a assinatura declarada e nada mais'. Essas duas frases falam de politica de excecao, mas soam como uma afirmacao sobre discriminacao de tipos. Se o validador projeta varias variantes de tipo para um valor curinga, e se a comparacao de compatibilidade aceita sempre que qualquer um dos lados e o curinga, o relaxamento efetivo sobrevive intacto a remocao da tabela. A revisao adversarial acerta o alvo imediatamente: um programa que passa o handle errado continua sendo aceito, antes e depois."
+  },
+  "references": [],
+  "revision": {
+    "hash": "f4694e19e72f7e91d6c24814debca20cba2502964b5f88030b67b4db864c67fa",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "caso novo de #712/U-09B",
+    "updated_at": "2026-09-20T11:56:00Z",
+    "updated_by": "athenna"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "validador de maquina abstrata",
+      "registry de intrinsecas",
+      "evidencia de unidade formal"
+    ],
+    "conditions": [
+      "unidade cujo objetivo e substituir uma lista explicita de excecoes por um criterio derivado da assinatura",
+      "o validador projeta tipos declarados para um tipo de pilha e trata um valor curinga como compativel com qualquer coisa"
+    ]
+  },
+  "status": "candidate",
+  "title": "Remover a tabela de excecoes nao torna o validador estrito: a projecao de tipo e o curinga Unknown continuam aceitando"
+}

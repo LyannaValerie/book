@@ -1,0 +1,69 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao apague as sondas enquanto o processo do revisor estiver vivo: elas sao o workspace da revisao em curso.",
+    "Nao trate isso como falha do revisor. O brief e que nao fixou o espaco de sonda; o contrato do #535 ja diz que probes sao descartaveis e isolados, sem dizer onde.",
+    "Nao use isso para invalidar o veredito adversarial inteiro. Vale reproduzir os achados materiais; o que perde confiabilidade e especificamente o que foi medido depois do esgotamento."
+  ],
+  "cues": [
+    "tmpfs cheio",
+    "ENOSPC",
+    "adversarial workspace-write",
+    "sonda descartavel",
+    "clone do worktree",
+    "535"
+  ],
+  "discriminating_probe": {
+    "action": "rodar df -h no filesystem de sonda no instante em que o adversario reporta um resultado verde",
+    "observable": "0 byte livre significa que o verde e indistinguivel de build/teste abortado, e o resultado precisa ser reproduzido pelo PRIMARY em espaco proprio"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Revisao adversarial da Task #653/U-02 via codex exec --ephemeral --model gpt-5.6-terra --sandbox workspace-write. Sete clones do worktree em /tmp (a38-u02-d6-baseline 611 MB, authority-probe-red 601 MB, d5-probe-red 601 MB, d5-probe 601 MB, d4-probe-red 601 MB, d4-probe 601 MB, d6-head 403 MB) contra tmpfs de 3.9 GB. O MAJOR reportado por ele foi depois reproduzido pelo PRIMARY em espaco proprio e confirmado, mas o diff que ele imprimiu como evidencia era de celula errada e nao da celula concordante que sustentava o achado.",
+      "oracle": "du -sx /tmp/* e df -h /tmp antes e depois da remocao",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a38/artifacts/adversarial-session.log"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "No brief adversarial, fixe o espaco de sonda dentro do root da Task — <TASK_ROOT>/scratch ou <TASK_ROOT>/tmp — e proiba explicitamente clonar o worktree para /tmp. Peca tambem que cada sonda seja removida ANTES da proxima, em vez de no fim. Antes de ler qualquer verde de sensibilidade vindo de sessao adversarial, confirme espaco em disco no momento da medicao: verde obtido sob ENOSPC nao e verde, e cai na mesma classe de 'sensitivity falhando pelo motivo errado'. Do lado do PRIMARY, redirecionar saida para <TASK_ROOT> restaura a operacao sem esperar limpeza, e limpar as copias so depois de o processo do revisor ter encerrado evita corromper a revisao em curso."
+  },
+  "id": "B-9U765A3T4X0Q",
+  "observed_at": "2026-09-12T00:00:00Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "df -h /tmp durante a revisao e du -sx /tmp/* por diretorio de sonda; depois remocao das copias e df novamente",
+    "text": "Task #653/U-02, slot a38. `du -sx` mostrou sete diretorios a38-u02-* entre 403 MB e 611 MB; `df -h /tmp` em 3.9G/3.9G/0/100%. O PRIMARY passou a receber 'the temp filesystem ... is full (0MB free)' em toda chamada de shell e contornou redirecionando saida para <TASK_ROOT>/tmp. O adversario ainda entregou o veredito, mas afirmou ter removido as copias e elas continuavam la; a limpeza foi feita pelo PRIMARY depois do encerramento do processo, devolvendo o tmpfs a 1% de uso."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "O brief de revisao adversarial pede probes e mutacoes temporarias isoladas, o que esta certo. Sem dizer ONDE elas moram, o revisor copia o worktree inteiro uma vez por ataque. Sete copias de ~600 MB encheram um tmpfs de 3.9 GB, e a partir dali qualquer medicao dele roda sobre um filesystem sem espaco: build e teste passam a falhar por ENOSPC e o resultado nao distingue 'a injecao nao foi detectada' de 'a suite nao rodou'. O PRIMARY tambem perde a captura de stdout, porque o harness escreve no mesmo tmpfs."
+  },
+  "references": [],
+  "revision": {
+    "hash": "ffd950134c2c9496da10957248264f993dbfd721036f00feac75320bb56829b5",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-12T00:49:33Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "#535 revisao adversarial",
+      "codex exec --sandbox workspace-write",
+      "/tmp tmpfs",
+      "sondas de falsificacao"
+    ],
+    "conditions": [
+      "o brief manda o adversario materializar mutacoes descartaveis e nao fixa onde o espaco de sonda dele vive"
+    ]
+  },
+  "status": "candidate",
+  "title": "Revisor adversarial com sandbox workspace-write clona o worktree em /tmp por sonda e esgota o tmpfs"
+}

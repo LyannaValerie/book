@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-09-05T02:54:53Z",
+  "created_by": "amara",
+  "epistemic": "OBSERVED",
+  "from": "B-2GHYCJPMQ2JK",
+  "id": "R-1E92BD5D89D8574B",
+  "oracle": null,
+  "to": "book:B-D3R0F3WSMJYR",
+  "type": "references"
+}

@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-08-27T22:30:16Z",
+  "created_by": "amara",
+  "epistemic": "OBSERVED",
+  "from": "B-EPYSTACF4LNX",
+  "id": "R-D04944D00DA10021",
+  "oracle": "a execucao verde do mesmo SHA e o que responde a armadilha do make parar no primeiro alvo",
+  "to": "B-6N2QI4VTT9TO",
+  "type": "references"
+}

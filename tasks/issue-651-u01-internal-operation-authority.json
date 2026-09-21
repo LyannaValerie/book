@@ -1,0 +1,24 @@
+{
+  "domain": "oráculo metamórfico de autoridade única",
+  "external_task_ref": "pinker:issue-651-u01-internal-operation-authority",
+  "finished_at": "2026-09-11T22:41:02Z",
+  "followed_refs": [],
+  "goal": "Fechar G651-02-DIRECTIONAL-COVERAGE: prova permissiva para F1, F3 e F4 no oráculo metamórfico do contrato de operações internas",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "dois casos retidos e validados; a Task de engenharia para no limite de decisao humana com G651-02 pendente de fechamento semantico do Guia",
+  "project": "pinker-v0",
+  "started_at": "2026-09-11T22:39:51Z",
+  "state": "finished",
+  "task_id": "issue-651-u01-internal-operation-authority",
+  "validation": {
+    "oracle": "sequencia causal de cinco estados de P-F3 e P-F4, com a duplicata aditiva concorde como controle positivo, sobre o oraculo metamorfico da #651",
+    "outcome": "as duas remediacoes foram validadas por execucao no HEAD 50e56373990ff6bc07c0050361192e2aa338516f: 395 obrigacoes direcionais, 0 sem prova, e RED pela causa certa quando a duplicata volta",
+    "passed": true,
+    "summary": "B-HU48FW8U40QH e B-MEU1RPMXYN1G nasceram de dificuldade reproduzida e medida, nao de hipotese",
+    "validated_at": "2026-09-11T22:40:55Z"
+  }
+}

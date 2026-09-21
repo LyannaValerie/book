@@ -1,19 +1,41 @@
 {
-  "challenges": [],
+  "challenges": [
+    {
+      "evidence": [
+        {
+          "class": "OBSERVED",
+          "description": "Os quatro binds sao relativos sob target/; git diff --stat fabd794..origin/main -- tests/native_process_control_tests.rs sai vazio, entao main nao difere. Medicao direta: com cwd de 172 bytes, bind relativo de 32 bytes passa e bind absoluto de 205 bytes falha com AF_UNIX path too long.",
+          "source": "file:/pinker/artifacts/tasks/agents-md-target-por-task/review-reply.md"
+        }
+      ],
+      "id": "C-F3DB1B038E",
+      "observed_at": null,
+      "references": [],
+      "reported_by": "amara",
+      "statement": {
+        "class": "ASSERTED",
+        "text": "A parte de SUN_LEN nao reproduz na arvore atual. O caso afirma que os fixtures bindam socket unix sob <repo>/target/pinker-exec/ e que uma raiz longa estoura 108 bytes. Em 6b241ee e em origin/main (identicas neste arquivo), os quatro unicos binds estao em tests/native_process_control_tests.rs:227,335,725,726 -- todos PathBuf::from RELATIVO diretamente sob target/, nunca sob pinker-exec/. Caminho relativo entra em sun_path como escrito, logo o comprimento da worktree nao e contabilizado. O remedio prescrito, encurtar o caminho fisico da worktree, nao endereca nenhum desses sites. A parte da staticlib permanece valida e confirmada. A afirmacao pode ter valido num recorte anterior do codigo; nao ha suporte na arvore atual."
+      }
+    }
+  ],
   "contraindications": [
     "Não se aplica a CI, que já roda em caminho curto com target dentro da árvore."
   ],
   "cues": [
     "SUN_LEN",
+    "path must be shorter than SUN_LEN",
     "staticlib nativa ausente",
+    "libpinker_rt",
     "CARGO_TARGET_DIR",
     "pinker-exec",
-    "worktree",
-    "socket unix"
+    "worktree caminho longo",
+    "socket unix",
+    "part_c_filesystem_adulto_tests",
+    "soquete"
   ],
   "discriminating_probe": {
-    "action": "medir o comprimento do caminho que o fixture tenta bindar e conferir onde o teste procura a staticlib",
-    "observable": "o caminho excede 108 bytes, e a staticlib está no target fora da árvore em vez de <repo>/target/debug"
+    "action": "montar o caminho que o fixture binda e medir seus bytes; depois rodar o MESMO commit de um caminho curto e comparar",
+    "observable": "o caminho absoluto excede 107 bytes uteis no caminho longo e o mesmo commit fica verde no caminho curto"
   },
   "environment": {
     "backend": "native",
@@ -21,20 +43,21 @@
   },
   "evidence": [
     {
-      "class": "OBSERVED",
-      "description": "Medição direta: bind falhou em caminho de 109 bytes e passou em 101; ligar a staticlib ao caminho esperado fez part_d passar 8/8 sem mudar código",
-      "source": "file:/pinker/state/tasks/issue-522-pre-505-native-parity-repair/checkpoint.yaml"
+      "class": "VALIDATED",
+      "description": "Task #649/U-03B, slot a36, worktree /pinker/repo/pinker-v0/agentes/a36/worktree (55 bytes, caminho curto: SUN_LEN nao participa). PINKER_EXIGE_NATIVO=1 make ci parou em part_d_native_process_tests com 8/8 vermelhos em 'staticlib nativa ausente'. O controle que fecha a atribuicao: `git stash push -u` deixou a arvore identica a baseline 588555d0 e a MESMA suite falhou identicamente, entao a causa nao e a mudanca sob revisao. Remedio medido: `ln -sfn $CARGO_TARGET_DIR/debug <worktree>/target/debug` fez part_d passar 8/8 e make ci inteiro sair 0, sem tocar codigo nem teste. tests/part_d_native_process_tests.rs:115 procura o staticlib em <CARGO_MANIFEST_DIR>/target/debug/libpinker_rt.a enquanto manda o cargo compila-lo, e o cargo honra CARGO_TARGET_DIR.",
+      "oracle": "PINKER_EXIGE_NATIVO=1 make ci do mesmo commit com e sem a ponte <worktree>/target/debug -> CARGO_TARGET_DIR/debug",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a36/artifacts/make-ci.log"
     }
   ],
   "guidance": {
     "class": "ASSERTED",
-    "text": "Para gates nativos use um worktree de caminho curto e o target padrão dentro da árvore. Se precisar de target fora da árvore, ao menos ligue <repo>/target/debug/libpinker_rt.a ao artefato real. Falha em fixture antes da execução do sujeito não é regressão: confira o local do panic antes de investigar semântica."
+    "text": "Falha em fixture antes da execucao do sujeito nao e regressao: confira o local do panic antes de investigar semantica. Para a staticlib, ligue <repo>/target/debug/libpinker_rt.a ao artefato real no CARGO_TARGET_DIR — a ponte custa um symlink e resolve; ela e exigida por part_d_native_process_tests e por mais nada.\n\nA metade SUN_LEN deste caso foi resolvida na origem pela Issue #536 e a prescricao anterior nao vale mais como conselho corrente. O remedio nao era encurtar caminho nem identidade: era parar de pagar o orcamento de sun_path com o nome da Task. Separando identidade logica de caminho fisico — TASK_ID estavel, slot fisico curto alocado e observado, vinculo gravado no proprio slot — o caminho do socket caiu de 108 bytes (contra 107 uteis) para 93, e part_c_filesystem_adulto_tests passou a 6/6 sem tocar no fixture nem no TASK_ID de 35 caracteres.\n\nO que permanece valido e o metodo, nao o veredito: meca o caminho real em bytes no site que realmente binda, confirme onde o panic ocorreu, e trate comprimento de caminho como problema da topologia da Forja, nunca da identidade da Task. Se voce esta num layout onde a raiz de Task carrega o TASK_ID, o caso antigo ainda descreve o seu mundo; se a raiz e um slot observado, o sintoma nao deve reaparecer e reaparecimento e regressao de topologia."
   },
   "id": "B-ZI6WVTHJ4QMK",
   "observed_at": "2026-08-26T00:00:00Z",
   "observed_result": {
     "class": "OBSERVED",
-    "text": "O harness cria o sandbox em <repo>/target/pinker-exec e canonicaliza a raiz exigindo contenção, então symlink não encurta o caminho. O teste de processos procura a staticlib literalmente em <repo>/target/debug/libpinker_rt.a. Com o repositório num caminho de 62 caracteres, o path do socket dá 109 bytes contra o limite de 108: falha por um byte, dentro do fixture, antes de qualquer código Pinker executar."
+    "text": "Duas falhas distintas, ambas ambientais. (1) SUN_LEN: o harness cria o sandbox em <repo>/target/pinker-exec/exec-{pid}-{seq}/ e canonicaliza a raiz exigindo contencao, entao symlink nao encurta o caminho. O site que estoura NAO esta em tests/native_process_control_tests.rs, cujos quatro binds sao relativos: esta em tests/part_c_filesystem_adulto_tests.rs:401, que faz UnixListener::bind(raiz.join(\"soquete\")) com raiz = NativeArtifactDir::path().join(\"arvore\"), ou seja, caminho ABSOLUTO. Com repo_root de 60 bytes o caminho do socket da 108 bytes contra 107 uteis: falha por um byte, dentro do fixture, antes de qualquer codigo Pinker executar. O orcamento pratico e task-id <= 34 caracteres sob /pinker/worktrees/tasks/, ja tolerando pid de 7 digitos. (2) Staticlib: os alvos procuram a staticlib literalmente em <repo>/target/debug/libpinker_rt.a."
   },
   "problem": {
     "class": "OBSERVED",
@@ -42,12 +65,12 @@
   },
   "references": [],
   "revision": {
-    "hash": "832e1f634adb71e09c45ca98c7f5f49c0b375608023ec4d747847f03ff1405e8",
-    "number": 1,
-    "parent_hash": null,
-    "reason": "created through semantic authoring",
-    "updated_at": "2026-08-26T06:16:44Z",
-    "updated_by": "velina"
+    "hash": "01e8bae7f9973d9a49c14c55394fd07901bf107a6ff735e31626409257902dfc",
+    "number": 6,
+    "parent_hash": "ff457d3e373bf0138d19c97d85dfca02499fca71d82ba3babe36245aeba2a3d2",
+    "reason": "Task #649/U-03B: nova confirmacao da metade staticlib, agora com controle na baseline limpa e com o remedio por symlink medido",
+    "updated_at": "2026-09-10T08:36:27Z",
+    "updated_by": "amara"
   },
   "schema_version": 1,
   "scope": {
@@ -57,9 +80,10 @@
       "native test harness"
     ],
     "conditions": [
-      "Task roda gates em worktree de caminho longo ou com CARGO_TARGET_DIR fora da árvore"
+      "Task roda gates em worktree de caminho longo ou com CARGO_TARGET_DIR fora da arvore",
+      "o alvo binda socket unix por caminho ABSOLUTO derivado de NativeArtifactDir::path()"
     ]
   },
-  "status": "candidate",
+  "status": "challenged",
   "title": "Gates nativos assumem target dentro da árvore e caminho de repositório curto"
 }

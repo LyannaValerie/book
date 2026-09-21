@@ -1,0 +1,18 @@
+{
+  "domain": "cartografia",
+  "external_task_ref": "pinker:issue-693-trama-ts-projection-summary-bridge",
+  "finished_at": "2026-09-17T23:01:20Z",
+  "followed_refs": [],
+  "goal": "TS: explicit current -> historical summary bridge for the projection rename map",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "TS delivered: PR 694 green on b849543, awaiting human merge decision",
+  "project": "pinker-v0",
+  "started_at": "2026-09-17T22:53:09Z",
+  "state": "finished",
+  "task_id": "issue-693-trama-ts-projection-summary-bridge",
+  "validation": null
+}

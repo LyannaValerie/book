@@ -1,0 +1,18 @@
+{
+  "domain": "Pinker/TestHarness",
+  "external_task_ref": "pinker:issue-638-main4-physical-decomposition",
+  "finished_at": "2026-09-08T22:42:18Z",
+  "followed_refs": [],
+  "goal": "Executar MAIN-4 (#638) e reter o que a execucao ensinou",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "MAIN-4 executada; retido B-64HE90F15HY4 sobre o flake de paridade da fase220",
+  "project": "Pinker",
+  "started_at": "2026-09-08T22:41:05Z",
+  "state": "finished",
+  "task_id": "issue-638-main4-physical-decomposition",
+  "validation": null
+}

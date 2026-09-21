@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-09-05T05:06:51Z",
+  "created_by": "velina",
+  "epistemic": "OBSERVED",
+  "from": "B-CX0MJL9YDYOS",
+  "id": "R-653C0C6CB8E47AB7",
+  "oracle": "o retire exigido pelo failover so e legitimo depois do teste de terminacao definido em B-GRWHF1EXY330",
+  "to": "B-GRWHF1EXY330",
+  "type": "depends_on"
+}

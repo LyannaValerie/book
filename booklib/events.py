@@ -9,7 +9,7 @@ import string
 from pathlib import Path
 from typing import Any
 
-from .core import BookError, canonical_bytes, digest, grant_shared_group_access, loads_json, lock, utc_now
+from .core import BookError, atomic_write, canonical_bytes, digest, grant_shared_group_access, loads_json, lock, utc_now
 from .security import redact_summary, reject_sensitive
 
 EVENT_KINDS = {
@@ -23,11 +23,86 @@ DATA_FIELDS = {
     "oracle", "outcome", "utility", "source_reads", "tool_calls", "full_file_reads",
     "wall_time", "reverts", "status", "path_id", "budget", "decision", "case_id",
     "relation_id", "validated", "action", "observable", "reason", "signature", "evidence",
+    # A3 — quais mutações de conhecimento esta decisão de retenção reconcilia.
+    "covers",
+    # A2-bis — a revisão que a mutação produziu, para a correspondência
+    # estado/revisão <-> evento exigida após a adoção.
+    "revision",
+    # A2/A4 — identidade da operação e da tentativa de finalização.
+    "operation_id", "attempt",
 }
 
 
 def log_path(root: Path) -> Path:
     return root / "events" / "events.jsonl"
+
+
+def write_all(fd: int, payload: bytes) -> None:
+    """Write every byte, or fail loudly.
+
+    ``os.write`` may write fewer bytes than asked. Ignoring the return value
+    leaves a truncated record in an append-only log. Progress of zero raises
+    instead of spinning: a loop that cannot advance is not a loop to keep.
+    """
+    view = memoryview(payload)
+    while view:
+        written = os.write(fd, view)
+        if written <= 0:
+            raise BookError("EVENT_WRITE_STALLED", "event write made no progress")
+        view = view[written:]
+
+
+#: Log states. Three failures, not one — they call for different recoveries.
+LOG_OK = "OK"
+LOG_INCOMPLETE_TAIL = "INCOMPLETE_TAIL"
+LOG_CORRUPT = "CORRUPT"
+LOG_HASH_INVALID = "HASH_INVALID"
+
+
+def classify_log(path: Path) -> dict[str, Any]:
+    """Classify the log and return the verified prefix.
+
+    A torn tail is not the same failure as corruption in the middle, and
+    neither is the same as a complete record whose hash does not check out.
+    Collapsing the three would authorise "drop it and carry on", which is how
+    evidence disappears.
+    """
+    if not path.exists():
+        return {"status": LOG_OK, "events": [], "detail": None, "verified": 0}
+    raw = path.read_text(encoding="utf-8")
+    lines = raw.splitlines()
+    ends_clean = raw.endswith("\n") or not raw
+    events: list[dict[str, Any]] = []
+    for number, line in enumerate(lines, 1):
+        try:
+            events.append(loads_json(line, f"event line {number}"))
+        except (json.JSONDecodeError, BookError) as exc:
+            last = number == len(lines)
+            detail = f"line {number}: {exc.message if isinstance(exc, BookError) else exc}"
+            if last and not ends_clean:
+                return {"status": LOG_INCOMPLETE_TAIL, "events": events, "detail": detail, "verified": number - 1}
+            return {"status": LOG_CORRUPT, "events": events, "detail": detail, "verified": number - 1}
+    try:
+        validate_events(events)
+    except BookError as exc:
+        return {"status": LOG_HASH_INVALID, "events": events, "detail": exc.message, "verified": len(events)}
+    return {"status": LOG_OK, "events": events, "detail": None, "verified": len(events)}
+
+
+def quarantine(root: Path, reason: str) -> Path:
+    """Preserve the bytes and their origin. This is evidence, not a repair, and
+    it proves nothing about the consistency of the rest of the store."""
+    source = log_path(root)
+    directory = root / ".book" / "quarantine"
+    directory.mkdir(parents=True, exist_ok=True)
+    stamp = utc_now().replace(":", "").replace("-", "")
+    destination = directory / f"events-{stamp}.jsonl"
+    destination.write_bytes(source.read_bytes() if source.exists() else b"")
+    atomic_write(
+        directory / f"events-{stamp}.origin.json",
+        {"source": str(source), "reason": reason, "quarantined_at": utc_now()},
+    )
+    return destination
 
 
 def _parse_lines(path: Path) -> list[dict[str, Any]]:
@@ -79,7 +154,19 @@ def append_event(root: Path, kind: str, *, task_id: str | None = None, summary: 
     clean_summary = redact_summary(summary)
     event_id = "E-" + (digest({"task": task_id, "key": idempotency_key})[:20].upper() if idempotency_key else "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(20)))
     with lock(root, "events"):
-        path = log_path(root); events = _parse_lines(path); validate_events(events)
+        path = log_path(root)
+        estado = classify_log(path)
+        if estado["status"] != LOG_OK:
+            # Mutação exige integridade total. A leitura sobre o prefixo
+            # verificado continua possível e declara a incompletude; anexar,
+            # não: a cadeia não pode crescer a partir de um estado que ninguém
+            # consegue estabelecer.
+            raise BookError(
+                "EVENT_LOG_NOT_APPENDABLE",
+                f"event log is {estado['status'].lower()}; recover before appending",
+                {"status": estado["status"], "detail": estado["detail"], "verified": estado["verified"]},
+            )
+        events = estado["events"]
         for event in events:
             if event["event_id"] == event_id:
                 comparable = {"kind": kind, "task_id": task_id, "summary": clean_summary, "data": safe_data}
@@ -92,7 +179,7 @@ def append_event(root: Path, kind: str, *, task_id: str | None = None, summary: 
         fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o660)
         try:
             grant_shared_group_access(fd)
-            os.write(fd, canonical_bytes(event) + b"\n"); os.fsync(fd)
+            write_all(fd, canonical_bytes(event) + b"\n"); os.fsync(fd)
         finally:
             os.close(fd)
     return {"ok": True, "operation": "event", "event": event, "idempotent": False}

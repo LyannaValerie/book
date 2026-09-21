@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-09-16T07:17:14Z",
+  "created_by": "amara",
+  "epistemic": "VALIDATED",
+  "from": "B-RC06GDJODCDD",
+  "id": "R-4BE78252C0252CA4",
+  "oracle": "pink nav projecao verificar 27/27 MATCH em git:69c941a5bfd816de6f4e8182b9e17cfd8b7c9f1c",
+  "to": "B-PNC9LEZTRIM8",
+  "type": "supersedes"
+}

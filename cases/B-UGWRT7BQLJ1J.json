@@ -1,0 +1,79 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando a autoridade versionada declara apenas o conjunto de caminhos auditados e o nivel de exigencia ja e unico e implicito no codigo.",
+    "Nao autoriza retirar da autoridade a declaracao das raizes: o escopo precisa continuar auditavel num arquivo revisavel; o que sai e o nivel de obrigacao.",
+    "Nao transforma toda opcao de politica em suspeita: a pergunta e se a opcao consegue, sozinha, levar codigo descoberto a PASS."
+  ],
+  "cues": [
+    "waiver por registro de politica",
+    "rota de aceitacao por escopo",
+    "file_enforcement declaravel",
+    "rebaixar raiz de producao para inventory",
+    "divida removida mas gate ainda contornavel",
+    "politica versionada decide quanto se exige",
+    "E-COVERAGE-POLICY-SCOPE-CONTRACT",
+    "ROOT_CONTRACT",
+    "escopo auditavel vs nivel de obrigacao",
+    "terceira rota de PASS do gate"
+  ],
+  "discriminating_probe": {
+    "action": "num clone isolado com um arquivo de producao parcialmente descoberto, confirme o vermelho por cobertura com a autoridade canonica; depois altere SOMENTE o registro de escopo da raiz de producao para o nivel mais fraco e rode o mesmo gate",
+    "observable": "se o gate sai 0 com o mesmo arquivo descoberto, o nivel de obrigacao e declaravel na autoridade e existe uma rota de aceitacao por raiz inteira, ainda que nenhum waiver por caminho exista"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Injecao de sensibilidade S8: ROOT_CONTRACT neutralizado, controle C16 vermelho com o gate saindo 0 sobre arquivo de producao descoberto; restauracao verificada por md5.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a11/artifacts/t1-sensitivity.log"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Targeted closure independente noutro provedor sobre o HEAD final 523f0f3: BLOCKERS=0 MAJORS=0 NITS=0, com as sondas de remocao, rename, duplicacao e raiz extra todas exit 5.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a11/artifacts/t1-targeted-closure-round1.log"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "um controle que rebaixa a raiz de producao precisa deixar o gate vermelho, e por contrato de escopo, nao por cobertura; e uma injecao de sensibilidade que neutraliza a comparacao do contrato precisa deixar esse controle vermelho com o gate saindo 0",
+    "text": "Separe as duas perguntas que uma autoridade versionada de escopo costuma misturar:\n\n  QUAIS raizes sao auditadas  -> declaravel na autoridade (o escopo precisa ser revisavel num arquivo)\n  QUANTO se exige de cada uma -> contrato do codigo, nao declaravel\n\nFixe categoria e nivel de obrigacao numa tabela constante no proprio modulo do gate e recuse na CARGA qualquer politica que a contradiga, com diagnostico proprio. Uma raiz oficial ausente dessa tabela deve falhar fechado, nunca herdar um nivel por omissao — senao acrescentar uma raiz nova reabre a rota.\n\nA heuristica geral: sempre que uma revisao fechar UMA rota de aceitacao por registro, enumere as outras dimensoes do mesmo arquivo de autoridade antes de declarar a propriedade. Um waiver por caminho e o caso estreito; o mesmo arquivo costuma carregar um caso largo (raiz, categoria, nivel, glob) que ninguem atacou porque o ataque anterior encontrou o estreito primeiro. Escreva a propriedade como 'nenhuma edicao SOMENTE da autoridade transforma codigo descoberto em PASS' e teste-a por dimensao, nao por registro."
+  },
+  "id": "B-UGWRT7BQLJ1J",
+  "observed_at": null,
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "controle C16 pelo consumidor real (`pink nav verificar`) mais injecao de sensibilidade S8 que troca a comparacao do contrato por `if false`",
+    "text": "Task #675/T1, PR #676, slot a11. Sem o contrato no codigo, a fixture com `src/parcial.rs` descoberto sai 0 apos o rebaixamento: o controle falha com 'rebaixar a raiz de producao desligou o gate', left: Some(0), right: Some(0). Com o contrato, a carga recusa com E-COVERAGE-POLICY-SCOPE-CONTRACT e a troca de categoria e recusada pelo mesmo caminho. Um revisor independente noutro provedor reproduziu a sonda e tentou tambem remover a raiz, renomea-la, duplica-la e acrescentar raiz extra: todas exit 5, e a excecao so aceita caminho de arquivo exato. 19/19 controles verdes, 123 arquivos de producao COMPLETE, 0 linha relevante descoberta."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Depois de remover por inteiro o registro `kind:\"debt\"` que permitia declarar uma lacuna e obter PASS, o gate continuava contornavel por um caminho mais largo e mais barato: a propria politica versionada declarava `category` e `file_enforcement` de cada raiz oficial. Editar uma linha — `{\"kind\":\"scope\",\"root\":\"src\",...,\"file_enforcement\":\"inventory\"}` em vez de `\"required\"` — desligava a verificacao de intervalo para TODA a producao de uma vez, sem cobrir uma linha. O modulo afirmava no proprio doc-comment que existiam exatamente duas rotas de aceitacao; existiam tres. A revisao anterior tinha fechado a rota por caminho exato e parado ali, porque foi esse o registro que apareceu no ataque."
+  },
+  "references": [],
+  "revision": {
+    "hash": "0b74208faf29b88469cc4cbcd4da64e433ae1b7cbd22ee7c5fba2d02e8d4746d",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-14T19:41:55Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "gate de cobertura de cartografia",
+      "autoridade versionada em JSONL de escopo/excecao",
+      "verify do inventario por arquivo"
+    ],
+    "conditions": [
+      "a mesma autoridade versionada declara QUAIS raizes sao auditadas e QUANTO se exige de cada uma",
+      "uma revisao ja recusou uma rota de aceitacao por registro (dividia/waiver por caminho) e ela foi removida",
+      "o gate le o nivel de obrigacao do registro de escopo antes de decidir se reporta intervalo descoberto"
+    ]
+  },
+  "status": "candidate",
+  "title": "Fechar a rota de waiver por caminho nao fecha a rota por escopo: o nivel de obrigacao da raiz nao pode morar na autoridade"
+}

@@ -1,0 +1,24 @@
+{
+  "domain": "Pinker",
+  "external_task_ref": "pinker:issue-698-trama-tm-change-manifest-cutover",
+  "finished_at": "2026-09-18T22:16:44Z",
+  "followed_refs": [],
+  "goal": "Reconciliar o conhecimento reutilizavel da TM/#698 antes do reclaim fisico do slot a25",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "Fechamento fisico da TM/#698 (slot a25): 3 casos novos retidos (B-WN5T5NXUGP8S, B-RZ05W4XNK89L, B-QE69B829HMWW), 2 casos desafiados por caminho morto (B-2IA1RDN7GFP6, B-RHSK3050R6VG), incidente de volume no-op em B-ZW6DR34376L0; EXECUTION_SEAL aplicado com 12215532636 bytes recuperados e durables preservados; active context retirado; a11 intocado",
+  "project": "LyannaValerie/pinker-v0",
+  "started_at": "2026-09-18T22:10:41Z",
+  "state": "finished",
+  "task_id": "T-8WIH1Q9IH3SK98PC",
+  "validation": {
+    "oracle": "forja-agentes verify + observe --measure do a25 e do a11 antes/depois",
+    "outcome": "a25 SEALED com 12215532636 bytes e 6203 arquivos efemeros recuperados; durables preservados; a11 identico; FORJA_VERIFY OK",
+    "passed": true,
+    "summary": "fechamento fisico da TM/#698 verificado pelos observadores canonicos",
+    "validated_at": "2026-09-18T22:16:33Z"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "A varredura estatica responde 'quem nomeia a API canonica', nao 'quem escreveu Rust semanticamente equivalente'; essa segunda pergunta e indecidivel por inspecao lexica e nao e o que ela promete.",
+    "Instrumentacao dinamica cobre so o que as sondas executam; sem a varredura estatica, fase viva fora do corpus continua invisivel."
+  ],
+  "cues": [
+    "universo circular de consumidores",
+    "escrituracao nao e universo",
+    "piso historico de decisores",
+    "track_caller registra o chamador",
+    "inventario estatico de src",
+    "repassador esconde o chamador",
+    "consumidor por indirecao"
+  ],
+  "discriminating_probe": {
+    "action": "remover uma entrada da tabela de cobertura sem remover o consumidor real; e acrescentar um decisor novo que consulte a autoridade atraves de um repassador declarado noutro arquivo",
+    "observable": "com universo circular as duas ficam verdes; com descoberta independente a primeira cai como 'descoberto sem escrituracao' e a segunda como 'alcanca a autoridade por indirecao sem escrituracao'"
+  },
+  "environment": {
+    "backend": "hosted",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Task #651: DISCOVERED_CONSUMERS = 8, piso historico 8, faltando 0, novos sem explicacao 0, por tres vias; E35/I25 (cobertura removida) RED, I45 (nono decisor no interpretador) RED pelo inventario estatico, I29 (indirecao) RED pelo fecho por repassador.",
+      "oracle": "descoberta dinamica, inventario estatico e fecho por repassador, cada um com mutacao propria",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a37/state/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Nunca deixe a lista que DECLARA cobertura ser o universo que o gate audita. Descubra o universo por pelo menos duas vias independentes da lista — instrumentacao no ponto de consulta da propria autoridade, e varredura da fonte por quem nomeia a API — e cruze com um piso historico que vale como fato, nao como lista editavel: um decisor que legitimamente deixou de consultar e materia de disposicao humana, nao de edicao silenciosa. Feche o ponto cego da indirecao: instrumentacao por quadro de pilha ve quem chamou a autoridade, e um repassador declarado em arquivo ja escriturado esconde o consumidor real. O sintoma de circularidade e sempre o mesmo: remova uma linha da escrituracao sem tocar o codigo e veja se o gate cai."
+  },
+  "id": "B-ZIF4TOLHLQHR",
+  "observed_at": "2026-09-11T00:00:00Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "remocao de uma linha da escrituracao com o consumidor real intacto; insercao de um decisor novo numa fase fora do corpus; insercao de consumidor que alcanca a autoridade por repassador",
+    "text": "Task #651/U-01, de acb6ac6 para 8c1b344 e 26a65d3. Remedio: tres descobertas INDEPENDENTES da escrituracao. (1) Dinamica: cada consulta publica da autoridade anota o ARQUIVO de quem perguntou, via cfg_attr(test, track_caller) e std::panic::Location — producao intacta, porque fora de teste nem o atributo existe; consultas da autoridade a si mesma sao descartadas. (2) Estatica: varredura de src/** por quem nomeia a API canonica, que cobre o compilador inteiro e nao apenas as fases que as sondas executam. (3) Transitiva: identificacao de REPASSADOR — funcao cujo corpo E a consulta, uma mencao a API num corpo curto — e exigencia de que quem o chame esteja escriturado; entrada de fase nao e repassador, porque devolve o veredito da fase e nao o fato. As tres sao cruzadas com um piso historico dos decisores encontrados no reinventario, e a escrituracao tem de coincidir com todas."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "O oraculo exigia que cada consumidor acompanhasse a mutacao, mas a lista de consumidores era escrita a mao no proprio teste — ao mesmo tempo universo e objeto auditado. Tirar da lista um decisor que continuava existindo no compilador deixava a suite verde. Havia dois pontos cegos adicionais: uma fase viva fora do corpus de sondas (interpretador) nao aparecia, e uma funcao que apenas REPASSA a resposta da autoridade escondia quem a chamava, porque a instrumentacao dinamica anota um quadro de pilha so."
+  },
+  "references": [],
+  "revision": {
+    "hash": "96e3f8007d5b00413d83db2a52071485e432551d2ed0f16c216c351e57fd53d3",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-11T22:48:54Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "src/internal_operations.rs",
+      "src/internal_operations/metamorphic_oracle.rs"
+    ],
+    "conditions": [
+      "oraculo que exige que todo consumidor de uma autoridade acompanhe a mutacao",
+      "lista de consumidores escrita a mao no proprio teste"
+    ]
+  },
+  "status": "candidate",
+  "title": "Universo de consumidores declarado pela mesma lista que o oraculo audita: remover um decisor real nao fica vermelho"
+}

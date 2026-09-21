@@ -1,0 +1,69 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica a suites que sao pacotes reais com __init__.py.",
+    "Nao indica defeito no gate forja-check, que nunca passa top_level_dir."
+  ],
+  "cues": [
+    "unittest discover",
+    "Start directory is not importable",
+    "top_level_dir",
+    "tests/forja",
+    "forja-check",
+    "instrumentar suite existente"
+  ],
+  "discriminating_probe": {
+    "action": "rodar discover com e sem top_level_dir contra o mesmo diretorio",
+    "observable": "com top_level_dir vem ImportError antes de qualquer teste; sem ele a suite coleta e roda normalmente"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0",
+    "runner": "python3 -m unittest"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Issue #539, baseline d7d42d6: forja_sensitivity_probe.py falhou com ImportError: Start directory is not importable: .../worktree/tests/forja; removido o top_level_dir, a mesma funcao mediu 110 testes em 6156.5 ms sem falhas.",
+      "oracle": "mesma suite, mesmo commit, mesma funcao, com e sem top_level_dir",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a01/artifacts/raw/pass2-driver.log"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Ao instrumentar uma suite unittest existente, copie a invocacao do gate em vez de melhora-la. Se o gate roda discover apenas com -s e -p, o runner de medicao tambem deve; acrescentar top_level_dir muda a resolucao de import e produz um ImportError que parece defeito da suite e e defeito do instrumento. A regra vale para qualquer medicao: instrumento que difere do sujeito mede outra coisa."
+  },
+  "id": "B-YW5BJ9GCWJCE",
+  "observed_at": "2026-08-29T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O Makefile executa python3 -m unittest discover -s tests/forja -p 'test_*.py' -v, sem top_level_dir, e o default do discover e usar o proprio start_dir como top level. Passar o repo root obriga tests/forja a ser importavel a partir dali, e nao existe __init__.py em tests/ nem em tests/forja. Medido na Issue #539 em d7d42d6: com top_level_dir a chamada aborta antes de qualquer teste; sem ele, 110 testes rodam, 0 falhas, 6156.5 ms."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um runner de medicao que carrega a suite tests/forja com unittest.TestLoader().discover(start_dir, pattern, top_level_dir=<repo_root>) morre com ImportError: Start directory is not importable, enquanto o gate real do repositorio roda a mesma suite sem problema."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a01/artifacts/forja-sensitivity-timings.jsonl"
+  ],
+  "revision": {
+    "hash": "97afa1a6ab6ec99710b2479db1a0a0b4a91dde6c187407c118c812f45ef5f9a5",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-29T13:01:50Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "tests/forja",
+      "Makefile forja-check",
+      "runner de medicao TASK_LOCAL"
+    ],
+    "conditions": [
+      "instrumentacao externa de uma suite unittest que nao e um pacote Python"
+    ]
+  },
+  "status": "candidate",
+  "title": "Instrumentar a suite Forja: discover com top_level_dir no repo root nao importa tests/forja"
+}

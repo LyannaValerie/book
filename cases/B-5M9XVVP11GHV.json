@@ -1,0 +1,70 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando a Task autoriza explicitamente a relacao adjacente.",
+    "Contagem por arquivo que menciona a grafia superestima: o backend enumerava as operacoes para outro fato."
+  ],
+  "cues": [
+    "autoridade expandida sem mandato",
+    "decisor unico no baseline",
+    "binding nativo",
+    "OPERATION EXISTS nao implica BINDS TO SYMBOL",
+    "reinventario por decisor",
+    "consolidacao elegante demais",
+    "controle negativo no dono legitimo"
+  ],
+  "discriminating_probe": {
+    "action": "listar, para cada fato candidato, os arquivos que DECIDEM aquele fato (nao os que nomeiam a operacao) e contar",
+    "observable": "fato consolidavel tem contagem maior que um; fato com contagem um e dono unico preexistente, e mover ele nao reduz decisao nenhuma"
+  },
+  "environment": {
+    "backend": "hosted",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Task #651: G651-01 fechado em 9cad2fe e reconferido em todo HEAD posterior ate 50e5637; 'git diff d6d7971 -- src/backend_s.rs' vazio; NC5 verde em todas as baterias.",
+      "oracle": "diff contra baseline no arquivo do dono legitimo, mais NC5 como controle negativo",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a37/state/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Antes de mover um fato para a autoridade nova, conte quantos DECISORES independentes ele tem hoje — decisores do fato, nao arquivos que mencionam o objeto. Um fato com dono unico nao e candidato a consolidacao, por mais que a tabela nova o hospedasse melhor. Separe os dois enunciados por escrito no cabecalho da autoridade ('a operacao existe' != 'a operacao liga-se a este simbolo ABI'), e prove a fronteira nos DOIS sentidos: um gate que exige diff vazio no dono legitimo, e um controle NEGATIVO que escreve a decisao dentro do dono e exige verde. Sem o controle negativo, o oraculo de autoridade unica passa a tratar todo fato local como duplicacao."
+  },
+  "id": "B-5M9XVVP11GHV",
+  "observed_at": "2026-09-10T00:00:00Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "reinventario por DECISOR do fato, nao por arquivo que menciona a operacao; mais controle negativo que exercita a fronteira pelo lado do dono legitimo",
+    "text": "Task #651/U-01, PR #652. O reinventario contou decisores por fato: F1-F4 tinham oito; o binding tinha um, src/backend_s.rs. Que o backend tambem ENUMERE operacoes internas prova duplicacao de F1, nao de binding. Remedio: runtime_symbol e simbolo_runtime sairam da autoridade e a regiao backend-s.runtime.simbolos-intrinsecas voltou inteira ao baseline, com 'git diff <baseline> -- src/backend_s.rs' vazio como gate reexecutado em todo HEAD seguinte. O controle negativo NC5 escreve roteamento de simbolo DENTRO de backend_s e exige que o oraculo continue VERDE, porque aquele e o papel daquele arquivo."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A Task autorizava consolidar o contrato ESTRUTURAL de operacoes internas (existencia, aridade, operandos, resultado). A implementacao levou tambem a relacao 'operacao interna -> simbolo do runtime', porque a tabela nova era o lugar obvio para ela e o backend tambem enumerava as mesmas operacoes. A revisao do Guia recusou com UNAUTHORIZED_NATIVE_BINDING_AUTHORITY_EXPANSION: o fato adjacente tinha UM decisor so no baseline, e consolidar autoridade unica onde ja havia dono unico e o oposto do que a Task autoriza."
+  },
+  "references": [],
+  "revision": {
+    "hash": "107282ad00126ce078828c3b585c7eb8e398ae99b7e1bfba7ec15cfe1eab83f6",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-11T22:48:54Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "src/internal_operations.rs",
+      "src/backend_s.rs",
+      "Task de consolidacao de autoridade"
+    ],
+    "conditions": [
+      "Task autoriza consolidar UM fato estrutural compartilhado",
+      "existe um segundo fato, adjacente, que a mesma tabela poderia hospedar com elegancia"
+    ]
+  },
+  "status": "candidate",
+  "title": "Consolidar um fato que cabe bem na tabela nova sem reinventariar quantos decisores ele tinha expande autoridade que a Task nao recebeu"
+}

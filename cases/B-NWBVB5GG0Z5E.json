@@ -1,0 +1,90 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao autoriza auto-review do PRIMARY em nenhuma hipotese.",
+    "Nao autoriza usar a credencial de outro perfil (codex-velina) para contornar a quota.",
+    "Nao se aplica quando a recusa e de autenticacao ou de sandbox: essas tem causa e remedio proprios."
+  ],
+  "cues": [
+    "You've hit your usage limit",
+    "codex usage limit",
+    "try again at",
+    "adversario cross-provider",
+    "codex-amara recusou",
+    "ADVERSARIAL_PROVIDER != PRIMARY_PROVIDER",
+    "revisao #535 sem Codex",
+    "Reading additional input from stdin",
+    "You've hit your session limit",
+    "resets HH:MMam UTC",
+    "revisor Claude estourou sessao",
+    "sondar o cross-provider antes do fallback"
+  ],
+  "discriminating_probe": {
+    "action": "rodar `codex-amara exec --sandbox read-only -C <worktree> \"<prompt>\" < /dev/null` e ler a ultima linha do log",
+    "observable": "exit 1 com a mensagem de usage limit e um horario de retomada; nenhuma ferramenta foi chamada"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Task #607 (fechamento cartografico): codex-amara recusou com retry as 07:31; fallback para modelo distinto, desvio registrado em review.json; revisao fechada com 0 blockers e 0 majors apos remediacao.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a16/artifacts/review.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task #608 (INT-1, PR #609), no dia seguinte: mesma recusa e mesmo horario de retomada. Fallback para claude-sonnet-5 em sessao efemera read-only; 15/15 ataques exigidos responderam SURVIVES; tally 0/0/0/4 NOTES, dois deles remediados no candidato.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a17/memory/adversarial-synack.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task #626 (IR-4, PR #627), 2026-09-08T01:10Z: terceira ocorrencia. A sessao chegou a rodar cinco chamadas de ferramenta antes da recusa ('try again at 3:13 AM'), entao o gasto de quota nao e zero e o log parcial nao e revisao. Fallback para claude-sonnet-5 efemero read-only: 18/18 vetores cobertos, tally 0/0/0/1 NOTE, duas injecoes proprias do adversario ficaram vermelhas. Armadilha nova nesta ocorrencia: `claude -p` com `--add-dir` antes do prompt posicional engole o prompt como diretorio e sai com 'Input must be provided either through stdin or as a prompt argument'; passar o brief por stdin resolve.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a25/artifacts/review.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task #640 (MAIN-1, PR ainda nao aberta), 2026-09-09T01:24Z: ocorrencia SIMETRICA. Quem estourou foi o revisor CLAUDE ('You've hit your session limit, resets 2:50am UTC'), nao o Codex, e o Codex estava disponivel. Sondar o cross-provider antes de assumir o fallback custou uma chamada e devolveu o pareamento preferido pela #535 (ADVERSARIAL_PROVIDER != PRIMARY_PROVIDER satisfeito). Rodada ampla unica com 21 vetores, 2 MAJORS remediados sem tocar o produto, fechamento dirigido em duas rodadas, FINAL_REVIEW=CLOSED com HEAD inalterado.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a31/artifacts/review.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Sempre invoque `codex exec` com `< /dev/null` e `--sandbox read-only`. Se a quota recusar: (1) faca o Book lookup do sintoma antes de recuperar; (2) recupere pelo texto da propria #535, com sessao efemera, read-only, sem autoridade de mutacao, num modelo distinto do PRIMARY; (3) registre o desvio de forma explicita e assimetrica em review.json e no corpo da PR — `ADVERSARIAL_MODEL != PRIMARY_MODEL` satisfeito, `ADVERSARIAL_PROVIDER != PRIMARY_PROVIDER` NAO satisfeito; (4) nunca substitua a etapa por auto-review, e nao trate a excecao anterior como precedente que dispensa a tentativa cross-provider na proxima Task. Se o horario de retomada couber no orcamento da Task, esperar e melhor do que degradar o pareamento.\n\nSIMETRIA (observada na #640): a falha por limite pode ser do revisor CLAUDE, com a mensagem 'You've hit your session limit, resets HH:MM UTC' — texto diferente do 'usage limit ... try again at' do Codex. Nesse caso NAO ha degradacao a registrar: sonde o Codex com uma chamada trivial (`codex-amara exec --sandbox read-only --cd <worktree> - <<< 'responda OK-PROBE'`) e, se responder, use o cross-provider, que e o pareamento preferido. A regra geral que vale nos dois sentidos: identifique QUAL provedor recusou pelo texto exato da mensagem, e sonde o outro antes de assumir qualquer fallback."
+  },
+  "id": "B-NWBVB5GG0Z5E",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Duas armadilhas independentes. (1) Sem `< /dev/null`, `codex exec` fica parado em 'Reading additional input from stdin...' quando stdin nao e TTY, mesmo com o prompt passado como argumento: parece travado, nao esta. (2) Com stdin fechado, a sessao chega ate o modelo e ai recusa por quota. A #535 ja nomeia a saida: 'ou outro pareamento de modelos/provedores distintos quando disponivel'. Nao e improviso nem excecao concedida depois."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "`codex-amara exec` sai com 1 e imprime 'You've hit your usage limit ... try again at HH:MM', produzindo zero findings. O pareamento preferido pela #535 (Claude implementa -> Codex revisa) fica indisponivel, e a Task nao pode fechar sem revisao independente. Auto-review e proibido explicitamente."
+  },
+  "references": [],
+  "revision": {
+    "hash": "3a261ec65f32ff62fe94f0e7d96c5366ca63d657b1698f5092b5f6a88353f643",
+    "number": 3,
+    "parent_hash": "22e4d3184f842f2675828f4f0e5e7bde25be688d588ff9799691e1508ff5f768",
+    "reason": "quarta ocorrencia, simetrica: quem estourou foi o revisor Claude e o Codex estava disponivel; sondar o cross-provider antes de assumir o fallback",
+    "updated_at": "2026-09-09T01:50:54Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "codex-amara exec",
+      "#535 TWO_WAY_ANALYSIS_HANDSHAKING",
+      "revisao adversarial",
+      "sessao efemera read-only"
+    ],
+    "conditions": [
+      "o PRIMARY e Claude e a #535 pede Codex como adversario",
+      "a conta do Codex esgotou a quota da janela",
+      "o gate de revisao independente e obrigatorio para fechar a Task"
+    ]
+  },
+  "status": "candidate",
+  "title": "Quota do Codex derruba o adversario cross-provider da #535, e a propria #535 nomeia a recuperacao"
+}

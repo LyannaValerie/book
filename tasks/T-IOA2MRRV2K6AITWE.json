@@ -1,0 +1,18 @@
+{
+  "domain": "forja",
+  "external_task_ref": "pinker:issue-697-trama-ta-historical-archive",
+  "finished_at": "2026-09-18T10:26:04Z",
+  "followed_refs": [],
+  "goal": "Fechar o EXECUTION_SEAL que ficou bloqueado na TA/#697 quando o executor voltou a ser o agente vinculado ao slot",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "EXECUTION_SEAL da TA/#697 aplicado pelo agente vinculado ao slot a24; slot ACTIVE -> SEALED, 16136934889 bytes efemeros recuperados, durables preservados",
+  "project": "pinker",
+  "started_at": "2026-09-18T10:25:13Z",
+  "state": "finished",
+  "task_id": "T-IOA2MRRV2K6AITWE",
+  "validation": null
+}

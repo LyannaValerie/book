@@ -1,0 +1,94 @@
+{
+  "challenges": [
+    {
+      "evidence": [
+        {
+          "class": "VALIDATED",
+          "description": "Issue #557, baseline 58968822f338a239786b8753ad99fc0bb76d51d9: log da tentativa 1 do priming, sem a ponte, com backend_nativo_tests 75/75, backend_s_external_toolchain_tests 79/79, issue522_native_parity_tests 8/8 e part_d 0/8; zero ocorrencias de native_evidence no log.",
+          "oracle": "mesmo make ci, mesma arvore, unica diferenca a ausencia da ponte, com o gate posterior COM a ponte como controle positivo",
+          "source": "file:/pinker/repo/pinker-v0/agentes/a02/logs/priming-make-ci.log"
+        },
+        {
+          "class": "OBSERVED",
+          "description": "tests/common/mod.rs: native_runtime_lib resolve por current_exe().parent() e deps.parent(); tests/part_d_native_process_tests.rs:114 usa raiz.join(\"target/debug/libpinker_rt.a\").",
+          "source": "file:/pinker/repo/pinker-v0/agentes/a02/worktree/tests/common/mod.rs"
+        }
+      ],
+      "id": "C-61B14B4A2D",
+      "observed_at": null,
+      "references": [],
+      "reported_by": "velina",
+      "statement": {
+        "class": "OBSERVED",
+        "text": "A parte 'as demais nao falham, silenciam' nao reproduz na arvore corrente (58968822f338a239786b8753ad99fc0bb76d51d9). O caso adverte que, sem a ponte <worktree>/target/debug/libpinker_rt.a, as suites nativas alem de part_d passariam verdes e vazias. Medido na Issue #557: a tentativa 1 do priming rodou make ci SEM a ponte e, com PINKER_EXIGE_NATIVO=1, backend_nativo_tests deu 75/75, backend_s_external_toolchain_tests 79/79 e issue522_native_parity_tests 8/8, com zero eventos native_evidence; somente part_d_native_process_tests falhou, 0/8. A causa e estrutural: tests/common::native_runtime_lib resolve a staticlib por std::env::current_exe().parent() e o pai dele, ou seja <CARGO_TARGET_DIR>/debug/libpinker_rt.a, que existe assim que cargo build -p pinker_rt roda; apenas tests/part_d_native_process_tests.rs:114 usa raiz.join(\"target/debug/libpinker_rt.a\"), relativo ao worktree. Logo a frase do AGENTS.md de que a ponte e exigida so por part_d esta correta como escrita, e a leitura mais forte do caso nao vale aqui. Permanece valido e importante o restante do caso: nunca reportar paridade nativa sem PINKER_EXIGE_NATIVO=1, e usar o wall como sinal barato. Alem disso, com PINKER_EXIGE_NATIVO=1 o silencio e impossivel por construcao: require_native_evidence executa assert_ne! sobre a variavel nos dois bracos Skipped e Unavailable, entao falha alto em vez de pular."
+      }
+    }
+  ],
+  "contraindications": [
+    "Nao se aplica ao CI remoto, que roda com o target padrao dentro da arvore e portanto encontra a staticlib.",
+    "PINKER_EXIGE_NATIVO=1 nao substitui a ponte: sem ela a suite fica vermelha por fixture, nao por regressao."
+  ],
+  "cues": [
+    "PINKER_EXIGE_NATIVO",
+    "require_native_evidence",
+    "native_evidence",
+    "runtime_library_not_found",
+    "libpinker_rt",
+    "paridade interpretador nativo",
+    "teste verde rapido demais",
+    "gate que passa sem medir"
+  ],
+  "discriminating_probe": {
+    "action": "rodar a mesma suite com PINKER_EXIGE_NATIVO=1 e comparar o tempo de parede das duas execucoes",
+    "observable": "com a variavel a suite falha com runtime_library_not_found; sem ela passa, e o tempo salta de menos de 1 s para mais de 10 s quando a evidencia nativa realmente roda"
+  },
+  "environment": {
+    "backend": "native",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "issue492_argumento_nomeado_paridade_tests no commit 832e573: sem ponte sem variavel 12 passed em 0,72 s; sem ponte com variavel 1 passed 11 failed runtime_library_not_found; com ponte com variavel 12 passed em 11,00 s.",
+      "oracle": "mesma suite, mesmo commit, tres execucoes variando ponte da staticlib e PINKER_EXIGE_NATIVO",
+      "source": "file:/pinker/artifacts/tasks/issue-525-process-accessor-authority/native-evidence-silent-skip.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Nunca reporte paridade nativa como provada sem PINKER_EXIGE_NATIVO=1. Em Task da Forja, onde o AGENTS.md exige CARGO_TARGET_DIR fora da arvore, crie a ponte da staticlib antes de qualquer alvo nativo: cargo build -p pinker_rt e depois ln -sfn $CARGO_TARGET_DIR/debug/libpinker_rt.a <repo>/target/debug/libpinker_rt.a. Use o tempo de parede como sinal barato: uma suite que compila e executa ELF nao termina em menos de um segundo. Leia com cuidado a frase do AGENTS.md de que a ponte e exigida so por part_d_native_process_tests: ela e verdadeira sobre falha DURA e falsa se lida como as demais suites nao precisarem da ponte. As demais nao falham, silenciam."
+  },
+  "id": "B-QOS3720QJJSH",
+  "observed_at": "2026-08-26T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "tests/common/mod.rs:297 require_native_evidence devolve None em NativeEvidenceCapability::Unavailable, imprimindo apenas um JSON em stderr; o assert_ne! que converteria isso em falha so dispara sob PINKER_EXIGE_NATIVO=1. native_runtime_lib resolve a staticlib pelo diretorio corrente, em <repo>/target/debug/libpinker_rt.a, e nao pelo CARGO_TARGET_DIR. Medicao no mesmo commit, mesma suite: sem ponte e sem a variavel, 12 passed em 0,72 s; sem ponte e com a variavel, 1 passed e 11 failed com runtime_library_not_found; com a ponte e com a variavel, 12 passed em 11,00 s. O primeiro verde e o terceiro nao valem a mesma coisa."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Uma suite de paridade interpretador/nativo reporta 12 passed, 0 failed. O verde e verdadeiro e vazio ao mesmo tempo: nenhum ELF foi compilado nem executado. require_native_evidence devolveu None porque a staticlib nao estava em <repo>/target/debug/libpinker_rt.a, e cada teste pulou a metade nativa sem marcar ignored e sem falhar."
+  },
+  "references": [],
+  "revision": {
+    "hash": "ab18fe0e0ab5b24909149a7d038b01dc962254b65487709b319dd11a69340ae3",
+    "number": 2,
+    "parent_hash": "3b11cf325646493004b66a142cce2104330a5d94ea19f826027cde952d32eba4",
+    "reason": "reproducao na arvore corrente refuta a generalizacao do silencio para alem de part_d",
+    "updated_at": "2026-09-01T00:11:12Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "tests/common/mod.rs",
+      "issue492_argumento_nomeado_paridade_tests",
+      "todo alvo que chama require_native_evidence(_, true)"
+    ],
+    "conditions": [
+      "Task da Forja com CARGO_TARGET_DIR fora da arvore, sem a ponte da staticlib",
+      "PINKER_EXIGE_NATIVO nao definido"
+    ]
+  },
+  "status": "challenged",
+  "title": "Paridade nativa verde em 0,7 s: require_native_evidence pula a metade nativa em silencio"
+}

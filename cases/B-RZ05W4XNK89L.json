@@ -1,0 +1,81 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao autoriza backfill nem fabricacao de manifesto para PR que nunca teve evidencia canonica: acervo fechado e fechado dos dois lados.",
+    "Nao vale onde o caminho de autoria ainda tem consumidor concreto; a remocao so foi legitima porque nenhum workflow, gate, teste de produto ou instrucao viva invocava pink doc importar-pr.",
+    "Nao confunda com a autoria POT/LPT do corpo de PR sob #687, que continua obrigatoria: sao mecanismos separados.",
+    "Nao reintroduza reconstrucao do historico a partir do estado corrente para tapar o buraco aparente entre o cutover e hoje."
+  ],
+  "cues": [
+    "pinker-change",
+    "importar-pr",
+    "acervo fechado",
+    "intervalo historico finito",
+    "autoria continua de ledger",
+    "bloco no corpo do PR",
+    "manifesto ausente em PR novo",
+    "baseline_pr 330",
+    "cutover do PR 410",
+    "leitor historico minimo"
+  ],
+  "discriminating_probe": {
+    "action": "classificar cada consumidor de .pinker/changes/pr-*.yaml, index.jsonl, historical-exceptions-v1.yaml e dos simbolos de change.rs em HISTORICAL_READ_REQUIRED, CURRENT_NAV_REQUIRED, AUTHORING_ONLY ou DEAD, procurando por workflow, gate, teste de produto e instrucao viva que invoque cada caminho antes de remover qualquer simbolo",
+    "observable": "o caminho de autoria fica sem consumidor concreto enquanto o leitor historico continua com consumidores vivos; so o primeiro pode sair"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "PR #700 (head d971c98) removeu a superficie de autoria e preservou o leitor minimo com DocConfig::baseline_gate aplicado na leitura sob E-DOC-BASELINE; os controles todo_merge_pos_baseline_ate_o_cutover_tem_manifesto_ou_excecao, intervalo_historico_preservado_e_finito_e_completo e excecoes_sao_proibidas_depois_do_cutover cobrem o intervalo.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a25/artifacts/pr-body.md"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Matriz de consumidores levantada antes da remocao, por capacidade e por simbolo.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a25/memory/consumer-matrix.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Separe tres coisas que o gate universal mantinha grudadas: a obrigacao de autoria, o acervo ja escrito e o leitor que a navegacao atual usa. DOCUMENT_NAVIGATION != CONTINUOUS_PR_LEDGER_AUTHORING, e NO_NEW_MANIFEST_REQUIRED != DELETE_HISTORICAL_LEDGER. Faca o inventario de consumidores antes de tocar em codigo e remova apenas a classe AUTHORING_ONLY provada sem consumidor. Torne o intervalo explicito onde ele possa ser verificado por teste - baseline exclusivo, SHA de cutover e um controle que proibe excecao depois do cutover - em vez de deixa-lo implicito no conteudo do diretorio: um acervo fechado cujo limite so existe nos dados volta a parecer incompleto na proxima leitura. Declare o fechamento tambem no README do acervo, para quem chega pelo diretorio e nao pelo teste."
+  },
+  "id": "B-RZ05W4XNK89L",
+  "observed_at": "2026-09-18T19:10:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "A TM/#698 removeu Change::parse_pr_body, extract_block, Change::render_yaml, Change::semantically_equal, change::immutable_error, DocSub::ImportarPr com run_doc_importar e tooling::freeze_import, e preservou Change::parse_manifest/parse_block/validate e Manifests::load/render_ledger/ledger_json. Os 21 manifestos, o index.jsonl, o historical-exceptions-v1.yaml e os 13 payloads de .pinker/archive ficaram com bytes inalterados, e o intervalo virou asercao explicita em dois controles novos e no README do acervo."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "O gate universal exigia um bloco pinker-change em todo PR, mas o acervo que ele alimentava sempre foi finito: 21 manifestos entre o baseline exclusivo do PR 330 e o merge do PR 410 (1df2a6a), com 114 merges posteriores sem manifesto nenhum. Ao encerrar a obrigacao aparecem duas leituras erradas e simetricas: apagar o acervo porque a autoria parou, ou preservar o caminho de autoria por precaucao. A confusao tem uma causa concreta: a verificacao de documento continua lendo os manifestos, e esse consumo vivo faz a autoria parecer obrigatoria."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a25/artifacts/pr-body.md",
+    "file:/pinker/repo/pinker-v0/agentes/a25/memory/consumer-matrix.json"
+  ],
+  "revision": {
+    "hash": "054bdaf2d645b44a6fba014852f5a338ee4dcd40bc27ac725fa02e9d11b6fa3f",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-18T22:11:57Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      ".pinker/changes",
+      "src/change.rs",
+      "src/doc.rs",
+      "src/tooling.rs",
+      "tests/change_history_coverage_tests.rs"
+    ],
+    "conditions": [
+      "um gate universal obriga a autoria de um artefato cujo acervo real e finito e ja tem consumidores de leitura"
+    ]
+  },
+  "status": "candidate",
+  "title": "Encerrar a autoria continua de um acervo nao apaga o acervo: corte o caminho de autoria, preserve o leitor historico e escreva o intervalo finito como asercao"
+}

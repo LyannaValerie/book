@@ -1,0 +1,72 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao serve para desculpar divergencia real de .text: se a secao de codigo difere, a saida nativa mudou.",
+    "Nao substitui a captura original quando ela existe com proveniencia; a reconstrucao corrobora, nao apaga."
+  ],
+  "cues": [
+    "executavel byte-identico",
+    "hash do executavel diferente",
+    "provenance do baseline nativo",
+    "debuginfo embute caminho",
+    "text section identica",
+    "reconstrucao de baseline"
+  ],
+  "discriminating_probe": {
+    "action": "comparar sha256 do .a do runtime dos dois lados, e a secao .text dos executaveis, antes de concluir qualquer coisa do hash do arquivo inteiro",
+    "observable": "runtime .a com hash diferente entre ambientes explica a divergencia de arquivo inteiro sem tocar em semantica"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "manifesto de proveniencia com os dois lados reconstruidos, hashes, ambiente e a localizacao da divergencia entre ambientes",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a37/artifacts/probes/native-provenance.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "script reproduzivel da reconstrucao de dois lados a partir de um unico caminho de arvore",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a37/artifacts/support/reconstruct_native_two_sided.sh"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "a secao .text identica nos dois lados prova que a saida nativa nao mudou; o hash do arquivo inteiro so prova isso quando o ambiente de build e identico",
+    "text": "Construa os dois lados a partir de um unico caminho de arvore: extraia cada commit com `git archive` para o MESMO diretorio, construa em CARGO_TARGET_DIR proprio, e so o commit de fonte difere entre as duas medidas. Registre junto ao artefato um manifesto com commit de fonte, comando, ambiente (rustc/cargo/cc/kernel) e sha256 por arquivo: sem isso a evidencia e inauditavel mesmo quando correta. Quando precisar comparar entre ambientes, compare a secao .text extraida com `objcopy -O binary --only-section=.text` em vez do arquivo inteiro. E rotule qualquer recaptura como RECONSTRUIDA: recriar um baseline e chama-lo de evidencia historica e falsificacao."
+  },
+  "id": "B-ZCECPRV82JLC",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Em #712/U-09B a captura historica registrava executaveis byte-identicos (e8ae43b6) mas sem manifesto de proveniencia. A reconstrucao de dois lados a partir de UM MESMO caminho de arvore deu .s e executavel byte-identicos nos dois lados (8242027227 e 15b63f6b), e o .s reproduziu exatamente o hash historico. O executavel reconstruido diferia do historico no arquivo inteiro, mas a secao .text era byte-identica (ac4efbd1, 852237 bytes no mesmo endereco) e as 220415 linhas de bytes de instrucao batiam; as 70 linhas divergentes do objdump eram o cabecalho de caminho e sufixos .llvm.<hash> de simbolos anonimos."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Para provar que uma mudanca nao altera a saida nativa, compara-se o .s emitido e o executavel linkado dos dois lados. Se os dois lados forem construidos a partir de arvores em caminhos diferentes, o .a do runtime embute o caminho da arvore no debuginfo e o hash do arquivo inteiro diverge, mesmo com zero instrucao diferente. A evidencia entao parece refutar a propria afirmacao que devia sustentar, e uma revisao adversarial legitimamente recusa o artefato."
+  },
+  "references": [],
+  "revision": {
+    "hash": "bce78ba29f0d331a126c6f496753353d812b927d7fcab72d4c327a861a245155",
+    "number": 2,
+    "parent_hash": "43f150bd8394288929c127fca2abedc0080d35fbd48c4cc805697f4a7212d177",
+    "reason": "restaurar os nomes de comando que a substituicao de shell apagou na criacao",
+    "updated_at": "2026-09-20T11:58:12Z",
+    "updated_by": "athenna"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "evidencia nativa",
+      "pink build --nativo",
+      "libpinker_rt.a"
+    ],
+    "conditions": [
+      "comparacao de dois lados entre base e candidato para provar que a saida nativa nao mudou",
+      "cada lado construido a partir de uma arvore de fonte em caminho de filesystem diferente"
+    ]
+  },
+  "status": "candidate",
+  "title": "Baseline nativo construido noutro caminho de arvore muda o hash do arquivo inteiro sem mudar uma instrucao"
+}

@@ -1,0 +1,18 @@
+{
+  "domain": "modulos/tratos",
+  "external_task_ref": "pinker:issue-649-u03b-relation-reachability",
+  "finished_at": "2026-09-10T08:39:34Z",
+  "followed_refs": [],
+  "goal": "Materializar POLICY_B (relation reachability) no compilador Pinker — Task #649 / U-03B",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "POLICY_B materializada; PR #650 aberta com CI verde; duas revisoes de caso retidas (B-ZI6WVTHJ4QMK, B-L82QTHN2Z9EI); nenhum caso novo, ambos os achados reusaveis ja tinham dono no acervo",
+  "project": "pinker-v0",
+  "started_at": "2026-09-10T08:39:18Z",
+  "state": "finished",
+  "task_id": "issue-649-u03b-relation-reachability",
+  "validation": null
+}

@@ -1,0 +1,76 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando a divergencia nao tem token duplicado: ai a paridade quebrou por outra causa.",
+    "Nao se aplica a exemplos que nao gravam em disco por caminho fixo.",
+    "Nao explica falha que reaparece em toda repeticao do mesmo gate.",
+    "Nao confunda com B-LW3AE6LM3H2U, que e cold start de target/pinker-exec e falha com AlreadyExists dentro do fixture."
+  ],
+  "cues": [
+    "stdout divergente em examples/fase220_arquivo_tempo_acaso_nativos_valido.pink",
+    "arquivo_tempo_acaso_tem_paridade_de_stdout_com_interpretador",
+    "backend_nativo_tests",
+    "canta canta",
+    "append duplicado",
+    "target/fase220_teste.txt",
+    "caminho fixo relativo ao CWD",
+    "flake de paridade nativa",
+    "native_execution_failure guest_exited status exit status: 1"
+  ],
+  "discriminating_probe": {
+    "action": "Olhar o stdout divergente antes de qualquer bissecao: comparar os dois vetores procurando token repetido, e conferir se o exemplo grava caminho fixo relativo ao CWD. Depois repetir o mesmo `make ci` sem alterar nada.",
+    "observable": "Se a divergencia for um token duplicado de um exemplo que escreve caminho fixo, e a repeticao passar, e corrida entre testes do mesmo binario, nao regressao do sujeito. Regressao real reaparece em toda execucao e nao produz token duplicado."
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Task #638, slot a30, HEAD do candidato: um PINKER_EXIGE_NATIVO=1 make ci deu `test result: FAILED. 74 passed; 1 failed` em backend_nativo_tests, com panic em tests/backend_nativo_tests.rs:888 e stdout interpretado contendo 'canta canta'. A mesma arvore, sem nenhuma alteracao, passou no make ci seguinte com exit 0 e 140 grupos de teste ok, e ja havia passado duas vezes antes.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a30/artifacts/make-ci-final.log"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "examples/fase220_arquivo_tempo_acaso_nativos_valido.pink grava em juntar(\"target\", \"fase220_teste.txt\") e anexa ' canta' com abrir_anexo/anexar_verso; tests/backend_nativo_tests.rs cita o mesmo exemplo em PARIDADE_NATIVA_CASOS (linha 819) e no teste individual arquivo_tempo_acaso_tem_paridade_de_stdout_com_interpretador (linha 1051).",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a30/worktree/tests/backend_nativo_tests.rs"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Nao trate como vermelho de baseline nem como regressao do corte fisico: o sujeito nao esta no caminho. Repita o gate; registre a ocorrencia no ledger de reds em vez de esconde-la. Se precisar de determinismo imediato, rode o alvo com --test-threads=1, que serializa os quatro processos. O conserto na origem seria dar a cada teste um caminho proprio (por exemplo derivado do marcador que paridade_stdout ja recebe) em vez do caminho fixo do exemplo, mas isso e mudanca de produto e pertence a uma Task propria."
+  },
+  "id": "B-64HE90F15HY4",
+  "observed_at": "2026-09-08T22:34:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O stdout interpretado traz 'copia: rosa pinker canta canta' e para cedo, enquanto o esperado tem um unico ' canta' e continua ate as linhas de tempo e acaso; o log traz `native_execution_failure ... status=exit status: 1 reason=guest_exited` para o mesmo caso. O exemplo grava por caminho fixo relativo ao CWD: `juntar(\"target\", \"fase220_teste.txt\")`, cria o arquivo, anexa ' canta' e copia para `target/fase220_copia.txt`. O mesmo exemplo e executado por mais de um teste do mesmo binario (a entrada de PARIDADE_NATIVA_CASOS e o teste individual que chama paridade_stdout), e cada teste roda o programa duas vezes, interpretado e nativo. Quatro processos disputam o mesmo arquivo em threads paralelas: quando dois anexos caem entre a criacao e a leitura de um deles, o ' canta' duplica e a paridade quebra."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um `PINKER_EXIGE_NATIVO=1 make ci` falha em arquivo_tempo_acaso_tem_paridade_de_stdout_com_interpretador com 'stdout divergente', e a mesma arvore, sem nenhuma alteracao, passa na execucao seguinte. O sintoma parece regressao do corte quando a Task esta movendo codigo de CLI ou de build."
+  },
+  "references": [],
+  "revision": {
+    "hash": "789b3699b265c30259f6a5116f5f0e102b3e3b2d4f92f516cb4dcb37b88e7a12",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-08T22:42:05Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "tests/backend_nativo_tests.rs",
+      "examples/fase220_arquivo_tempo_acaso_nativos_valido.pink",
+      "PARIDADE_NATIVA_CASOS"
+    ],
+    "conditions": [
+      "cargo test com paralelismo padrao de threads dentro do alvo backend_nativo_tests",
+      "PINKER_EXIGE_NATIVO=1 com driver C e libpinker_rt.a presentes, de modo que a metade nativa realmente executa"
+    ]
+  },
+  "status": "candidate",
+  "title": "Paridade nativa da fase220 flakea porque dois testes gravam o mesmo target/fase220_teste.txt em paralelo"
+}

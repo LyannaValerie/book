@@ -1,0 +1,11 @@
+{
+  "case_id": "B-D3R0F3WSMJYR",
+  "domain": "Pinker",
+  "synthetic": false,
+  "updated_at": "2026-09-05T02:54:04Z",
+  "views": [
+    "Pinker",
+    "Pinker/Navegacao",
+    "Pinker/modularizacao-seletiva"
+  ]
+}

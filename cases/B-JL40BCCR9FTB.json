@@ -1,0 +1,67 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Reescrever autoria deixa de ser seguro assim que a branch foi publicada e alguém pode tê-la buscado.",
+    "`--reset-author` também redefine a data de autoria; onde a data importar como evidência, use filtro que preserve a data."
+  ],
+  "cues": [
+    "push declined",
+    "email privacy",
+    "GH007",
+    "identidade de commit",
+    "noreply",
+    "publicacao"
+  ],
+  "discriminating_probe": {
+    "action": "comparar o e-mail dos commits novos com o dos commits do baseline",
+    "observable": "divergência de domínio (pessoal vs noreply do repositório) explica a recusa sem precisar ler a política da conta"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Push da branch da #505 recusado; rebase com --reset-author sobre a identidade noreply do repositório resolveu e o push seguiu",
+      "source": "file:/pinker/artifacts/tasks/issue-505-intrinsic-inventory/terminal-report-505-migracao.md"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "git log do baseline nomeia o endereço aceito, e o push passa sem tocar em configuração de conta",
+    "text": "Antes do primeiro commit, leia a identidade que o repositório já usa (`git log -3 --format='%an <%ae>'`) em vez de inventar uma a partir do perfil do agente. Nunca desative a proteção de privacidade da conta para fazer um push passar. Se os commits já existem e nada foi publicado, reescrever autoria por rebase é seguro; depois de publicado, não é."
+  },
+  "id": "B-JL40BCCR9FTB",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "A convenção viva do repositório é `amara <151316340+LyannaValerie@users.noreply.github.com>` — visível em `git log --format='%an <%ae>'` no próprio baseline, e já configurada em `git config --global`. Commits feitos com `-c user.email=<pessoal>` violam a proteção. O reparo, com a branch ainda não publicada, é reescrever a autoria: `git config --local` com a identidade certa e `git rebase <baseline> --exec 'git commit --amend --no-edit --reset-author --quiet'`."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "O push é recusado com `push declined due to email privacy restrictions` DEPOIS de todo o trabalho estar commitado. A mensagem aponta para as configurações do GitHub e sugere desativar a proteção, que é a saída errada."
+  },
+  "references": [],
+  "revision": {
+    "hash": "ab0ca165049ee4aff67fcdcc5c9a7dcc530f27e9fde01354d0c003d06fbbd62c",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-27T16:11:04Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "publicacao",
+      "git",
+      "github"
+    ],
+    "conditions": [
+      "commits criados com -c user.email apontando para endereço pessoal",
+      "conta com proteção de privacidade de e-mail ativa"
+    ]
+  },
+  "status": "candidate",
+  "title": "Push recusado por privacidade de e-mail: a identidade de commit da Forja é o endereço noreply do repositório"
+}

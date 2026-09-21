@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-09-07T18:17:57Z",
+  "created_by": "velina",
+  "epistemic": "VALIDATED",
+  "from": "B-KAGT8A97FD7L",
+  "id": "R-86F46C6DCA3B0702",
+  "oracle": "medicao da unidade IR-1 da #621: coluna exports previu 4 pub(super), o compilador exigiu 3",
+  "to": "B-D3R0F3WSMJYR",
+  "type": "references"
+}

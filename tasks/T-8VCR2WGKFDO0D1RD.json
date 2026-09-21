@@ -1,0 +1,18 @@
+{
+  "domain": "trama",
+  "external_task_ref": "pinker:issue-675-trama-t1-cartography-coverage",
+  "finished_at": null,
+  "followed_refs": [],
+  "goal": "Continuacao T1 #675/PR #676: recuperar Task apos quota, fechar a rota de aceitacao por escopo e apresentar evidencia de fechamento dirigido",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": null,
+  "project": "pinker",
+  "started_at": "2026-09-14T19:41:45Z",
+  "state": "active",
+  "task_id": "T-8VCR2WGKFDO0D1RD",
+  "validation": null
+}

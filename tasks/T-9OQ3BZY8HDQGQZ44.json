@@ -1,0 +1,18 @@
+{
+  "domain": "Pinker",
+  "external_task_ref": "pinker:issue-695-trama-th-projection-hash-bridge",
+  "finished_at": "2026-09-18T05:23:16Z",
+  "followed_refs": [],
+  "goal": "TH/#695: schema 3 do mapa de renomeacao declara a relacao de hash corrente -> historico",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "resolved",
+  "project": "LyannaValerie/pinker-v0",
+  "started_at": "2026-09-18T05:21:40Z",
+  "state": "finished",
+  "task_id": "T-9OQ3BZY8HDQGQZ44",
+  "validation": null
+}

@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-09-04T23:16:06Z",
+  "created_by": "amara",
+  "epistemic": "VALIDATED",
+  "from": "B-580ASABORT01",
+  "id": "R-E0DC41075B044153",
+  "oracle": "A instrumentacao de B-WYBIRXOBXVZV produziu a medicao remota da Task #596 que atualiza B-580ASABORT01",
+  "to": "B-WYBIRXOBXVZV",
+  "type": "validated_by"
+}

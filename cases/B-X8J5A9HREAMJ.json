@@ -1,0 +1,68 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao use este criterio para arrastar texto de diagnostico nem predicado de comparacao da fase para a autoridade: sao fatos locais legitimos, e os controles negativos existem para proteger isso."
+  ],
+  "cues": [
+    "carve-out sem classificacao causal",
+    "mesma pergunta noutra representacao",
+    "tipo Rust nao concede independencia",
+    "Type versus TypeIR",
+    "derivar em vez de repetir",
+    "o que fica na fase e por que",
+    "leque com carga nao e expressavel em TypeIR"
+  ],
+  "discriminating_probe": {
+    "action": "reintroduzir o literal na fase, concordante com a autoridade, e mutar o fato na autoridade",
+    "observable": "se a fase derivava, ela acompanha e o mutante de reintroducao fica vermelho; se o fato era realmente da fase, mutar a autoridade nao move a resposta dela e o controle negativo fica verde"
+  },
+  "environment": {
+    "backend": "hosted",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Task #651: P01 e P02 (reintroducao dos literais de operando e de resultado em semantic/calls) RED; I37 perdeu a ancora porque o literal deixou de existir; NC1 (predicado de comparacao) e NC2 (texto de diagnostico) GREEN.",
+      "oracle": "mutante de reintroducao como controle positivo e NC1/NC2 como negativos",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a37/state/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Antes de aceitar que uma fase tem fato proprio, faca a pergunta causal: e a MESMA relacao expressa noutra representacao? Se for, e duplicacao, e representacao diferente nao a absolve — derive. Um carve-out legitimo tem de responder o que a autoridade NAO poderia responder: ou a pergunta nao e expressavel na representacao dela, ou a resposta da fase e mais FINA que a dela, ou a autoridade declara papel e a fase deriva a classe concreta do valor recebido. Escreva a razao de cada item que fica, um por um, e prove cada uma com controle negativo; e prove a derivacao com mutante que reintroduz o literal."
+  },
+  "id": "B-X8J5A9HREAMJ",
+  "observed_at": "2026-09-11T00:00:00Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "mutantes que REINTRODUZEM o literal removido, exigidos vermelhos; mais controles negativos que exercitam cada fato que ficou na fase",
+    "text": "Task #651/U-01, HEAD 26a65d3. Remedio em duas partes. Primeira: a fase passou a DERIVAR — traduz a classe que a autoridade declara em vez de reescreve-la —, e dois mutantes que reintroduzem os literais (operando e resultado) ficam vermelhos. Segunda: o que sobra na fase foi nomeado item por item, com a razao de cada um: a correspondencia entre a representacao da fase e a da autoridade (fato das DUAS representacoes, nao do contrato); o texto do diagnostico; 'este valor e um leque COM CARGA?', que nao e expressavel na representacao da autoridade porque todo leque e uma palavra nela; e 'qual o TIPO da carga?', decidido pela declaracao do usuario e mais fino que a classe de transporte. Onde a autoridade declara PAPEL em vez de classe, nao ha classe compartilhada a duplicar: a classe concreta e derivada do valor recebido, pela fase."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um consumidor mantinha localmente a mesma relacao que a autoridade declara, escrita na representacao da fase: onde a autoridade dizia Declarados([TypeIR::MapVersoVerso]), a fase escrevia 'if !matches!(map_ty, Type::MapVersoVerso(_))'; onde a autoridade dizia Declarado(TypeIR::Bombom), a fase escrevia 'return Ok(Type::Bombom(span))'. O PRIMARY declarou carve-out por 'fato de fase' e o Guia recusou: carve-out exige classificacao causal ANTES, e um tipo Rust diferente nao transforma a mesma relacao em outra pergunta."
+  },
+  "references": [],
+  "revision": {
+    "hash": "db563808ef38677ad89a899a48b178dfa32c09b1a822bd05da96d2e12c60ee2f",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-11T22:48:55Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "src/semantic/calls.rs",
+      "src/internal_operations.rs"
+    ],
+    "conditions": [
+      "consolidacao de autoridade em que uma fase parece ter fato proprio",
+      "a fase decide na representacao DELA, nao na da autoridade"
+    ]
+  },
+  "status": "candidate",
+  "title": "Carve-out de fato local numa fase exige classificacao causal: a mesma relacao escrita noutro tipo Rust nao ganha independencia semantica"
+}
