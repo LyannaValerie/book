@@ -1,0 +1,77 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao vale quando o workflow existe e apenas nao disparou por filtro de path, branch ou evento: ai a ausencia de execucao e gatilho e o remedio e ler o on:, nao declarar o portao aposentado.",
+    "Nao autoriza retirar workflow que ainda tenha responsabilidade independente; a retirada so foi legitima porque nenhuma responsabilidade sobrou depois de remover o gate universal.",
+    "Nao transforme a retirada em licenca para afrouxar o portao que continua existindo: o CI remoto permanece autoritativo."
+  ],
+  "cues": [
+    "REMOTE_TRAMA",
+    "workflow inexistente",
+    "trama.yml removido",
+    "portao remoto ausente",
+    "NONEXISTENT_WORKFLOW",
+    "nenhuma execucao para o head SHA",
+    "workflow cerimonial",
+    "contabilidade de vermelho remoto"
+  ],
+  "discriminating_probe": {
+    "action": "listar os workflows realmente configurados e seus gatilhos (ls .github/workflows/ e o bloco on: de cada um) e comparar com as execucoes do head SHA (gh run list --commit <sha>)",
+    "observable": "o portao exigido nao tem arquivo de workflow nenhum: a ausencia de execucao vem da configuracao, nao de um resultado vermelho; quando o arquivo existe e so nao disparou, a causa aparece no on:"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "PR #700 retirou .github/workflows/trama.yml e reescreveu AGENTS.md, CONTRIBUTING.md, docs/development/README.md e o pull_request_template; o controle tests/trama_ci_tests.rs::nenhum_workflow_exige_bloco_pinker_change prova que nenhum workflow restante exige o bloco.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a25/artifacts/pr-body.md"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "main 4547bd05ed5d986eb75c2fa6f865391b3f7e5776 fechou verde com a execucao 35398659207 do workflow CI; nenhuma execucao de Trama existe nem e exigida.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a25/state/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Trate o conjunto de portoes remotos como derivado da configuracao corrente, nunca de um nome herdado: REMOTE_GATE_REQUIREMENT segue os workflows que existem e disparam. Ao retirar um workflow, atualize na MESMA mudanca (1) o AGENTS.md que lista os portoes exigidos, (2) a governanca permanente de campanha que cobra contabilidade completa de vermelho remoto, e (3) os templates de Task que reservam um campo para aquele workflow. Escreva a regra como invariante legivel - NONEXISTENT_WORKFLOW != FAILED_GATE - e faca o campo antigo virar RETIRED_NOT_APPLICABLE no relatorio final em vez de sumir. Antes de apagar, prove que a responsabilidade do workflow ja vive em outro lugar; aqui o gate integral ja era make ci no workflow CI, que dispara em pull_request e inclui docs-check, nav-check e change-history-check."
+  },
+  "id": "B-WN5T5NXUGP8S",
+  "observed_at": "2026-09-18T19:10:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Na TM/#698 o trama.yml saiu e a mesma PR reescreveu AGENTS.md para exigir os workflows realmente configurados que disparam no candidato, declarando explicitamente que workflow inexistente nao e portao reprovado. O candidato final d971c98 fechou com o workflow CI verde e REMOTE_TRAMA = RETIRED_NOT_APPLICABLE, sem portao pendente, e o postmerge da main 4547bd0 (run 35398659207) tambem passou so pelo CI."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A TM/#698 apagou .github/workflows/trama.yml, o unico produtor do campo REMOTE_TRAMA. Se a governanca permanente e o AGENTS.md continuassem exigindo 'CI e Trama remotos verdes', toda Task seguinte procuraria no head SHA uma execucao que nenhuma configuracao pode mais produzir e leria essa ausencia como portao pendente ou reprovado, bloqueando o fechamento por um gate deliberadamente aposentado. A reacao simetrica e igualmente errada: manter um workflow no-op vivo so para continuar podendo reportar REMOTE_TRAMA = SUCCESS."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a25/artifacts/pr-body.md",
+    "file:/pinker/repo/pinker-v0/agentes/a25/state/checkpoint.yaml"
+  ],
+  "revision": {
+    "hash": "ee678a74c4c304d8a4183b4c50dad3f1864665ae173f59f1d123086341b1cc3e",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-18T22:11:17Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      ".github/workflows",
+      "AGENTS.md",
+      "governanca permanente de campanha",
+      "template de Task"
+    ],
+    "conditions": [
+      "um workflow dedicado e retirado enquanto a governanca ainda o nomeia como portao obrigatorio"
+    ]
+  },
+  "status": "candidate",
+  "title": "Aposentar um portao remoto exige reescrever na mesma mudanca a governanca que exigia a execucao dele"
+}

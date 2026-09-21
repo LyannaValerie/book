@@ -1,0 +1,68 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica à IR: `InstructionIR::If` carrega `else_block: Option<BlockIR>` e não encadeia outro `If` no else."
+  ],
+  "cues": [
+    "senao se",
+    "else if encadeado",
+    "ElseBlock::If",
+    "varredura de AST incompleta",
+    "blocos_do_stmt",
+    "cadeia de condicional",
+    "desugaring de tentar"
+  ],
+  "discriminating_probe": {
+    "action": "neutralizar todas as ocorrências de uma grafia na AST com a varredura e, em seguida, procurar a grafia no `format!(\"{:?}\")` da função inteira",
+    "observable": "com a cadeia achatada a contagem é zero; sem ela, sobra pelo menos uma ocorrência dentro de uma condição de `senão se`"
+  },
+  "environment": {
+    "backend": "hosted",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Task #651, HEAD 50e56373990ff6bc07c0050361192e2aa338516f: antes do achatamento, a obrigação `leque_tag / F4/classe / semantic-calls` lia (false,false) e a recusa sob A1 era de uma comparação binária do programa original; depois, (false,true).",
+      "oracle": "par (aceita sob A0, aceita sob A1) por consumidor",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a37/artifacts/setimo-head/registro.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Ao escrever varredura genérica sobre esta AST, ache a cadeia de `senão se` explicitamente: um laço que, partindo do `IfStmt`, acumula `condition` e `then_branch` de cada elo, desce por `ElseBlock::If` e para no `ElseBlock::Block` final (que também entra como bloco). O sintoma de ter esquecido não é a varredura acusar erro — é um resultado que continua contaminado depois de uma neutralização que parecia total, e a mensagem que sobra aponta para um construto que a varredura não visitou. Confirme completude contando: varra, e depois procure a grafia no `Debug` do artefato inteiro."
+  },
+  "id": "B-MEU1RPMXYN1G",
+  "observed_at": "2026-09-11T00:00:00Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "neutralização de todos os sítios de uma grafia na AST, conferida pela recusa que sobra na checagem semântica",
+    "text": "Task #651/U-01, sétimo HEAD. A neutralização de `__pinker_internal_leque_tag` na sonda parecia completa, mas o programa continuava sendo recusado sob a autoridade mutada com 'tipos incompatíveis em operação binária: verso e bombom'. O desugaring de `tentar` emite a leitura de tag na condição de cada ramo de uma cadeia `se / senão se`, e a varredura só visitava a primeira. Depois de achatar a cadeia — percorrendo `ElseBlock::If` como instrução, não como bloco — a neutralização passou a alcançar todos os sítios e a obrigação virou provada."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Uma varredura que devolve `vec![&mut condicional.condition]` como expressões da instrução e `vec![then_branch, else_branch]` como blocos dela parece completa, mas `ElseBlock::If` não é bloco: é outro `IfStmt`. Empurrar só o `then_branch` dele deixa de fora a CONDIÇÃO do segundo ramo em diante, e tudo o que estiver aninhado no `else` final."
+  },
+  "references": [],
+  "revision": {
+    "hash": "58cef3bcc090fa06ae8c743411fa0544014c1758d3d98c96f486f30c7da12308",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-11T19:06:19Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "src/ast.rs",
+      "varredura genérica de Stmt/Expr em teste ou ferramenta"
+    ],
+    "conditions": [
+      "AST em que `Stmt::If` carrega `else_branch: Option<ElseBlock>` e `ElseBlock::If(Box<IfStmt>)`",
+      "varredura que separa expressões próprias da instrução dos blocos aninhados dela"
+    ]
+  },
+  "status": "candidate",
+  "title": "Varredura de AST que trata `senão se` como um bloco só perde toda condição a partir da segunda"
+}

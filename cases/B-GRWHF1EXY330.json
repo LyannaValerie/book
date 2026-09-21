@@ -1,0 +1,91 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando o active context ja aponta para a Task corrente: ai o DENIED tem outra causa.",
+    "Nao autoriza destruir task root, worktree ou evidencia da Task anterior.",
+    "Nao se aplica quando a Task citada no DENIED ainda esta em andamento: retirar o context dela abandonaria trabalho vivo. O teste e se a Task TERMINOU, nao se o codigo dela esta em main: uma Task de diagnostico pode terminar com a PR fechada SEM merge, por desenho, e nesse caso  responde 'nao esta em main' sem que exista trabalho vivo algum.",
+    "Nao substitui o EXECUTION_SEAL do slot nem autoriza forja-agentes retire, que destroi o task root com worktree, memory, state e artifacts."
+  ],
+  "cues": [
+    "comando mutante recusado",
+    "nao e a Task ativa do chamador",
+    "active context",
+    "forja-lifecycle",
+    "NO_ACTIVE_CONTEXT",
+    "identidade original ausente",
+    "provision DENIED",
+    "slot SEALED",
+    "retire publish provision",
+    "fecho fisico pos-merge",
+    "slot SEALED com context ainda ACTIVE",
+    "retire como passo do fecho, nao so do proximo provision"
+  ],
+  "discriminating_probe": {
+    "action": "rodar forja-agentes provision para a Task nova e, se vier DENIED, comparar o nome da Task citada na mensagem com o campo task de sudo -n /opt/pinker/bin/forja-lifecycle show; depois confirmar em git branch -r --contains que o commit daquela Task ja esta em origin/main",
+    "observable": "os dois nomes coincidem e o trabalho da Task citada ja esta em main: o bloqueio e o context residual, independentemente de o slot dela estar SEALED ou ACTIVE"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Task issue-588-intrinsics-physical-closure: provision recusado porque o context de c1-historical-intrinsic-registry (slot a04, SEALED, PR #584 ja mergeada) seguia ACTIVE desde 2026-09-03T18:42:15Z. Depois de retire + publish, provision alocou o slot a06 e verify retornou status OK com problems vazio.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a06/memory/checkpoint.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task issue-598-resource-policy-parity: provision recusado citando issue-592-materialized-default-body-fact, cujo slot a08 ainda estava ACTIVE (nao SEALED) embora o commit c3d1040 ja estivesse em origin/main pela PR #593. A mesma sequencia retire -> publish -> provision desbloqueou; o slot a08 nao foi tocado e forja-agentes verify voltou OK com o slot novo a11.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a11/memory/task.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task issue-601: provision recusado citando issue-596-remote-diagnostic-580. O commit db941283 NAO e ancestral de origin/main e a PR #597 esta CLOSED com mergedAt=null — o oraculo 'ja esta em main' respondeu nao, mas a memoria da Task registrava expected_disposition CLOSE_WITHOUT_MERGE e veredito terminal. A mesma sequencia retire -> publish -> provision desbloqueou e alocou o slot a13 com verify OK.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a13/memory/task.jsonl"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "TA/#697, slot a24, fecho fisico pos-merge em 2026-09-18. PR #699 MERGED em 10:38:43Z (merge commit 0cf68447123b0ff023645434c3f5afecda76dcd8), CI pos-merge run 35335721697 success em main, slot SEALED desde 10:24:21Z com target/cache/tmp/scratch/logs vazios e forja-agentes verify OK com zero problems. Mesmo assim forja-contexto-ativo show --agent athenna devolvia ACTIVE generation 2 apontando para a Task encerrada: nenhum comando falhou, o residuo era invisivel. O selo tinha sido aplicado por amara (agente do vinculo) e o context era de athenna (executor sucessor) - dois atores, dois registros, um so fecho.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a24/memory/checkpoint.json"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "sudo -n /opt/pinker/bin/forja-lifecycle show devolve NO_ACTIVE_CONTEXT depois do retire e ACTIVE com a Task nova depois do publish; forja-agentes provision entao aceita, e forja-agentes verify volta OK com o slot novo; no fecho fisico pos-merge, forja-contexto-ativo show --agent <executor> devolve NO_ACTIVE_CONTEXT com o slot em SEALED e o task root preservado",
+    "text": "Trate active context e slot como lifecycles separados. A sequencia que desbloqueia e, pelo caminho absoluto e via sudo, retire -> publish -> provision:\n\n  sudo -n /opt/pinker/bin/forja-lifecycle show\n  sudo -n /opt/pinker/bin/forja-lifecycle retire\n  sudo -n /opt/pinker/bin/forja-lifecycle publish --task <nova> --generation 1\n  forja-agentes provision --task-id <nova> --branch <nova> --base <sha>\n\nO retire e do proprio chamador e nao pede autoridade administrativa: o broker deriva a identidade do sudo original. Nao apague o worktree nem a evidencia da Task antiga para contornar; o problema nao esta no slot. E nao invente flags: forja-lifecycle retire nao aceita seletor de Task, ele retira o context do proprio agente.\n\nAntes do retire, confirme que a Task citada TERMINOU — nao que ela esta em main. Duas terminacoes legitimas: PR mergeada, ou PR fechada sem merge com veredito terminal registrado (tipico de Task de diagnostico). Consulte a memoria factual da Task citada em <TASK_ROOT>/memory alem de .\n\nO retire nao e so desbloqueio do proximo provision: e passo do FECHO FISICO da propria Task. Quando a PR foi mergeada e o CI pos-merge esta verde, nenhum comando falha por causa do context vivo, entao ele sobrevive silenciosamente ate recusar um provision futuro. Feche-o na hora: depois de provar residuo efemero zero e forja-agentes verify OK, rode sudo -n /opt/pinker/bin/forja-lifecycle retire e confirme com sudo -n /opt/pinker/bin/forja-contexto-ativo show --agent <executor> devolvendo NO_ACTIVE_CONTEXT.\n\nApos transferencia de executor os dois registros sao fechados por atores diferentes: o EXECUTION_SEAL do slot cabe ao agente nomeado em agentes/<slot>/task.json (ver B-CX0MJL9YDYOS), e o active context so o proprio executor que o detem consegue retirar. Fechar um nao fecha o outro, e so o primeiro tem gatilho de erro que o lembre."
+  },
+  "id": "B-GRWHF1EXY330",
+  "observed_at": "2026-09-04T00:08:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Selar o slot (forja-agentes seal / state --set SEALED) NAO retira o active context: sao dois registros distintos. O slot vive em agentes/<slot>; o active context vive em /pinker/state/active/agents/<agente>.json e e escrito pelo broker forja-lifecycle. Enquanto o context antigo estiver ACTIVE, todo comando mutante de layout para outra Task e recusado. forja-lifecycle exige identidade original: chamar direto devolve DENIED 'identidade original ausente: use via sudo', e 'sudo -n forja-lifecycle' devolve command not found porque o wrapper nao esta no PATH do sudo."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "forja-agentes provision --task-id <nova> recusa com DENIED: \"comando mutante recusado: --task-id 'X' nao e a Task ativa do chamador ('Y')\", onde Y e uma Task ja mergeada e com slot SEALED. A mensagem parece exigir autoridade que o agente nao tem, e nao diz o que retirar."
+  },
+  "references": [],
+  "revision": {
+    "hash": "197d499c49e15e6ccf5108e4573c51fdebb36a0bcd3d66b473a0237b4bd3fee9",
+    "number": 5,
+    "parent_hash": "4ceb35c4001038e258cf65e390dcf28dd84506fe0b811d45f69cea9fe0097c4c",
+    "reason": "quinta observacao: retirar o active context e passo do fecho fisico pos-merge, nao apenas desbloqueio do proximo provision; apos transferencia de executor selo e context sao fechados por atores diferentes",
+    "updated_at": "2026-09-18T12:19:55Z",
+    "updated_by": "athenna"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "forja-agentes provision",
+      "forja-lifecycle",
+      "active context"
+    ],
+    "conditions": [
+      "a Task anterior terminou (PR mergeada) mas ninguem retirou o active context do agente",
+      "o slot da Task anterior pode estar SEALED ou ainda ACTIVE: o bloqueio nao vem do slot",
+      "uma Task nova precisa ser provisionada pelo mesmo agente"
+    ]
+  },
+  "status": "verified",
+  "title": "Active context da Task anterior sobrevive ao selo e recusa o provision da proxima"
+}

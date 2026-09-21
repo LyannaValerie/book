@@ -2,16 +2,20 @@
   "challenges": [],
   "contraindications": [
     "Não se aplica quando a cápsula diverge em contagem de regiões, o que indica região nova ou removida e não deriva de hash.",
-    "Não use preparar/aceitar para esta manutenção: aquele fluxo cria marco novo e não reconcilia a cadeia."
+    "Não use preparar/aceitar para esta manutenção: aquele fluxo cria marco novo e não reconcilia a cadeia.",
+    "Não atualize um `from`/`from_hash` só porque ele não bate com o catálogo corrente. Em arquivo de snapshot, muitas âncoras estão legitimamente defasadas em relação ao catálogo atual porque se referem ao estado PÓS-RECEITA do predecessor. Reescrever tudo que não bate corrompe a cadeia: medido em 73 âncoras reescritas de uma vez, que precisaram ser revertidas. O predicado seguro é `from` == hash EXATO de antes da mudança, e só para região que esta Task modificou.",
+    "Não calcule a reconciliação a partir de uma reconciliação anterior. Depois de um segundo `nav sincronizar`, o `from_hash` que você acabou de escrever vira o defasado e a regra deixa de aplicar em silêncio. Recalcule sempre a partir da receita da baseline (`git show <baseline>:<receita>`), o que também torna a operação idempotente.",
+    "O override pina DOIS fatos correntes: `from_hash` e `from_summary`. Mudar o texto do `@pinker-nav:summary` de uma regiao com override quebra a capsula mesmo com o hash ja reconciliado, e o harness reporta um erro por vez (E-SNAP-OVERRIDE-BASE, depois E-SNAP-OVERRIDE-SUMMARY). Reconcilie os dois pelo mesmo predicado, leia o summary novo do catalogo recem-sincronizado em vez de transcreve-lo, e reexecute `nav projecao verificar` ate MATCH.",
+    "Antes de aplicar o predicado, conte as regioes do catalogo contra a baseline: regiao nova ou removida tira este caso de aplicacao. Na #533 deu 3 regioes com hash alterado, 0 novas e 0 removidas; 2 tinham override e a terceira nao exigiu nada."
   ],
   "cues": [
-    "FROZEN",
-    "DRIFT",
-    "projecao",
-    "stable_projection",
-    "override-region",
-    "exclude-key",
-    "E-SNAP-OVERRIDE-BASE"
+    "navigation_catalog_not_current",
+    "from_hash",
+    "from_summary",
+    "nav sincronizar",
+    "preflight_unificado_compoe_campos_e_deferred",
+    "cargo fmt",
+    "base do override divergente"
   ],
   "discriminating_probe": {
     "action": "reconstruir a projeção estável da mesma cápsula na baseline conhecida como MATCH e no estado atual, e comparar registro a registro por chave e campo",
@@ -22,14 +26,26 @@
   },
   "evidence": [
     {
+      "class": "VALIDATED",
+      "description": "Task #649/U-03B, slot a36. Edicoes tocaram ir.lowering.funcoes-blocos, semantic.chamadas.despacho, semantic.expressoes.verificacao e modulos.visibilidade.tratos. As tres primeiras tinham regra de override e exigiram rebase de from_hash (as duas primeiras tambem de from_summary); a quarta nao tem regra e nao exigiu nada. Antes do rebase: HARNESS_FAILURE em onda-pink-agente-d com 'base do override ... divergente: esperado fnv1a64:8c8900a701d1c4db, encontrado fnv1a64:53a033cea4dc799b', e `pink verificar --diff origin/main --json` com blocking navigation_catalog_not_current/STALE. Depois do rebase: 13/13 MATCH e PINKER_EXIGE_NATIVO=1 make ci = 0. O ciclo teve de ser refeito duas vezes porque `cargo fmt` reescreveu o corpo de duas das regioes apos o primeiro sincronizar.",
+      "oracle": "pink nav projecao verificar antes e depois do rebase, no mesmo commit",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a36/artifacts/make-ci-final.log"
+    },
+    {
       "class": "OBSERVED",
-      "description": "O comparador de projeção estável isolou duas divergências de campo hash; após a reconciliação estrita a cadeia inteira voltou a MATCH, a cápsula base reproduziu o hash congelado e o diff estável ficou vazio",
-      "source": "file:/pinker/state/tasks/issue-522-pre-505-native-parity-repair/checkpoint.yaml"
+      "description": "Precedente na arvore: a U-03A (commit dc52823) atualizou exatamente from_hash e from_summary das duas regioes que tocou, e nada mais.",
+      "source": "git:dc528235430e985745a646cbf0023c7741da86d2"
+    },
+    {
+      "class": "VALIDATED",
+      "description": "Task #653/U-02, slot a38: quarta aplicacao do caso rotineiro, sem desvio. O catalogo acusou 0 regioes novas e 0 removidas; tres regioes tiveram hash alterado (ir.lowering.comandos-controle, parser.lacos.for-each, semantic.chamadas.despacho) e as tres tinham regra override-region na receita mutavel. Nenhum summary mudou, entao so from_hash foi rebaseado, calculado a partir de `git show <baseline>:<receita>` para ser idempotente; to_hash e to_summary ficaram intocados. Antes: 13 HARNESS_FAILURE com 'base do override ir.lowering.comandos-controle divergente: esperado fnv1a64:fcdf3558b9db84a6, encontrado fnv1a64:a7772e44bcabfb44'. Depois: 13/13 MATCH, nav CURRENT, e PINKER_EXIGE_NATIVO=1 make ci exit 0 com 145/145 suites ok. O ciclo nao precisou ser refeito porque `cargo fmt` foi rodado ANTES do primeiro `nav sincronizar`.",
+      "oracle": "pink nav projecao verificar antes e depois do rebase, no mesmo commit",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a38/artifacts/make-ci-final.log"
     }
   ],
   "guidance": {
     "class": "ASSERTED",
-    "text": "Nunca recalibre medidas FROZEN. Compare a projeção estável reconstruída contra uma baseline conhecida como MATCH para obter o conjunto exato de campos divergentes, e só então escreva transformações na receita. Região que existia historicamente e mudou pede override-region; região nova pede exclude-key. Extraia to_hash e to_summary da baseline, nunca de memória."
+    "text": "Nunca recalibre medidas FROZEN. Compare a projeção estável reconstruída contra uma baseline conhecida como MATCH para obter o conjunto exato de campos divergentes, e só então escreva transformações na receita. Região que existia historicamente e mudou pede override-region; região nova pede exclude-key. Extraia to_hash e to_summary da baseline, nunca de memória. CASO ROTINEIRO (#649): quando a regra `override-region` JÁ EXISTE e a Task apenas mudou o conteúdo da região, não há transformação nova a escrever — o que falta é rebasear a BASE. Ordem: (1) `pink nav sincronizar`; (2) para cada região tocada que tenha regra, copiar o hash novo para `from_hash` e o summary novo para `from_summary`, deixando `to_hash`/`to_summary` intocados; (3) `pink nav verificar`; (4) `pink nav projecao verificar` = 13/13 MATCH. Três armadilhas medidas: nem toda regra tem `from_summary` (a de `semantic.expressoes.verificacao` só tem `from_hash`, e um regex que exija as duas chaves não casa e reporta 'NO RULE' em silêncio); nem toda região tocada tem regra (`modulos.visibilidade.tratos` não tem, e isso é normal, não gap); e `cargo fmt` reescreve o corpo DEPOIS do primeiro sincronizar, então o ciclo (1)-(4) precisa ser refeito após o fmt. O gate que acusa PRIMEIRO não é o de projeção: `pink verificar --diff origin/main` bloqueia com `navigation_catalog_not_current`/STALE, e é isso que reprova `tests/f1_tooling_tests.rs::preflight_unificado_compoe_campos_e_deferred` — sintoma que parece de tooling e é de catálogo dessincronizado."
   },
   "id": "B-L82QTHN2Z9EI",
   "observed_at": "2026-08-26T00:00:00Z",
@@ -43,11 +59,11 @@
   },
   "references": [],
   "revision": {
-    "hash": "f3ea4f9ffe0f7d8f8e3681c2649bfe0fc2a363dfa2856de53ccc02946aed7b4d",
-    "number": 1,
-    "parent_hash": null,
-    "reason": "created through semantic authoring",
-    "updated_at": "2026-08-26T05:28:11Z",
+    "hash": "3bd384a1b8115c24a73eed677cbe954fe8cd86df51bf2aab9dd700fcc12e779f",
+    "number": 5,
+    "parent_hash": "c88999e7654df2ef553c674ac4943e841b2db509da7b37afdb22c3e6aa3216cb",
+    "reason": "Task #653/U-02: quarta aplicacao do caso rotineiro; rodar cargo fmt antes do primeiro sincronizar evita refazer o ciclo",
+    "updated_at": "2026-09-12T00:48:56Z",
     "updated_by": "velina"
   },
   "schema_version": 1,

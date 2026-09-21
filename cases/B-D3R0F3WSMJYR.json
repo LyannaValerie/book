@@ -1,0 +1,98 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao confundir com B-0FPBIZX5ZG9F: la o caminho do MODULO Rust muda (src/intrinsic_authority.rs -> src/intrinsics/identity.rs) e o estrago e proporcional as CITACOES do caminho no corpo de outras regioes, com drift de hash espalhado. Aqui o caminho de modulo nao muda, nenhuma citacao quebra, e o unico sintoma e E-SNAP-PATH-ALTERADO no campo `file`.",
+    "Nao confundir com B-VQPA0OHIQZQB: la a contagem de regioes do catalogo cai. Aqui ela nao muda.",
+    "Nao vale para arquivo cuja maior funcao concentra a maior parte do LOC: braco de match nao e unidade de move. Antes de prometer reducao, meca a maior funcao do arquivo, nao so o LOC do arquivo.",
+    "Nao vale para crate binario com filhos em src/ solto: os filhos do bin precisam de diretorio proprio que lib.rs nao declare, senao fica ambiguo qual crate possui o arquivo."
+  ],
+  "cues": [
+    "E-SNAP-PATH-ALTERADO",
+    "src/X.rs para src/X/mod.rs",
+    "path alterado na regiao",
+    "to_file expect_file override-region",
+    "decomposicao fisica monolito",
+    "pub(super) modulo filho",
+    "sobreposicao de regioes",
+    "marcador aberto sem fim",
+    "expected_overrides receita"
+  ],
+  "discriminating_probe": {
+    "action": "num clone descartavel, mover uma familia para src/X/<familia>.rs, rodar pink nav sincronizar e comparar o diff de src/navigation.jsonl campo a campo, depois rodar pink nav projecao verificar",
+    "observable": "quantas regioes mudam `file`, quantas mudam `hash`, e se as 13 projecoes caem em E-SNAP-PATH-ALTERADO"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0",
+    "toolchain": "rustc 1.78.0, edition 2021"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "PROBE_B: diff de src/navigation.jsonl com as 24 regioes de parser.rs mudando file e 23 hashes identicos; diff da receita com 18 regras realinhadas, 6 override-region novas e expected_overrides 174->180; sha256 dos 13 snapshots identico antes e depois; parser_tests 48/48.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a13/artifacts/probeB-navigation.diff"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "PROBE_C': relocacao dos 6 mod de teste de interpreter.rs com 19/19 hashes preservados, receita com 8 regras realinhadas e 11 novas, expected_overrides 174->185, projecoes 13/13 MATCH e cargo test --lib verde.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a13/artifacts/probeC-recipe.diff"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "PROBE_C: tentativa de mover so fn try_call_intrinsic de interpreter.rs recusada por pink nav sincronizar com 'sobreposicao de regioes' e 'marcador interpreter.intrinsecos.acaso aberto sem fim', porque a regiao comeca antes da fn e termina dentro dela.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a13/memory/task.jsonl"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Ferramenta que aplica o remedio de receita de forma reproduzivel, validada nas duas sondas.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a13/artifacts/restore_paths.py"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task #608 (INT-1, PR #609) confirma o caso numa variante: o Guia escolheu manter o pai como src/interpreter.rs em vez de mod.rs, justamente para nao mover o campo `file` das dez regioes que ficam. Mesmo assim as nove que migram exigiram remedio de receita — tres regras realinhadas com expect_file corrente e to_file historico, cinco override-region de caminho novas, duas exclude-key para as ancoras novas, contadores 182->187 e 125->127. Custo Rust real: um unico pub(super). 13/13 projecoes FROZEN MATCH sem tocar em snapshot.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a17/artifacts/equivalence.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Meca o custo em duas colunas separadas. Coluna Rust: conte apenas os simbolos definidos dentro da faixa movida que sao referenciados de fora dela E hoje sao privados; esse e o numero exato de `pub(super)`. Agrupar familias na mesma unidade reduz esse numero, porque chamada interna a unidade deixa de atravessar a fronteira (medido: 6 familias de parser separadas custam 14 pub(super), agregadas custam 8). Coluna Trama: o custo e proporcional ao numero de regioes DO ARQUIVO, nao das movidas, e so na primeira unidade daquele arquivo — depois que src/X.rs virou src/X/mod.rs, as unidades seguintes so mexem no `file` das regioes que realmente saem. O remedio inteiro mora na RECEITA, artefato mutavel: para cada regiao com `file` alterado garanta uma `override-region` com `expect_file` = caminho novo e `to_file` = caminho historico, realinhe `from_hash` das que tambem sofreram drift, e some as regras novas em `expected_overrides` da receita. Nenhum snapshot FROZEN e tocado. Duas armadilhas: (a) fronteira de item Rust nao e fronteira de regiao — se um marcador @pinker-nav abre antes da fn e fecha dentro dela, cortar na fn parte a regiao e `pink nav sincronizar` recusa com 'marcador aberto sem fim'; verifique a pureza do span ANTES de planejar o corte, e o proprio sincronizar e o oraculo barato disso; (b) `pink nav projecao verificar` = MATCH nao prova forma canonica da receita — sao contratos distintos, ver B-M5T31AWWT14D."
+  },
+  "id": "B-D3R0F3WSMJYR",
+  "observed_at": "2026-09-05T02:30:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Duas relocacoes medidas. (1) src/parser.rs -> parser/{mod,lacos}.rs, familia parser.lacos.for-each (1275 LOC): custo Rust = 1 `mod lacos;`, 1 `use super::*;`, 1 `pub(super)`, zero `pub(crate)`; 24 das 24 regioes do arquivo mudaram `file`; 23 dos 24 hashes ficaram identicos — so a regiao que recebeu a linha `pub(super)` sofreu drift. (2) src/interpreter.rs -> interpreter/{mod,tests}.rs, os 6 mod de teste (1146 LOC): zero mudanca de visibilidade, 19 de 19 regioes mudaram `file` e 19 de 19 hashes ficaram identicos. Nos dois casos as 13 projecoes deram HARNESS_FAILURE com E-SNAP-PATH-ALTERADO antes do remedio e 13/13 MATCH depois, com o sha256 dos treze .pinker/projections/*.toml identico antes e depois. Em Rust o sentido pai->filho e gratuito: o modulo filho le fn, tipo, metodo e campo privados do pai sem nenhuma promocao, e `impl TipoDoPai` pode ser escrito no arquivo filho. So o sentido filho->pai custa `pub(super)`, um por simbolo consumido de fora — confirmado com controle negativo E0603."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Antes de mover, o custo aparente de dividir um monolito e o numero de itens privados que viram pub(super). Medido, esse custo e quase nulo e o custo real esta em outro lugar: renomear src/X.rs para src/X/mod.rs muda o campo `file` de TODAS as regioes do arquivo, e as 13 projecoes FROZEN param com E-SNAP-PATH-ALTERADO."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a13/artifacts/INVENTARIO-601.md",
+    "git:03cbb12ede5a307bffc54b383b61dbd77a36c9d6"
+  ],
+  "revision": {
+    "hash": "b510ef23b0a61e9ffdebdd657645dbe9fe51a63f83f61d3bc0e4f17cd5719fad",
+    "number": 2,
+    "parent_hash": "3d4818774ccc90d6428ad5f2c29adc14971334871fd19dcf7eb022b8c5b2c51c",
+    "reason": "cross-link da segunda instancia (#608/PR609): variante que preserva o pai como X.rs e mede o mesmo custo de receita",
+    "updated_at": "2026-09-06T04:50:08Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "src/parser.rs",
+      "src/interpreter.rs",
+      "pink nav sincronizar",
+      "pink nav projecao verificar",
+      ".pinker/projections/recipes"
+    ],
+    "conditions": [
+      "Task quer reduzir LOC de um monolito movendo familias para modulos irmaos",
+      "o caminho de modulo Rust NAO muda: crate::parser continua crate::parser",
+      "existem projecoes historicas FROZEN que citam as regioes do arquivo"
+    ]
+  },
+  "status": "candidate",
+  "title": "Split fisico de monolito Rust em mod.rs + irmaos: o custo real e de receita de projecao, nao de visibilidade"
+}

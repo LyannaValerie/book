@@ -1,0 +1,83 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao vale para harness cujo criterio de kill consome o agregado da suite (contagem de falhas, deteccao de efeito colateral fora do alvo, cobertura).",
+    "Nao autoriza generalizar para outra suite ou para a CI historica de um projeto sem medicao propria: o padrao foi observado num unico harness.",
+    "Nao substitui a prova de que a mutacao aplicou: MUTATION_NOT_APPLIED continua tendo de reprovar o gate, e com mais de uma ancora 'o texto mudou' nao prova que todas aplicaram.",
+    "Reduzir execucao nao pode virar aceitar qualquer vermelho como morte: TEST_FAILED != MUTANT_KILLED permanece."
+  ],
+  "cues": [
+    "mutation testing",
+    "sensibilidade",
+    "full suite per mutant",
+    "oracle causal declarado",
+    "wrong-reason kill",
+    "test selection",
+    "evidencia repetida e nao usada",
+    "REPEATED_EVIDENCE_WITH_UNUSED_RESULTS",
+    "custo de gate"
+  ],
+  "discriminating_probe": {
+    "action": "para cada mutante, aplicar a mutacao identica ao harness e executar SOMENTE o teste discriminante declarado; comparar o veredito por mutante com o da suite integral",
+    "observable": "se todos os mutantes continuam mortos pelo mesmo oracle e pela mesma classe de excecao, o veredito nunca dependeu dos outros testes; se algum sobrevive ou muda de motivo, ele dependia e a reducao removeria poder"
+  },
+  "environment": {
+    "baseline": "d7d42d676bff9c81c48774ab80bb75aad7fa012f",
+    "repository": "LyannaValerie/pinker-v0",
+    "runner": "python3 -m unittest"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Issue #541, baseline d7d42d6: os 48 mutantes de tests/forja/test_sensibilidade.py foram reexecutados um a um rodando SOMENTE o teste discriminante declarado. 48/48 ancoras aplicaram, 48/48 selecionaram exatamente 1 teste, 48/48 morreram por AssertionError no proprio alvo — veredito identico ao da suite integral. Custo dirigido 8611.7 ms contra 296059.2 ms de reexecucao integral medidos na #539.",
+      "oracle": "mesma arvore, mesmo commit, mesma mutacao, veredito por mutante comparado entre suite integral e alvo isolado",
+      "source": "file:/pinker/artifacts/evidence-store/85/8542de75c7f4fe5e109674e91e18cbbbb929de5b7d0a7a833ca55865d97aa8e4"
+    },
+    {
+      "class": "VALIDATED",
+      "description": "Baseline local do mesmo host em d7d42d6: forja-check 315160 ms (112 testes, verde), gate de sensibilidade isolado 314120 ms, suite base sozinha 6610 ms (110 testes). 49 execucoes integrais = 1 baseline + 48 mutantes.",
+      "oracle": "/usr/bin/time sobre o alvo do Makefile e sobre a suite isolada, mesmo CARGO_TARGET_DIR e mesma maquina da #539",
+      "source": "file:/pinker/artifacts/evidence-store/3d/3df1bd56473709a731122f27237bfb419d61029481b538039ac40f6795d1f8fb"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Antes de tratar um harness de mutacao como caro por natureza, leia o criterio de kill e pergunte quais resultados o veredito realmente consome. Quando cada mutante ja declara um oracle causal e o juiz le apenas ele, o trabalho restante e evidencia produzida e descartada, e a reducao nao exige enfraquecer nada. Isso e uma leitura do harness, nao uma lei: o padrao precisa ser medido em cada suite antes de ser assumido, porque um harness cujo veredito consome o agregado (contagem de falhas, cobertura, deteccao de efeito colateral) perderia poder discriminante com a mesma mudanca. Generalizar sem medir e o erro; a repeticao pode existir em outra suite e nao existir na seguinte."
+  },
+  "id": "B-RDK70RINUAW4",
+  "observed_at": "2026-08-29T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Medido na Issue #541 em d7d42d6, em tests/forja/test_sensibilidade.py: 48 mutantes, suite base de 110 testes, 39 alvos distintos, 49 execucoes integrais. Rodando so o alvo declarado, 48/48 ancoras aplicaram, 48/48 selecionaram exatamente 1 teste e 48/48 morreram por AssertionError no proprio alvo — veredito identico ao da suite integral. Custo dirigido dos 48: 8611.7 ms contra 296059.2 ms de reexecucao integral medidos na #539. O harness ja declarava o oracle por mutante e ja exigia AssertionError nele; os ~109 testes restantes rodavam 48 vezes sem que nenhuma asercao lesse o resultado agregado deles."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um gate de sensibilidade por mutacao executa a suite base integral uma vez por mutante, mas o veredito de cada mutante e decidido exclusivamente pelo teste discriminante que o proprio mutante declara. O resultado agregado dos demais testes e produzido a cada execucao e nunca consultado por nenhuma asercao."
+  },
+  "references": [
+    "file:/pinker/artifacts/evidence-store/ae/ae649443e0b185e89211c3fdbc75f82a5b084d4a4917eaaba975437c37a31018",
+    "file:/pinker/artifacts/evidence-store/1e/1efe9e48f0be62e791287482bf3bac9598a84977f5716f138dfc5927084408d2",
+    "file:/pinker/artifacts/evidence-store/85/8542de75c7f4fe5e109674e91e18cbbbb929de5b7d0a7a833ca55865d97aa8e4"
+  ],
+  "revision": {
+    "hash": "50ed5fa2afb9df6f52734743085aacab2a369b730c5794014a6da05085e1a647",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-29T19:10:00Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "tests/forja/test_sensibilidade.py",
+      "gate forja-check",
+      "harness de mutation testing"
+    ],
+    "conditions": [
+      "harness cujo veredito por mutante e decidido por um oracle causal declarado"
+    ]
+  },
+  "status": "candidate",
+  "title": "Harness de mutacao que roda a suite inteira por mutante e le so o oracle declarado"
+}

@@ -1,0 +1,83 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando a autoridade rejeitou o corte original de forma explicita e registrada: ali a pendencia nao existe.",
+    "Nao autoriza executar o corte pendente dentro da Task corrente."
+  ],
+  "cues": [
+    "READY_TO_CLOSE por contagem de rotulos",
+    "rotulo de unidade reusado",
+    "INT-1 dois cortes",
+    "lacuna de inventario fisico",
+    "unidade aceita pendente",
+    "fechamento de campanha nao sustentado por metricas",
+    "INT1_DISTINCT_CUT_COUNT",
+    "colisao entre artifacts e Issues",
+    "falsificacao parcial de achado",
+    "contar definicoes no inventario"
+  ],
+  "discriminating_probe": {
+    "action": "para cada unidade do inventario, verificar a existencia do arquivo-alvo declarado e se o bloco de origem saiu do arquivo pai, em vez de conferir se existe uma Task com aquele rotulo",
+    "observable": "o arquivo-alvo do inventario nao existe e o bloco continua no pai com os mesmos bytes do baseline, mesmo havendo uma Task fechada com aquele rotulo"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Achado F2 da revisao adversarial #535 da #640, por codex-amara (cross-provider), verificado independentemente pelo executor de continuacao antes da remediacao.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a31/artifacts/review.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Definicao original da unidade no inventario da #601.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a13/artifacts/units.json"
+    },
+    {
+      "class": "VALIDATED",
+      "description": "Targeted closure da #640 (HEAD d752486): releitura literal dos quatro artifacts da #601 com sha256, indices de array e ranges. INT1_DISTINCT_CUT_COUNT = 1. A pendencia sobreviveu: bloco de 1146 linhas em src/interpreter.rs:4545 com sha256 05a7e22cf119ad74f60044233b1ea50148cecbd89c70ec35a0b17544534aa59e, identico as linhas 8000-9145 de git show 03cbb12e:src/interpreter.rs; src/interpreter/tests.rs nao existe, enquanto o analogo exato BS-3 foi executado pela #610. Revisor cross-provider independente confirmou: int1_distinct_cut_count=1, int1_id_collision=false, ready_to_close_supported=true.",
+      "oracle": "contagem literal das definicoes de INT-1 nos quatro artifacts da #601 (grep + indices de array, com sha256 de cada artifact), mais sha256 do bloco de 1146 linhas contra git show 03cbb12e:src/interpreter.rs linhas 8000-9145",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a31/artifacts/F2-EVIDENCIA-LITERAL.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Nunca declare fechamento de campanha fisica contando rotulos de Task. Reconcilie por CONTEUDO: para cada unidade do inventario, o arquivo-alvo declarado existe e o bloco de origem saiu do pai? Quando uma Task posterior reusa um rotulo para outro corte, renomeie o corte novo no relatorio (INT-1' e claro o bastante) e mantenha o corte original na lista de pendentes ate haver execucao ou rejeicao explicita da autoridade. Nao amplie a unidade corrente para absorver a lacuna: isso e escopo nao autorizado. FALSE com a lacuna nomeada e um resultado valido do contrato; TRUE por contagem de rotulo nao e.\n\nCOMO ENUNCIAR O ACHADO SEM ERRAR A LOCALIZACAO: separe as duas afirmacoes, porque elas se falsificam independentemente. (1) 'o identificador nomeia dois cortes' — verifique ONDE: contar as definicoes dentro dos artifacts do inventario e um comando; se der 1, a colisao e entre artifacts e Issues posteriores, nao dentro do inventario, e enunciar o contrario faz a revisao ser falsificada por releitura. (2) 'a unidade continua pendente' — isso se prova por hash do bloco contra o baseline e pela ausencia do arquivo-alvo, e sobrevive mesmo quando (1) cai. Um revisor que junta as duas numa frase entrega um MAJOR que o executor derruba pela metade errada."
+  },
+  "id": "B-CUC8Y5AY6GDF",
+  "observed_at": null,
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "cruzar `units.json` do inventario com a realidade fisica atual (existencia do arquivo alvo e permanencia do bloco no pai), corte a corte, em vez de comparar listas de rotulos",
+    "text": "Task #640, repo pinker-v0. `units.json` da #601: INT-1 = {file: src/interpreter.rs, label: 'mods de teste -> interpreter/tests.rs'}. Realidade no HEAD 3ca3720: `src/interpreter/tests.rs` nao existe; os 1146 LOC de `#[cfg(test)]` continuam em `src/interpreter.rs:4545`, bytes identicos ao baseline (sha256 05a7e22cf119ad74f60044233b1ea50148cecbd89c70ec35a0b17544534aa59e). O corte da #608 existe e e outro arquivo. READY_TO_CLOSE corrigido para FALSE, com a lacuna nomeada e a decisao devolvida a autoridade."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Na ultima unidade fisica da campanha (#640/MAIN-1), o relatorio declarou PHYSICAL_MODULARIZATION_READY_TO_CLOSE=TRUE contando 17 Tasks mutantes contra 17 unidades do inventario. Mas o rotulo INT-1 nomeia dois cortes distintos: no `units.json` da #601 e 'mods de teste -> interpreter/tests.rs'; a #607/#608 passou a usar INT-1 para 'try_call_intrinsic -> interpreter/hosted_intrinsics.rs'. O primeiro corte nunca foi executado nem rejeitado. A contagem por rotulo fechou uma campanha com uma unidade aceita ainda pendente. PRECISAO ADICIONADA NA #640 (targeted closure): a colisao NAO esta dentro dos artifacts da #601. Varredura literal dos quatro artifacts devolve INT1_DISTINCT_CUT_COUNT = 1: `INT-1` aparece uma unica vez em units.json[0] e uma unica vez em unit_costs.json[0], sempre como 'mods de teste -> interpreter/tests.rs', e region_matrix.json nao carrega identificador de unidade. O corte que a #608 executou corresponde POR CONTEUDO a INT-2 do inventario ('intrinsecas hospedadas + modelo de memoria publica', units.json[1], classe P3, em REJECTED_CUTS da §7), desbloqueada pela decisao cartografica da #607 — que e a Alternativa B da propria §7. A reutilizacao do identificador aconteceu nas Issues, e o inventario e internamente consistente."
+  },
+  "references": [],
+  "revision": {
+    "hash": "d9831b648649f96c6266157a5b4a0e5024bd993b04097396c5e6dd8bd2ecdf2c",
+    "number": 2,
+    "parent_hash": "07f6b407041a16ee056a7533f316a9866732f433dead6307d017993a02e26117",
+    "reason": "targeted closure da #640: a colisao nao esta dentro dos artifacts da #601 (INT1_DISTINCT_CUT_COUNT=1); separar a afirmacao de colisao da afirmacao de pendencia",
+    "updated_at": "2026-09-09T11:29:09Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "inventario fisico #601",
+      "campanha de decomposicao #442",
+      "declaracao PHYSICAL_MODULARIZATION_READY_TO_CLOSE"
+    ],
+    "conditions": [
+      "uma campanha executa unidades nomeadas por um inventario anterior",
+      "uma Task posterior reusa o rotulo de uma unidade para um corte diferente",
+      "o fechamento e declarado contando rotulos de Task, nao cortes do inventario"
+    ]
+  },
+  "status": "candidate",
+  "title": "Rotulo de unidade reusado por Task posterior esconde uma lacuna do inventario fisico"
+}

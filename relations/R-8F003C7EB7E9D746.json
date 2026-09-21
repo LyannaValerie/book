@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-08-29T13:25:45Z",
+  "created_by": "amara",
+  "epistemic": "VALIDATED",
+  "from": "B-FE43ZWR28GUQ",
+  "id": "R-8F003C7EB7E9D746",
+  "oracle": "medicao #539 em d7d42d6: a validade do ranking depende da evidencia nativa ter rodado; com ponte da staticlib e PINKER_EXIGE_NATIVO=1 o alvo issue492 custou 10707 ms e part_d passou 8/8, contra menos de 1 s quando a metade nativa e pulada",
+  "to": "B-QOS3720QJJSH",
+  "type": "depends_on"
+}

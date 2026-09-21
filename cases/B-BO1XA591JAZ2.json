@@ -1,0 +1,95 @@
+{
+  "challenges": [
+    {
+      "evidence": [
+        {
+          "class": "OBSERVED",
+          "description": "Na Task #714, o primeiro `cargo build --locked --bin pink` no worktree em 759b3c7 produziu {\"schema\":3,\"binary_path\":\"/pinker/repo/pinker-v0/agentes/a38/target/debug/pink\",\"binary_version\":\"0.1.0\",\"binary_commit\":\"UNKNOWN\"} enquanto git rev-parse HEAD era 759b3c7ddb7051aa627e189f54b85e9d4759e65f. Um rebuild identico com PINKER_BUILD_COMMIT=$(git rev-parse HEAD) devolveu binary_commit igual ao HEAD e so entao `pink doctor` reportou compatibility EXACT.",
+          "source": "file:/pinker/repo/pinker-v0/agentes/a38/memory/checkpoint.json"
+        },
+        {
+          "class": "OBSERVED",
+          "description": "build.rs no HEAD observado contem somente a linha de rerun-if-env-changed; `git log --oneline -- build.rs` devolve um unico commit, ba8ba96, cujo diff ja introduz esse conteudo. Nao existe revisao em que build.rs tenha derivado o commit do git.",
+          "source": "file:/pinker/repo/pinker-v0/agentes/a38/worktree/build.rs"
+        }
+      ],
+      "id": "C-999C3EA6AC",
+      "observed_at": "2026-09-20T16:20:00Z",
+      "references": [
+        "file:/pinker/repo/pinker-v0/agentes/a38/memory/checkpoint.json",
+        "file:/pinker/repo/pinker-v0/agentes/a38/worktree/build.rs",
+        "file:/pinker/repo/pinker-v0/agentes/a38/worktree/ci_env.sh"
+      ],
+      "reported_by": "athenna",
+      "statement": {
+        "class": "ASSERTED",
+        "text": "O mecanismo declarado no caso e factualmente falso contra a main corrente, e sempre foi. O caso afirma que 'binary_commit e gravado no build a partir do HEAD daquele momento'. Em 759b3c7ddb7051aa627e189f54b85e9d4759e65f, build.rs contem apenas println!(\"cargo:rerun-if-env-changed=PINKER_BUILD_COMMIT\") - conteudo inalterado desde seu unico commit, ba8ba96 - e src/tooling.rs:44 le option_env!(\"PINKER_BUILD_COMMIT\").unwrap_or(\"UNKNOWN\"). Logo um `cargo build --locked --bin pink` sem a variavel nao produz o SHA do baseline: produz literalmente \"UNKNOWN\". Quem carimba a variavel e ci_env.sh:4-7, ou seja, o caminho de `make ci`, nao o comando de build que #690 secao 18 nomeia entre os gates comuns. O sintoma que o caso descreve - binario anunciando um SHA velho - continua alcancavel, mas por outra causa: uma variavel carimbada a partir de um HEAD anterior e nao reexportada. A guidance permanece correta e util (reconstruir o pink depois de congelar o candidato e conferir --version-json contra git rev-parse HEAD no mesmo comando); o que precisa mudar e a causa declarada, que hoje faz o leitor procurar o defeito no lugar errado e supor que o portao PINK_BINARY_COMMIT == WORKTREE_HEAD e satisfeito por um build simples."
+      }
+    }
+  ],
+  "contraindications": [
+    "Não é motivo para amend do commit do candidato: rebuild resolve.",
+    "Não confundir com ancestral compatível instalado em /opt, que é outra pergunta."
+  ],
+  "cues": [
+    "version-json",
+    "binary_commit",
+    "PINKER_BUILD_COMMIT",
+    "candidato",
+    "revisor",
+    "proveniencia",
+    "doctor"
+  ],
+  "discriminating_probe": {
+    "action": "comparar binary_commit de pink --version-json com git rev-parse HEAD depois do commit do candidato",
+    "observable": "os dois SHAs são iguais ou o binário anuncia o SHA anterior"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Task #645/U-04: binary_commit=d2eb7d744e66114f66e35bca6e11468f8d964f6a com HEAD=130e407775ed2dcbb7d9fa72b97cebf185c29d62; finding ADV645-01 da revisão adversarial; rebuild de 3.59s realinhou os dois.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a34/artifacts/review/targeted-closure.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Reconstrua o pink DEPOIS de congelar o candidato e antes de gerar evidência ou entregar brief: um `cargo build --locked --bin pink` incremental custa segundos. Confira `pink --version-json` contra `git rev-parse HEAD` no mesmo comando em que você registra o FINAL_CANDIDATE_HEAD. Reexecute os gates locais com o binário correto; o candidato não muda, só a evidência."
+  },
+  "id": "B-BO1XA591JAZ2",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O revisor adversarial independente detectou a divergência, declarou a proveniência do binário entregue como não confirmada e refez os builds do candidato e do baseline por conta própria antes de aceitar qualquer resultado. Custou um MINOR de evidência operacional na revisão, não um blocker: o binário era funcionalmente o candidato, só o metadado estava velho."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "binary_commit é gravado no build a partir do HEAD daquele momento. Quem constrói antes de commitar entrega um binário que anuncia o SHA do baseline enquanto o worktree já está no SHA do candidato. O passo de bootstrap que exige PINK_BINARY_COMMIT == WORKTREE_HEAD passa no início da Task e volta a ser falso depois do commit, sem nenhum sinal."
+  },
+  "references": [],
+  "revision": {
+    "hash": "1e5aca74f31f06223566fd1a7c6da2ab989ed99e4ebfae0c5bb70c3f366238a4",
+    "number": 2,
+    "parent_hash": "04e26e6858db2efd71042d421d8a98c34e3633889c444f4b0c711b8d59515bc4",
+    "reason": "mecanismo declarado e factualmente falso contra a main corrente",
+    "updated_at": "2026-09-20T16:56:00Z",
+    "updated_by": "athenna"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "pink --version-json",
+      "pink doctor",
+      "cargo build --bin pink",
+      "handoff de revisão adversarial"
+    ],
+    "conditions": [
+      "Task constrói o pink cedo, implementa, e só depois congela o candidato num commit",
+      "o brief entregue ao revisor afirma PINK_BINARY_COMMIT == WORKTREE_HEAD"
+    ]
+  },
+  "status": "challenged",
+  "title": "pink construído antes do commit anuncia binary_commit do baseline e a revisão trata a evidência como não confirmada"
+}

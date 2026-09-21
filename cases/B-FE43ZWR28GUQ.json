@@ -1,0 +1,73 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "A igualdade soma-wall so prova ausencia de concorrencia entre alvos; nao diz nada sobre o paralelismo interno de cada binario.",
+    "Nao vale para runners que executam binarios de teste concorrentemente, como cargo-nextest.",
+    "Alvo que nao imprime finished in, por versao antiga de libtest, fica de fora da soma e precisa ser contado a parte."
+  ],
+  "cues": [
+    "cargo test lento",
+    "suite lenta",
+    "custo por alvo",
+    "finished in",
+    "paralelismo entre alvos",
+    "test harness",
+    "ranking de testes",
+    "medir suite"
+  ],
+  "discriminating_probe": {
+    "action": "parear cada linha Running <path> (<bin>) com o finished in Xs da linha test result seguinte, num unico log de cargo test, e comparar a soma com o wall medido",
+    "observable": "se a soma dos tempos internos bate com o wall, nao ha concorrencia entre alvos e o log integral ja e o ranking"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0",
+    "runner": "cargo test --locked"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Issue #539 em d7d42d6: artifacts/full-run-per-target.json derivado de um unico raw/test_run.log, contra artifacts/test-target-ranking.jsonl com 118 invocacoes isoladas; nenhuma das execucoes isoladas recompilou (campo recompiled=false), entao runtime e compilacao nao se misturaram.",
+      "oracle": "tres derivacoes independentes do mesmo custo: wall unico, soma dos tempos internos do mesmo log, soma de invocacoes separadas",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a01/artifacts/final-characterization.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Antes de gastar uma suite inteira medindo alvo por alvo, extraia o custo por alvo do log que voce ja tem: libtest imprime finished in Xs em cada linha test result, e a linha Running anterior diz de qual alvo se trata. Cuidado com duas armadilhas na contagem: as linhas de unittest tem a forma Running unittests <path> (<bin>), com um token a mais que as de integracao, e os cinco pacotes de runtime/ imprimem todos o mesmo caminho relativo src/lib.rs, entao desambigue pelo prefixo do binario em deps/ e nao pelo caminho. Se voce tambem rodar os alvos isolados, use o PRIMEIRO registro de cada alvo como amostra unica: uma passagem de repeticao reinicia a numeracao de rep e substitui silenciosamente a amostra original. Compare a soma com o wall antes de afirmar sequencialidade, e nao confunda sequencialidade com custo: ela nao acrescenta tempo, ela impede que o tempo dos alvos se sobreponha."
+  },
+  "id": "B-FE43ZWR28GUQ",
+  "observed_at": "2026-08-29T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Em d7d42d6, Issue #539, com PINKER_EXIGE_NATIVO=1: wall de uma execucao integral 577140.3 ms; soma dos tempos internos impressos por libtest nos 124 executaveis do mesmo log 575840.0 ms, diferenca 0.23%; soma de 118 invocacoes separadas de cargo test --test X 575770.6 ms, diferenca 0.24%. O overhead do Cargo por invocacao ficou em 21.6 ms. Ou seja os binarios de teste correm em sequencia e o paralelismo vive dentro de cada binario. A distribuicao do custo: 78 alvos que criam subprocesso carregam 99.62% do runtime, os 40 que nao criam carregam 0.38%, 69 alvos terminam abaixo de 1 s e somam 1.07%, e um unico alvo carrega 18.48%. Compilacao nao explica nada disso: build frio 17978.9 ms, check 6948.8 ms, compilacao de todos os alvos 64329.3 ms, build quente no-op 28.5 ms."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Descobrir o custo de cada alvo de teste parece exigir rodar cada alvo isolado, o que custa uma suite inteira a mais, e ainda deixa a duvida de se a soma dos alvos pode ser comparada com o wall da suite."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a01/artifacts/test-target-ranking.csv"
+  ],
+  "revision": {
+    "hash": "ac55cbed27e91499de55c95aea1619f245fe948e96b41929884e73895823af96",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-29T13:24:56Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "cargo test",
+      "tests/",
+      "medicao de custo de suite"
+    ],
+    "conditions": [
+      "workspace Cargo com muitos alvos de integracao",
+      "necessidade de saber para onde vai o tempo da suite"
+    ]
+  },
+  "status": "candidate",
+  "title": "Wall do cargo test e a soma dos alvos: um unico log integral ja da o custo por alvo"
+}

@@ -1,0 +1,9 @@
+{
+  "case_id": "B-FE43ZWR28GUQ",
+  "domain": "Pinker",
+  "synthetic": false,
+  "updated_at": "2026-08-29T13:24:56Z",
+  "views": [
+    "Pinker/TestHarness"
+  ]
+}

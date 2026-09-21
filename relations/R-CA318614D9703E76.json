@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-08-27T01:30:15Z",
+  "created_by": "amara",
+  "epistemic": "OBSERVED",
+  "from": "B-W81S5ABYTXTD",
+  "id": "R-CA318614D9703E76",
+  "oracle": null,
+  "to": "file:/pinker/artifacts/tasks/issue-528-quarantine-etxtbsy/etxtbsy-mecanismo.md",
+  "type": "learned_from"
+}

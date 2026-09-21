@@ -1,0 +1,69 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não vale se o despacho a jusante lê a grafia que o USUÁRIO escreveu em vez da canonicalizada: aí a recusa no parser não é suficiente e as camadas precisam mudar.",
+    "A grafia canônica continua sendo chave de despacho e por isso permanece RESERVADA para declaração. Soltá-la sem fazer IR/interpretador/backend preferirem a função do usuário troca uma recusa explícita por sombreamento silencioso — que é pior.",
+    "Nome de membro curto colide com palavra comum e com tipo da linguagem: `verso` e `logica` não parseiam em posição de chamada, e `tamanho`/`criar`/`obter` aparecem por coincidência em censos de vazamento. Meça antes de escolher o nome."
+  ],
+  "cues": [
+    "superficie global",
+    "intrinseca",
+    "modulo importavel",
+    "canonicalizacao",
+    "CANONICALIZATION_BOUNDARY",
+    "namespace publico",
+    "migracao lexical"
+  ],
+  "discriminating_probe": {
+    "action": "escrever cada grafia pública a seco, sem nenhum import, e parsear; depois medir `git diff` nas camadas de execução",
+    "observable": "toda grafia recusada por escopo E zero linhas de diff no backend/runtime prova que a migração foi nominal"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Censo final da #505: 154 grafias canônicas, 151 membros, 15 módulos, 0 intrínsecas globais sobreviventes em 254 grafias sondadas",
+      "source": "file:/pinker/artifacts/tasks/issue-505-intrinsic-inventory/censo-final.txt"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "254 grafias públicas escritas a seco, todas recusadas; `git diff` de 0 linhas em backend_s.rs/native_symbol.rs/runtime/",
+    "text": "Localize o limite de canonicalização e coloque a recusa lá, não no despacho. Rastreie, dentro do laço de parsing, se a grafia corrente veio da canonicalização de um import ou do texto do usuário — sem isso as duas ficam indistinguíveis depois da reescrita. A recusa precisa ceder a duas coisas: identidade de topo do arquivo e censo léxico de nomes ligados em QUALQUER escopo (não só os visíveis no ponto), senão `nova x = carinho(){ x(...) }` passa a ser recusado pelo parser em vez de resolvido pela semântica. Prove `GLOBAL = 0` por comportamento — escreva cada grafia a seco e exija recusa — e não por lista, que é o que uma lista vazia sempre 'prova'."
+  },
+  "id": "B-OT7Z641QLE31",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Não é preciso. Se o mecanismo de import já canonicaliza `(módulo, membro)` para a identidade executiva ANTES das camadas a jusante, então basta separar dois namespaces na autoridade — grafia canônica endereça IDENTIDADE, o par `(módulo, membro)` é a SUPERFÍCIE PÚBLICA — e acrescentar UMA recusa no mesmo ponto de canonicalização: grafia pública escrita a seco, sem import, é erro. Na #505 isso removeu 166 nomes globais com diff ZERO em backend_s.rs, native_symbol.rs e runtime/, e mudança apenas dentro de `#[cfg(test)]` no interpretador."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Migrar uma stdlib de ~150 nomes globais para módulos importáveis parece exigir tocar semantic, IR, interpretador e backend, porque todos despacham pelo nome. Fazer isso multiplica o risco de divergência interpretador/nativo e de símbolo de runtime novo, que é exatamente o que a migração não pode causar."
+  },
+  "references": [],
+  "revision": {
+    "hash": "34a752e13404cf262b8cc77391f1bd2fd1b03c97a7d0d4d96a3fca4677a9ace8",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-27T14:38:02Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "parser",
+      "autoridade de intrinsecas",
+      "registro de modulos"
+    ],
+    "conditions": [
+      "linguagem cuja superfície pública histórica é um conjunto de nomes globais",
+      "existe um ponto único onde a forma importada já é canonicalizada para a identidade executiva"
+    ]
+  },
+  "status": "candidate",
+  "title": "Remover superfície pública global sem tocar as camadas de execução: recuse no limite de canonicalização"
+}

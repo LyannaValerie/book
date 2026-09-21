@@ -1,0 +1,70 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando a suite roda inteira por cargo test: ali o ambiente do gate ja esta ativo em todos os alvos.",
+    "Nao e o mesmo caso que a invalidacao de grafo por troca de valor de PINKER_BUILD_COMMIT; aqui a variavel esta AUSENTE e quem dispara o rebuild e um alvo de teste, nao o operador."
+  ],
+  "cues": [
+    "ranking por alvo",
+    "target isolado mais lento",
+    "alvo vermelho so fora do cargo test",
+    "PINKER_BUILD_COMMIT",
+    "rerun-if-env-changed",
+    "UNKNOWN_BINARY_COMMIT",
+    "compatibility UNKNOWN",
+    "teste que chama cargo build",
+    "ci_env.sh",
+    "medicao contaminada no meio da passagem"
+  ],
+  "discriminating_probe": {
+    "action": "rodar o alvo vermelho isolado e depois pelo gate oficial; se divergirem, ler binary_commit em pink doctor --json antes e depois da passagem",
+    "observable": "o alvo passa pelo gate e falha isolado, e binary_commit cai para UNKNOWN durante a passagem isolada"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0",
+    "runner": "execucao direta de binario de teste, sem Cargo"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Issue #557: target-ranking-pass1-discarded-env-mismatch.json (116 alvos, 1 exit 101) preservado ao lado de target-ranking-raw.json (116 alvos, 0 exit nao-zero) depois de exportar a variavel; logs/pass1-discarded-env-mismatch/f1_tooling_tests.log com os dois panicos.",
+      "oracle": "mesmo binario, mesma arvore, mesmo CARGO_TARGET_DIR, unica variavel de ambiente alterada, com o gate oficial como controle positivo",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/target-ranking-pass1-discarded-env-mismatch.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "tests/issue554_runtime_profile_tests.rs:88-97 invoca Command::new(env!(\"CARGO\")) com build --locked --message-format=json herdando o ambiente; build.rs:2 declara rerun-if-env-changed=PINKER_BUILD_COMMIT; src/tooling.rs:39 le option_env!(\"PINKER_BUILD_COMMIT\").unwrap_or(\"UNKNOWN\").",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a02/worktree/tests/issue554_runtime_profile_tests.rs"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Antes de medir alvo por alvo fora do Cargo, reproduza o ambiente do gate, nao so os paths. Compare o env efetivo do gate com o seu: aqui a unica diferenca era PINKER_BUILD_COMMIT, derivada dentro do ci_env.sh e portanto invisivel de fora. Depois, ancore a identidade do que voce esta medindo antes e depois da passagem inteira (pink doctor --json e barato) para provar que o grafo nao mudou no meio. Um alvo vermelho numa passagem de ranking e sinal de contaminacao da medicao ate prova em contrario: verifique se o mesmo alvo passa pelo gate oficial antes de acreditar em regressao. Descarte a passagem inteira, nao so o alvo vermelho, porque a ordem de execucao decide quais alvos vieram depois da reconstrucao. Grep barato para saber se o risco existe na sua suite: procure Command::new(env!(\"CARGO\")) e chamadas a cargo build/test dentro de tests/**."
+  },
+  "id": "B-KWGYCISOV2ZD",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Issue #557, baseline 58968822f338a239786b8753ad99fc0bb76d51d9. Primeira passagem de ranking sobre 116 binarios: 115 verdes e f1_tooling_tests vermelho, 13 passed / 2 failed, panicos em assert!(output.status.success()) para pink doctor e pink preflight. O binario nao estava quebrado: o mesmo alvo passa 15/15 via cargo test. A causa e outro alvo. tests/issue554_runtime_profile_tests.rs chama Command::new(env!(\"CARGO\")).args([\"build\",\"--locked\",...]) herdando o ambiente do processo de teste. A passagem rodava sem PINKER_BUILD_COMMIT, que ci_env.sh exporta no make ci; build.rs declara rerun-if-env-changed=PINKER_BUILD_COMMIT, entao esse cargo build reconstruiu o grafo com a variavel ausente e reescreveu target/debug/pink com binary_commit=UNKNOWN. A partir dai pink doctor devolve compatibility=UNKNOWN_BINARY_COMMIT e exit 1, e todo alvo executado depois daquele ponto da ordem foi medido contra um grafo diferente. Exportando PINKER_BUILD_COMMIT=$(git rev-parse HEAD), igual ao ci_env.sh, a segunda passagem deu 116 de 116 com exit 0 e a identidade do pink permaneceu EXACT antes e depois da passagem inteira."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Para ranquear custo por alvo, a receita natural e executar cada binario de teste ja compilado direto, sem Cargo, para nao medir o driver. Parece que basta o binario, o cwd e o CARGO_TARGET_DIR. Nao basta: se qualquer alvo da suite invocar o build system, ele herda o ambiente da medicao, e um ambiente que difere do gate em uma unica variavel muda o grafo compilado no meio da passagem."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a02/logs/pass1-discarded-env-mismatch/f1_tooling_tests.log",
+    "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/final-report.md"
+  ],
+  "revision": {
+    "hash": "43ba819e5995eca36c5b93a8dbb5317bc1c6209bef62b03b9b1138f0204f68f7",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-31T23:59:06Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": null,
+  "status": "candidate",
+  "title": "Ranking por alvo isolado precisa reproduzir o ambiente do gate: um alvo que chama cargo build reconstroi o grafo no meio da medicao"
+}

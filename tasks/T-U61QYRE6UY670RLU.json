@@ -1,0 +1,18 @@
+{
+  "domain": "pinker-v0/Trama",
+  "external_task_ref": "pinker:issue-705-trama-t3-supervised-operational-use",
+  "finished_at": "2026-09-19T16:50:39Z",
+  "followed_refs": [],
+  "goal": "Retencao de conhecimento do encerramento fisico de T3 (#705): avaliar e registrar o que a Trama supervisionada produziu de reutilizavel",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "Retencao de T3 concluida: 1 caso novo B-JZKO06LLJY6N, 1 relacao R-278F107D3ED624DF, nenhuma duplicata criada",
+  "project": "pinker-v0",
+  "started_at": "2026-09-19T16:49:35Z",
+  "state": "finished",
+  "task_id": "T-U61QYRE6UY670RLU",
+  "validation": null
+}

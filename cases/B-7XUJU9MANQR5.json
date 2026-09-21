@@ -1,0 +1,57 @@
+{
+  "challenges": [],
+  "contraindications": [],
+  "cues": [
+    "pink_cli",
+    "cfg(test)",
+    "path attribute",
+    "contrafactual",
+    "use super::*",
+    "use crate as pinker_v0",
+    "dead_code",
+    "consumidor no binario",
+    "prova por execucao",
+    "colher_closures_de_default"
+  ],
+  "discriminating_probe": null,
+  "environment": null,
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "pinker-v0 PR 656: src/u05_cli_recognition_tests.rs mais src/lib.rs; PINKER_EXIGE_NATIVO=1 make ci verde com 146 suites",
+      "source": "git:e48154fe46e2a03026f880337c7e668fb9c236c0"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Mutante escondido em colher_closures_de_default: censo textual GREEN, testemunha contrafactual RED com chaves observadas vazias, cardinalidade 0 contra 1 esperada",
+      "source": "file:src/u05_cli_recognition_tests.rs"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Quando um consumidor de autoridade mora num modulo que so o binario incorpora, nao amplie visibilidade de producao nem invente flag de runtime para testa-lo: reinclua o MESMO arquivo fisico num adaptador cfg(test) da biblioteca. Reproduza no modulo pai exatamente o contexto de nomes que o entrypoint da ao modulo, com crate:: nos use paths e um alias use crate as <nome-da-crate>; para os caminhos de expressao. Entre pela superficie que ja existe, a funcao pub(super) que o binario chama, nunca tornando publico o coletor privado. Se fazer o adaptador compilar exigir mover logica, ampliar visibilidade ou duplicar implementacao, pare: ai a prova deixaria de ser do consumidor real. Verifique dead_code medindo, nao presumindo, e mantenha o allow local ao mod reincluido. Ver tambem o caso do use super::* que muda de significado quando um mod de teste inline vira arquivo filho."
+  },
+  "id": "B-7XUJU9MANQR5",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Criar src/u05_cli_recognition_tests.rs, ligado em src/lib.rs so por cfg(test) mod ..., e reincluir o MESMO arquivo fisico por path = pink_cli/modules.rs compilou de primeira. Tres fatos fizeram funcionar: (1) para mod nao-inline, o path attribute resolve relativo ao diretorio do arquivo que declara, entao vale o mesmo caminho que main.rs escreve; (2) modules.rs usa use super::*, e o modulo pai de teste precisa reproduzir as mesmas linhas use que main.rs tem no topo, escritas com crate:: porque em lib.rs nao existe extern crate pinker_v0 e use pinker_v0::... nao resolve num use path; (3) use crate as pinker_v0; no pai faz os caminhos de EXPRESSAO pinker_v0::anonymous_identity dentro de modules.rs resolverem para a MESMA crate sob teste, logo para o MESMO thread-local do contrafactual. O unico custo foi dead_code: Rust compila o modulo inteiro e 4 funcoes ficam sem chamador no alvo de teste; um allow(dead_code) no proprio mod reincluido resolve, e a necessidade foi medida removendo o allow (4 erros sob -D warnings). Matriz medida: derivado+canonico GREEN, derivado+contrafactual GREEN, copia local+canonico GREEN inclusive na integracao real do binario, copia local+contrafactual RED com pool vazio, removida so a copia GREEN, censo textual GREEN durante o mutante. O arquivo novo em src/ sem marcador de navegacao nao mexeu na contagem de regioes: nav verificar ok e 13/13 projecoes MATCH."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um consumidor real de autoridade vive em src/pink_cli/modules.rs, que so main.rs incorpora por path attribute. O contrafactual thread-local da biblioteca (cfg(test)) nao alcancava esse codigo, entao a cobertura por execucao ficava com um consumidor alcancavel sem prova duravel: uma copia local escondida por concatenacao do prefixo podia voltar ali com o terminal verde, porque o censo textual e suplementar."
+  },
+  "references": [],
+  "revision": {
+    "hash": "92586c086cb36238c92fae6937e0afb52fe43c0ee6b9dd78cbe9c18979a9d483",
+    "number": 2,
+    "parent_hash": "d5bd5646486325199cc48ee84f3ca749b03433f02755aa524d9b0f83ae9c4544",
+    "reason": "substitui payload de teste acidental pelo caso real da #655",
+    "updated_at": "2026-09-12T12:18:46Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": null,
+  "status": "candidate",
+  "title": "Consumidor que mora em src/pink_cli e alcancavel por prova de biblioteca: reincluir o MESMO arquivo por path attribute sob cfg(test)"
+}

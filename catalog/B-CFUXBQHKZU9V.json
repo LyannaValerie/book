@@ -1,0 +1,12 @@
+{
+  "case_id": "B-CFUXBQHKZU9V",
+  "domain": "Pinker",
+  "synthetic": false,
+  "updated_at": "2026-09-20T16:55:18Z",
+  "views": [
+    "pinker-v0",
+    "pinker-v0/ActiveContext",
+    "pinker-v0/ForjaAgentesProvision",
+    "pinker-v0/ForjaLifecycle"
+  ]
+}

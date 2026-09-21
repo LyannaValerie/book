@@ -1,0 +1,96 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao vale quando o stdout do guest NAO esta vazio: se o guest chegou a imprimir o erro do contrato, ele sobreviveu ao laco e o abort e outro.",
+    "Nao vale para sinal 13 (SIGPIPE) nem 9 (SIGKILL), que apontam para o filho ou para a contencao externa.",
+    "Nao confunda com o modo 'abnormal' da fixture, que chama std::process::abort() no FILHO: abort do filho vira Err do contrato e o guest sai com codigo 0."
+  ],
+  "cues": [
+    "SIGABRT",
+    "signal 6",
+    "guest_exited",
+    "stdout vazio",
+    "RLIMIT_AS",
+    "address_space_bytes",
+    "continuous-stdout",
+    "continuous-both",
+    "memory allocation failed",
+    "handle_alloc_error",
+    "flake nativo"
+  ],
+  "discriminating_probe": {
+    "action": "Instrumentar temporariamente o laco de timeout do runtime para emitir bytes capturados, capacidade do Vec e VmPeak de /proc/self/status, e rodar 8 amostras sob o RLIMIT_AS real do harness.",
+    "observable": "Se o consumo for uma funcao escada nas potencias de dois e o VmPeak saltar entre degraus em execucoes identicas, a causa e teto de enderecamento, nao corrida. Corrida daria assinatura independente do volume."
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "native_execution_failure case=timeout-continuous-both-nativo policy=Common address_space_bytes=1073741824 duration_ms=1196 status=signal: 6 (SIGABRT) (core dumped) signal=6 reason=guest_exited",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a09/artifacts/passo11/ci-1734-attempt1-trecho.txt"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Bytes capturados e VmPeak do guest sob RLIMIT_AS=1 GiB: continuous-both 125-149 MB por canal, caps 128/256 MiB, VmPeak saltando entre 267.200 kB e 529.344 kB em execucoes identicas",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a09/artifacts/passo11/medicao-bytes-e-vmpeak.txt"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Bisseccao de RLIMIT_AS: 528 MB passa, 512 MB aborta com 'memory allocation of N bytes failed'",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a09/artifacts/passo11/bisseccao-rlimit-as.txt"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "strace do abort: mremap ENOMEM, mmap ENOMEM, write(2,'memory allocation of '), tgkill(SIGABRT)",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a09/artifacts/passo11/strace-abort-forcado-ulimit-v-65536.txt"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Medicao no proprio runner GitHub Actions (Task #596, 5 attempts do run 33926154463): timeout-continuous-both-nativo com guest_rlimit_as_soft=1073741824 e VmPeak=528452 kB em 5/5, contra 267200 kB nesta maquina. As capacidades no runner estao um degrau de dobra acima (256 MiB/canal contra 128 MiB/canal); VmHWM remoto/local = 1,61..2,00x. Nenhum SIGABRT foi observado nos 5 attempts.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a10/artifacts/dossie-remoto-596.md"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "Issue #580, baseline 63eaed96. Assinatura reproduzida com sinal 6, stdout vazio e 'memory allocation of N bytes failed' ao rodar o caso exato Ate(150) com RLIMIT_AS reduzido a 512 MB, e com o teto real de 1 GiB usando janela maior. 152 execucoes nos parametros reais na maquina local nao reproduziram.",
+    "text": "Diante de SIGABRT de um guest Pinker nativo com stdout vazio, meca o espaco de enderecamento ANTES de investigar corrida. Tres discriminantes baratos, em ordem: (1) rode o guest sozinho sob 'bash -c \"ulimit -v <KB>; exec <guest>\"' e bisseccione o limite ate achar o high-water real de VA; (2) leia address_space_bytes no proprio evento native_execution_failure do log do CI; (3) confira a precedencia de select_primary_reason: GuestExited e a ULTIMA, logo reason=guest_exited prova que watchdog, capture limit e timeout externo NAO dispararam. Lembre que capture_limit do harness limita o Vec do processo de TESTE, nao o acumulo do guest, e nao gera backpressure. Cuidado com a direcao: um runner mais lento drena MENOS na janela fixa e passaria, entao 'CI mais lento' nao explica a falha e a instancia so fecha com medicao no proprio runner. ATUALIZACAO #596: a tensao de direcao acima ('CI mais lento nao explica a falha') foi RESOLVIDA por medicao no runner, e a favor da hipotese de recurso. O runner hospedado drena 1,6-2,0x mais na mesma janela de 150 ms e opera um degrau de dobra inteiro acima da maquina local: caps de 256 MiB por canal em -both e 512 MiB em -stdout, contra 128 e 256 MiB localmente. Com isso os dois casos ficam a UMA dobra do teto de 1 GiB (4 + 512 + 512 = 1028 MiB > 1024), rodando a 85-87% do volume que dispara essa dobra, e o volume oscila 25-27% entre execucoes identicas do MESMO runner. duration_ms nao e proxy de banda: ficou em 183-194 ms no runner contra 193 ms locais, apesar dos 1196 ms do log historico, que sao dominados por exec e carga do ELF. Cinco attempts nao reproduziram o abort, o que e o esperado para um evento dessa raridade e NAO refuta a hipotese."
+  },
+  "id": "B-580ASABORT01",
+  "observed_at": "2026-09-04T17:30:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O guest nao aborta por corrida. O runtime de processos estruturados acumula stdout/stderr capturados em Vec<u8> sem teto enquanto controla o filho; em 150 ms de janela semantica a fixture continuous-* faz o guest acumular ~290 MB, com capacidade de Vec de 256-512 MiB. O harness impoe RLIMIT_AS=1 GiB ao guest e SO ao guest, em launcher_pre_exec. Quando o proximo degrau da dobra do Vec ultrapassa o teto, mremap/mmap devolvem ENOMEM e handle_alloc_error chama abort()."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Teste nativo da Parte D falha de forma intermitente com signal=6 (SIGABRT), reason=guest_exited e stdout do guest vazio, sempre nos casos timeout-continuous-stdout/both, e passa em rerun do mesmo SHA. A leitura instintiva e corrida de pipe/kill/reap no runtime."
+  },
+  "references": [
+    "trama:runtime.processos.execucao",
+    "trama:evidencia.processos.parte-d-native-step-4"
+  ],
+  "revision": {
+    "hash": "f8d0ca3a6a2707fa4052c5fcff3e64626bd3e057dcffe0f811e592c549918b63",
+    "number": 2,
+    "parent_hash": "ebc8a2cc20b9d4cec416c6b32c535793228a2bbd8ca947b8941f57c69b124338",
+    "reason": "Medicao remota da Task #596 resolve a tensao de direcao declarada",
+    "updated_at": "2026-09-04T23:15:35Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "runtime",
+      "harness-de-testes-nativos"
+    ],
+    "conditions": [
+      "guest Pinker nativo sob ControlledCommand",
+      "fixture que produz saida continuamente",
+      "LimiteTempo curto com janela de fixture maior"
+    ]
+  },
+  "status": "candidate",
+  "title": "SIGABRT do guest nativo com stdout vazio: suspeite de RLIMIT_AS do harness antes de corrida de pipes"
+}

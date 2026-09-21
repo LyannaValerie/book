@@ -1,0 +1,18 @@
+{
+  "domain": "Pinker",
+  "external_task_ref": "pinker:issue-681-trama-tl-canonical-metadata-language",
+  "finished_at": "2026-09-19T01:45:32Z",
+  "followed_refs": [],
+  "goal": "Reconcile reusable knowledge from Pinker Task TL (#681), the canonical-English migration of current Trama authored metadata, before post-merge physical closure of slot a11.",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "Two reusable cases retained (B-7O5ZVOFJBZ9H, B-UKAVZIIXBZTM), two relations added, retention reconciled with zero uncovered knowledge mutations.",
+  "project": "LyannaValerie/pinker-v0",
+  "started_at": "2026-09-19T01:43:11Z",
+  "state": "finished",
+  "task_id": "T-A2DXHUFDRHGR6WBV",
+  "validation": null
+}

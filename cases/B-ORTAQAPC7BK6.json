@@ -1,0 +1,58 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica quando a árvore pertence a quem executa.",
+    "Passar safe.directory=* não substitui checar o dono quando a confiança na árvore é o próprio assunto."
+  ],
+  "cues": [
+    "dubious ownership",
+    "safe.directory",
+    "sudo git",
+    "not a git repository (null)",
+    "classificacao errada sob root",
+    "git falha em silencio no plano"
+  ],
+  "discriminating_probe": {
+    "action": "rodar o mesmo `git rev-parse HEAD` na mesma árvore com e sem sudo",
+    "observable": "a versão privilegiada falha com dubious ownership enquanto a não privilegiada devolve o SHA"
+  },
+  "environment": {
+    "component": "Forja",
+    "tool": "git"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "sudo git -C /pinker/worktrees/tasks/d10-nested-patterns-adult rev-parse HEAD -> 'fatal: detected dubious ownership'; sem sudo -> 4375d0c3604332d12f4e97df2654d33c352cb3e3. Contagens do plano: amara 54/9, root 24/39.",
+      "oracle": "execucao pareada do mesmo script com e sem sudo",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a01/artifacts/retirada-plano.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Separe a fase que precisa de privilégio da fase que precisa de identidade. Classifique com a identidade que possui a configuração de Git relevante e execute a remoção com o privilégio necessário, em vez de rodar tudo sob o maior privilégio disponível. Quando um comando Git tiver mesmo de rodar sob root, passe `git -c safe.directory=*` explicitamente e trate falha do Git como erro, nunca como evidência sobre o conteúdo. Um classificador que converte 'não consegui perguntar' em 'não é verificável' erra para o lado seguro nesta direção, mas erraria para o lado destrutivo na direção oposta — e a mesma confusão produz as duas."
+  },
+  "id": "B-ORTAQAPC7BK6",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O mesmo plano de retirada, sobre as mesmas árvores: rodado como amara classificou 54 itens como reproduzíveis e 9 como não verificáveis; rodado sob sudo classificou 24 como reproduzíveis e 39 como não verificáveis. A causa é o `safe.directory` do chamador, que não vale para root: `git rev-parse` devolve 'detected dubious ownership' e o script interpreta a falha como 'repositório pai destruído'."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um script de inventário ou de limpeza precisa de root para ler/apagar arquivos de outro dono, então a pessoa roda o script inteiro sob sudo. As checagens de Git embutidas passam a falhar, e o script conclui algo sobre o conteúdo que na verdade só descreve a identidade de quem executou."
+  },
+  "references": [],
+  "revision": {
+    "hash": "71ba89a78b2ce509a169ed200948164533043fced6370d98061fa138c179d3b4",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-28T00:43:49Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": null,
+  "status": "candidate",
+  "title": "Classificação rodada como root perde os checks de Git e vira preservação em massa"
+}

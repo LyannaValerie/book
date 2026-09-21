@@ -1,0 +1,71 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Does not apply before historical projections are materialized: while history is still reconstructed on demand, the migration does own the reconstruction path.",
+    "Not an argument against multilingual retrieval; it only says that a metadata-language migration is not where it gets decided."
+  ],
+  "cues": [
+    "canonical metadata",
+    "metadata language",
+    "migration",
+    "materialized history",
+    "archive integrity",
+    "retrieval policy",
+    "scope boundary",
+    "trama"
+  ],
+  "discriminating_probe": {
+    "action": "after the migration, verify the archive projections and separately state which retrieval behaviours the migration did not add",
+    "observable": "archive bytes unchanged and projection verification still complete, while retrieval behaviour is unchanged"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Archive and projection integrity after the migration, and the explicitly excluded retrieval behaviours.",
+      "source": "event:E-8F4AEAAB2F9766550C45"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Treat the canonical language of current metadata and the retrieval policy over that metadata as two separate authorities. The migration owns the current catalog only: materialized history is data the migration reads, never rewrites, so prove archive integrity as an acceptance obligation rather than assuming it. And write the retrieval boundary down explicitly in the acceptance evidence, because canonical English keys are the exact thing a later reader will mistake for permission to add multilingual search."
+  },
+  "id": "B-UKAVZIIXBZTM",
+  "observed_at": "2026-09-19T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "TL (#681) renamed 735 current identities with zero dangling references and zero duplicate canonical identities while archive_bytes_changed stayed false and projection verification stayed at 13/13. No stemming, no cross-language equivalence, no query-intent inference and no change to the strict no-answer policy were introduced; those stayed with #674."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A language migration of current authored metadata invites two scope expansions that look like the same task. The first is backwards: making the current rename consistent with already materialized historical projections, which would mutate the archive. The second is forwards: reading canonical English keys as a mandate to understand queries written in the old language, which is a retrieval-policy change with its own authority."
+  },
+  "references": [
+    "event:E-8F4AEAAB2F9766550C45"
+  ],
+  "revision": {
+    "hash": "1fd36f8add6c88e633cd4e3b9d41de415897fdfd9bc3410ec3ca536c5c2d547f",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-19T01:44:48Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "trama",
+      "catalog",
+      "archive",
+      "retrieval"
+    ],
+    "conditions": [
+      "authored metadata of a current catalog is migrated to a single canonical language",
+      "historical projections of that catalog are already materialized as archive data"
+    ]
+  },
+  "status": "candidate",
+  "title": "Normalizing the language of current metadata neither rewrites materialized history nor authorizes multilingual retrieval"
+}

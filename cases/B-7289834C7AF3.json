@@ -1,0 +1,73 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando o pai nao usa nenhum simbolo do irmao: ali remover `mod filho;` compila e o guardiao ja e o unico oraculo."
+  ],
+  "cues": [
+    "sensitivity",
+    "mutacao",
+    "guardiao",
+    "modulo",
+    "compilacao",
+    "RED",
+    "decomposicao fisica",
+    "#[path]"
+  ],
+  "discriminating_probe": {
+    "action": "aplicar a mutacao e ler a saida do alvo: procurar o bloco `failures:` e o nome do teste; comparar com `error[E...]` / `could not compile`",
+    "observable": "mutacao honesta nomeia o teste; mutacao vermelha pelo compilador tem `failures:` vazio"
+  },
+  "environment": {
+    "repo": "pinker-v0",
+    "toolchain": "rustc 1.78.0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Task #615: M1 com #[path] compila e quebra o_pai_inclui_o_irmao nomeando o teste; M1 sem #[path] da error[E0432] com failures: vazio.",
+      "oracle": "cargo test --test backend_s_module_layout_tests o_pai_inclui_o_irmao sob cada variante da mutacao",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a20/artifacts/SENSITIVITY.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "REMEDIO VALIDADO: separar as duas fronteiras em duas mutacoes e rotular cada uma pelo que ela realmente prova. (1) A metade que interroga o guardiao precisa COMPILAR: declare o mesmo arquivo sob outro nome de modulo com `#[path = \"<dir-do-pai>/<filho>.rs\"] mod outro_nome;` e ajuste o `use`. O arquivo continua no crate e continua no censo do modulo, e mesmo assim o guardiao que exige `mod <filho>;` no pai fica vermelho, nomeando o teste. Atencao ao caminho: em `src/pai.rs`, `#[path]` e relativo ao diretorio de `pai.rs` (`src/`), nao a `src/pai/`. (2) A metade que nao compila continua util, mas como registro separado de que o compilador ja garante a fronteira mais forte que o guardiao textual; rotule-a como vermelha pelo compilador.\n\nA regra geral: antes de contar uma mutacao como evidencia de guardiao, leia POR QUE o alvo ficou vermelho. Exija que a saida nomeie um teste. Erro de compilacao e uma garantia real, e as vezes mais forte, mas e uma garantia de outra coisa, e trocar uma pela outra infla a contagem de sensibilidade sem aumentar o poder observado."
+  },
+  "id": "B-7289834C7AF3",
+  "observed_at": "2026-09-06T22:10:00Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "cargo test --locked --test backend_s_module_layout_tests o_pai_inclui_o_irmao, sob cada variante da mutacao, lendo o bloco `failures:` da saida",
+    "text": "Task #615 (unidade BS-1 de src/backend_s.rs, repo pinker-v0). M1 original removia `mod external_callconv;` e produzia `error[E0432]: unresolved import` — `failures:` vazio, `o_pai_inclui_o_irmao` nunca rodou. Substituida por `#[path = \"backend_s/external_callconv.rs\"] mod callconv;` mais `use callconv::...`: compila, e o alvo fica vermelho nomeando `o_pai_inclui_o_irmao`. A primeira tentativa usou `#[path = \"external_callconv.rs\"]` e falhou com `couldn't read src/external_callconv.rs`, o que fixou a regra de resolucao do caminho. A metade que nao compila ficou registrada como M1b."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Numa decomposicao fisica de arquivo Rust, o roteiro de sensibilidade pede 'M1 remove module inclusion -> RED'. Quando o pai depende do simbolo que desceu para o irmao, remover `mod filho;` nao compila, e o alvo de teste fica vermelho por erro de compilacao. O harness registra RED e o relatorio conta a mutacao como prova do guardiao estrutural. Nao e: um repositorio sem guardiao nenhum produziria exatamente o mesmo vermelho. O sinal e o bloco `failures:` vazio, contra mutacoes vizinhas que nomeiam o teste que quebrou."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a20/artifacts/sensitivity.py",
+    "file:/pinker/repo/pinker-v0/agentes/a20/artifacts/SENSITIVITY.json"
+  ],
+  "revision": {
+    "hash": "fad0bdefe033061bd91dd531a6124c328040de09e57190f763eca902315c4058",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "primeiro registro, validado na Task issue-615-bs1-backend-s-physical-decomposition",
+    "updated_at": "2026-09-06T22:10:00Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "harness de sensibilidade/mutacao",
+      "decomposicao fisica de modulo Rust (pai X.rs + X/filho.rs)",
+      "guardiao estrutural que exige `mod <filho>;` no pai"
+    ],
+    "conditions": [
+      "o pai chama um simbolo definido no irmao",
+      "o roteiro da Task pede uma mutacao 'remove module inclusion -> RED'"
+    ]
+  },
+  "status": "candidate",
+  "title": "Mutacao que remove a inclusao do modulo fica vermelha pelo compilador, nao pelo guardiao que ela diz exercitar"
+}

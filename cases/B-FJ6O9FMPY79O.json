@@ -1,0 +1,89 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao vale quando as duas caracterizacoes rodaram em hosts diferentes: ai a normalizacao de harness nao basta e a comparacao inteira e suspeita.",
+    "A subtracao do overhead por invocacao so e legitima se a fonte antiga registrou esse overhead por alvo; estimar por media global reintroduz o erro nos alvos pequenos.",
+    "Nao conclua 'contencao de host' a partir da janela lenta sem registro de load da epoca; o que a evidencia sustenta e 'nao e mudanca de codigo', nao a causa da lentidao.",
+    "Nao e o caso B-FE43ZWR28GUQ: aquele diz como extrair custo por alvo de UM log; este diz como comparar DUAS caracterizacoes feitas com harness e em janelas diferentes."
+  ],
+  "cues": [
+    "re-ranquear suite",
+    "comparar ranking antigo",
+    "falsa melhora",
+    "overhead do cargo por alvo",
+    "mediana de 3 enganosa",
+    "amostra bruta",
+    "otimizacao de helper compartilhado",
+    "invalidar ranking",
+    "delta sem causa",
+    "strace unfinished resumed"
+  ],
+  "discriminating_probe": {
+    "action": "para cada delta material, ler as linhas por-execucao do artefato bruto da caracterizacao antiga (nao o agregado) filtrando o alvo, e comparar a primeira amostra dela com a mediana nova",
+    "observable": "se a primeira amostra antiga bate com a mediana nova e as repeticoes antigas sao uniformemente mais lentas, o delta pertence a janela de medicao antiga e nao ao codigo"
+  },
+  "environment": {
+    "baseline": "c818870d9d8cfca2319ed89de4edc03ca5b3ccef",
+    "host": "mesmo host nas duas medicoes: AMD Ryzen 7 5700X, 4 CPUs logicos, 7.8Gi RAM, rustc 1.78.0",
+    "previous_baseline": "d7d42d676bff9c81c48774ab80bb75aad7fa012f",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "comparacao normalizada dos 117 alvos com correspondencia 1:1, incluindo old_wall_ms, old_cargo_overhead_ms e a classificacao OLD_SAMPLE_WINDOW_ARTIFACT com as amostras brutas da #539 anexadas por linha",
+      "oracle": "3 mudancas materiais sobrevivem com causa nomeavel; 2 se reclassificam; 0 regressoes",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/comparison-539.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "amostras brutas por execucao da #539, onde a primeira passagem e as repeticoes de part_e1 e phase245_246 divergem cerca de 15%",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a01/artifacts/test-target-ranking.jsonl"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "probe causal por argv[0] separando chamadas roteadas pelo helper alterado de spawns diretos por PATH",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/542-shared-impact-execve.jsonl"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "depois de normalizar, todo delta material sobrevivente tem uma causa nomeavel na fonte; os que nao tem sao artefato de amostragem e se reclassificam em vez de virar manchete",
+    "text": "Antes de classificar qualquer delta entre duas caracterizacoes: (1) subtraia de cada lado o custo do harness que so aquele lado pagou - se a medicao antiga registrou overhead por invocacao, use esse campo, nao uma media global; (2) para todo delta que passar do limiar, va na fonte antiga e recupere as AMOSTRAS BRUTAS daquele alvo, nao o agregado: um agregado mediana-de-3 pode misturar uma amostra rapida da primeira passagem com duas de uma janela carregada mais tarde, e a primeira amostra costuma ser a comparavel; (3) exija uma causa nomeavel na arvore - se os arquivos do alvo sao byte-identicos entre os baselines e o alvo nao toca a regiao alterada, o delta e artefato, nao melhora; (4) conte com que a otimizacao mude o topo e nao o corpo: o ganho aparece na concentracao (TOP_10_SHARE) e no alvo corrigido, e reordenar o resto e a excecao. Para o passo (3), um probe barato e nao mutante quando o helper alterado resolve executaveis de sistema: o argv[0] distingue as chamadas - caminho absoluto em argv[0] veio do helper, o nome curto veio de um spawn direto por PATH do proprio teste. Ao contar spawns por strace -f, re-una os pares '<unfinished ...>' e '<... execve resumed>' por pid antes de contar: sem isso o censo perde os execve partidos (399 de 2589 linhas em um alvo, filhos caindo de 1981 para 1598) e contar tentativas em vez de sucessos soma camadas ENOENT da busca no PATH."
+  },
+  "id": "B-FJ6O9FMPY79O",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Issue #547 em c818870 contra a #539 em d7d42d6, mesmo host. Primeiro erro: a #539 invocava o driver do Cargo por alvo (overhead mediano 21.2 ms, faixa 15.5-36.3) e a #547 executa o binario ja construido (startup medido 1.2-1.3 ms); a subtracao ingenua marcou 49 alvos abaixo de 100 ms como MATERIAL_IMPROVEMENT de cerca de 19 ms, que era so o driver ausente. Segundo erro: dois alvos com -12.77% e -13.97% nao tinham causa possivel - arquivos byte-identicos entre os baselines, zero execve de git ou gh - e a primeira amostra da propria #539 batia com a mediana nova dentro de 0.8%, enquanto a mediana-de-3 publicada por ela vinha de uma janela cerca de 15% mais lenta 11 minutos depois. Depois das duas correcoes: 3 mudancas materiais, 0 regressoes, 112 de 117 alvos ROUGHLY_STABLE. Resultado estrutural: a otimizacao invalidou o TOPO do ranking (o antigo primeiro caiu de 18.48% para 1.47% do runtime, TOP_10_SHARE de 50.07% para 40.80%) e nao o corpo dele."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Depois de uma otimizacao dirigida, o ranking antigo de custo por alvo precisa ser refeito, e a tentacao e subtrair os dois agregados alvo a alvo. Isso produz melhoras materiais que nao existem, por duas razoes independentes: a diferenca de harness entre as duas medicoes e a janela em que a medicao antiga colheu suas repeticoes."
+  },
+  "references": [],
+  "revision": {
+    "hash": "2781cf22f5bf7156518eab1b43ed25bd602e06390cfb5c998373d488c0f29733",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-30T11:43:41Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "cargo test",
+      "tests/",
+      "ranking de custo de suite",
+      "comparacao entre caracterizacoes"
+    ],
+    "conditions": [
+      "existe uma caracterizacao anterior da mesma suite",
+      "uma otimizacao dirigida mudou um helper compartilhado desde entao",
+      "a caracterizacao anterior e a nova usaram invocacoes diferentes"
+    ]
+  },
+  "status": "candidate",
+  "title": "Re-ranquear suite depois de otimizar helper compartilhado: normalize o harness e va nas amostras brutas antigas antes de acreditar num delta"
+}

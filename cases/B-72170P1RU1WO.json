@@ -1,0 +1,71 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao vale para os testes de produto: eles asseveram a mensagem por `contains` de trechos estaveis, nao por hash da saida inteira, e por isso nao veem o nao-determinismo.",
+    "Nao vale para o caminho montavel (`emit_external_toolchain_subset`), que nao passa por essa validacao."
+  ],
+  "cues": [
+    "golden instavel",
+    "sha256 da saida do pink",
+    "--asm-s",
+    "backend .s textual ainda nao suporta slot",
+    "E-BACKEND-TEXT",
+    "rc=1 diagnostico",
+    "nao-determinismo de HashMap",
+    "equivalencia antes e depois"
+  ],
+  "discriminating_probe": {
+    "action": "rodar a MESMA invocacao 10 vezes com o MESMO binario e comparar os hashes; separar as linhas por codigo de saida",
+    "observable": "as linhas rc=0 sao estaveis e as rc!=0 nao sao"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0",
+    "toolchain": "rustc 1.78.0, edition 2021"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "golden_before.tsv e golden_after.tsv da #612: 1242 linhas, 638 rc=0 identicas, 52 rc!=0 divergentes e 52/52 instaveis em 10 rodadas do mesmo binario.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a19/artifacts/golden_before.tsv"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Particione o golden por codigo de saida antes de comparar. As linhas rc=0 sao o oraculo de lowering/ABI e devem bater byte a byte; as rc!=0 provam so que a fronteira continua recusando as mesmas entradas, entao compare o CODIGO DE SAIDA, nao o texto. Se precisar do texto, normalize o token instavel (o nome do slot) ou compare conjuntos de saidas de N rodadas dos dois binarios, sabendo que N amostras nao esgotam um espaco de 10+ saidas. Antes de acusar qualquer divergencia, rode a mesma invocacao no mesmo binario umas dez vezes: e a diferenca entre uma regressao e um achado pre-existente. O nao-determinismo em si e achado nonblocking do produto — vive em validate_supported_subset, regiao backend-s.validacao.subset-textual — e nao deve ser consertado de carona numa Task de decomposicao fisica."
+  },
+  "id": "B-72170P1RU1WO",
+  "observed_at": "2026-09-06T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Task #612: das 1242 invocacoes (414 exemplos x --asm-s/--pseudo-asm/--selected), as 638 com rc=0 ficaram byte a byte identicas antes e depois, os codigos de saida ficaram identicos nas 1242, e as 52 divergentes eram todas rc!=0 e se mostraram instaveis em 10 rodadas consecutivas do mesmo binario. Comparando os CONJUNTOS de saidas de 20 rodadas do binario baseline contra 20 do candidato, 48 dos 52 arquivos deram conjuntos identicos; os 4 restantes tem ate 11 saidas distintas e 20 amostras nao esgotam o espaco. Mensagem tipica: \"backend .s textual ainda nao suporta slot '%alvo#0' do tipo 'verso' em 'principal'\", com '%alvo#0' alternando com '%base#0' entre rodadas."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Rodar `pink --asm-s` sobre todos os exemplos e comparar sha256 antes e depois parece o oraculo de equivalencia perfeito para um move fisico. Ele acusa dezenas de divergencias que nao existem: as invocacoes que RECUSAM o programa emitem o nome de um slot escolhido por iteracao de HashMap, e o texto muda entre rodadas do mesmo binario. Quem le esse diff como regressao gasta a Task investigando um fantasma; quem o ignora inteiro perde o oraculo real."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a19/artifacts/tools/golden_abi.sh"
+  ],
+  "revision": {
+    "hash": "525980d024b114d7126174e86224d111b1aab225d46761a2f4421915080f310c",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-06T18:43:31Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "pink CLI",
+      "backend_s",
+      "validate_supported_subset",
+      "harness de equivalencia"
+    ],
+    "conditions": [
+      "Task compara saida da CLI antes e depois de uma mudanca que deveria ser inerte"
+    ]
+  },
+  "status": "candidate",
+  "title": "Golden por hash da saida do pink nao serve para invocacao que recusa: o diagnostico de subset textual e nao-deterministico no baseline"
+}

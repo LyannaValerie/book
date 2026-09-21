@@ -1,0 +1,71 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica quando o alvo da asserção é o próprio literal: aí `codigo_executavel` cega o oráculo (B-T7G8THR97ZFY).",
+    "Não substitui censo de autoridade: produção dentro de um `mod` de teste continua invisível para este oráculo."
+  ],
+  "cues": [
+    "item de topo",
+    "codigo_executavel",
+    "literal cru multilinha",
+    "profundidade de chaves",
+    "irmao somente teste",
+    "tests.rs sem producao",
+    "oraculo textual estrutural",
+    "trazer memoria.alocar"
+  ],
+  "discriminating_probe": {
+    "action": "inserir `#[allow(dead_code)] fn producao_intrusa(x: u64) -> u64 { x + 1 }` logo depois da ponte no topo do irmão somente-teste e rodar o guardião estrutural",
+    "observable": "com o oráculo por profundidade de chaves a asserção de igualdade falha nomeando o item novo; com o oráculo por prefixo de linha o guardião já estava vermelho antes da mutação, por causa dos literais, e a mutação não distingue nada"
+  },
+  "environment": {
+    "backend": "hosted",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Task #642, commit 956dc07ebe7ff426a09413f465e63a95f4bf2802: o_irmao_somente_teste_nao_carrega_producao verde com o oráculo por profundidade; sensitivity M4 (fn producao_intrusa no topo) vermelha com a razão 'ganhou item de topo que não é a ponte nem módulo de teste'; a versão por prefixo de linha da mesma asserção falhou no arquivo correto.",
+      "oracle": "mesmo guardião, mesmo arquivo, duas formulações do oráculo, com a mutação M4 como controle positivo",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a32/artifacts/sensitivity/RESUMO.txt"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Para afirmar o que existe no NÍVEL DE TOPO de um arquivo Rust por oráculo textual, não use prefixo de linha: use profundidade de chaves sobre `codigo_executavel()`, que já removeu comentário, literal de texto e literal de caractere. O texto em profundidade 0, com espaços normalizados, é curto e comparável por igualdade exata a uma lista esperada — igualdade exata, não `contains`, porque é ela que transforma qualquer item novo de topo em vermelho. Isso é o complemento de B-T7G8THR97ZFY, não a contradição: quando o ALVO da asserção é um literal, `codigo_executavel` cega o oráculo; quando o alvo é a ESTRUTURA em volta dos literais, ele é exatamente o que a torna possível. Teto declarado: produção escondida DENTRO de um `mod` de teste não aparece nesse oráculo, e continua sendo problema da matriz comportamental."
+  },
+  "id": "B-OKW72761TZN0",
+  "observed_at": "2026-09-09T00:00:00Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "mesmo guardião, mesmo arquivo, duas formulações do oráculo de item de topo, com a mutação M4 (produção inserida no topo) como controle positivo",
+    "text": "Task #642 (INT-TESTS, unidade #601/INT-1), src/interpreter/tests.rs com 1158 linhas: o oráculo por prefixo de linha falhou em `src/interpreter/tests.rs:867: item de topo fora de módulo de teste: `trazer memoria.alocar;``, com o arquivo correto e sem produção nenhuma. Substituído por profundidade de chaves sobre `codigo_executavel(fonte)`: acumula só os caracteres em profundidade 0, normaliza espaços e compara com a string exata esperada — a ponte mais os seis cabeçalhos `#[cfg(test)] mod NOME`. Verde no arquivo correto; vermelho quando `fn producao_intrusa` é inserida no topo (sensitivity M4)."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um guardião estrutural precisa provar que um irmão somente-teste (src/X/tests.rs) não carrega produção. A forma óbvia é varrer as linhas do arquivo e recusar qualquer linha que comece na coluna 0 e não seja `//!`, a ponte, `#[cfg(test)]`, `mod NOME {` ou `}`. Ela reprova o arquivo correto: os módulos de teste deste repositório embutem programas Pinker em literais crus multilinha, e essas linhas começam na coluna 0 dentro do literal. O guardião acusa `trazer memoria.alocar;` como item de topo de produção."
+  },
+  "references": [],
+  "revision": {
+    "hash": "30835ff601328433ad119f409549c004405f24689a409fdaed1451c125204586",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "caso novo",
+    "updated_at": "2026-09-09T00:00:00Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "tests/interpreter_module_layout_tests.rs",
+      "tests/common/rust_source.rs",
+      "guardião estrutural de irmão somente-teste"
+    ],
+    "conditions": [
+      "arquivo de teste Rust que embute programas Pinker em literais crus multilinha",
+      "oráculo estrutural que precisa distinguir item de topo de corpo de módulo"
+    ]
+  },
+  "status": "candidate",
+  "title": "Oráculo de item de topo por prefixo de linha em arquivo de teste Rust é falsificado por literal cru com fonte Pinker não indentada"
+}

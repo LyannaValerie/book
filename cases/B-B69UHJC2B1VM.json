@@ -1,0 +1,70 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando o gate pede apenas que os testes existam; aqui o gate e a deteccao.",
+    "Nao autoriza apagar historico de execucao: o log bruto pode ficar, desde que o artefato que sustenta o gate seja o resultado limpo."
+  ],
+  "cues": [
+    "sensibilidade",
+    "MUTACAO_NAO_APLICOU",
+    "unclosed delimiter",
+    "prova de mutacao",
+    "artefato append-only",
+    "revisao adversarial BLOCK",
+    "controle negativo",
+    "git diff --numstat"
+  ],
+  "discriminating_probe": {
+    "action": "ler o artefato de sensibilidade como se fosse a unica evidencia disponivel e tentar responder, para cada mutacao, se ela foi aplicada e o que ficou vermelho",
+    "observable": "se alguma mutacao aparece duas vezes com veredictos diferentes, ou se algum RED e na verdade falha de compilacao, o artefato nao sustenta o gate"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Depois da reescrita numa passada unica, com delta medido por mutacao e tres controles negativos, o mesmo revisor fechou o achado: C2_ADV_001_CLOSED=true e, ao fim das rodadas, SENSITIVITY_ARTIFACT_SUFFICIENT=true.",
+      "oracle": "veredito do revisor independente sobre o mesmo artefato antes e depois da reescrita",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a07/artifacts/closure-review-round3.json"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "o artefato final tem exatamente uma linha por mutacao, cada uma com delta medido, veredito, testes vermelhos nomeados e revert confirmado; o revisor independente fecha o achado sem pedir reexecucao",
+    "text": "Prova de sensibilidade e um resultado, nao um log. Reescreva o artefato numa passada limpa depois que todas as mutacoes tiverem ancora correta, em vez de acrescentar linhas a cada tentativa.\n\nCada linha precisa carregar quatro fatos, e o mais esquecido e o primeiro: (1) que a mutacao ENTROU no arquivo, medido por `git diff --numstat` e nao pela ausencia de erro; (2) o veredito; (3) os testes que ficaram vermelhos, por nome; (4) que a arvore voltou ao SHA congelado. Sem (1), 'RED' e ambiguo entre deteccao e mutacao malformada — e um harness que classifica compilacao quebrada como vermelho transforma erro de digitacao em evidencia.\n\nDistinga tambem RED de RED(nao compila) na propria saida: sao veredictos diferentes, e so o primeiro prova que o oraculo viu a mudanca de comportamento. Um controle negativo — mutacao que DEVE ficar verde — vale mais que a decima mutacao vermelha: sem ele, ninguem sabe se o oraculo apenas fica vermelho para tudo."
+  },
+  "id": "B-B69UHJC2B1VM",
+  "observed_at": "2026-09-04T03:20:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Task issue-590-method-dispatch-authority (C2), candidato 147db203. O artefato guardava, lado a lado, tentativas de M1 com ancora que deixou de casar depois de `cargo fmt` e uma tentativa de M6 cuja substituicao produziu `error: this file contains an unclosed delimiter`. Ambas foram reexecutadas corretamente depois e registradas como RED, mas o arquivo virou append-only e manteve as duas versoes. A revisao classificou como BLOCKER: 'RED por nao compilar prova quebra sintatica, nao deteccao'. Nenhuma linha do produto estava errada; o custo foi uma rodada inteira de revisao mais a reexecucao das dez mutacoes."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "O revisor adversarial independente devolve BLOCK por prova insuficiente, nao por defeito de produto: o artefato de sensibilidade mostra a mutacao X ora como MUTACAO_NAO_APLICOU, ora como RED, e a mutacao Y terminando em erro de sintaxe do compilador. O implementador sabe que as linhas boas sao as ultimas; o revisor le o arquivo inteiro e nao tem como saber qual linha e autoridade."
+  },
+  "references": [],
+  "revision": {
+    "hash": "85d95342e19ea89ac58ea6cbd83b569a3fc68789fd7d0eb5e6fff1a7789ea76d",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "registro inicial",
+    "updated_at": "2026-09-04T04:20:00Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "harness de sensibilidade",
+      "revisao adversarial #535",
+      "artifacts da Task"
+    ],
+    "conditions": [
+      "a Task precisa provar N mutacoes vermelhas como gate",
+      "o registro das mutacoes e append-only e a primeira tentativa de alguma delas falhou por ancora errada ou substituicao malformada"
+    ]
+  },
+  "status": "verified",
+  "title": "Artefato de sensibilidade que acumula tentativas descartadas nao prova a mutacao"
+}

@@ -1,0 +1,24 @@
+{
+  "domain": "trama",
+  "external_task_ref": "pinker:issue-640-main1-physical-decomposition",
+  "finished_at": "2026-09-09T02:01:03Z",
+  "followed_refs": [],
+  "goal": "Executar a unidade fisica MAIN-1 da decomposicao da #601: mover as tres regioes cli.nav.* de src/main.rs para src/pink_cli/nav_cli.rs sem mudanca semantica, de autoridade, de API publica ou de comportamento",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [
+    "B-NWBVB5GG0Z5E",
+    "B-CX0MJL9YDYOS",
+    "B-580ASABORT01",
+    "B-ITDD1GRQ4LLI",
+    "B-7289834C7AF3"
+  ],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "PR_GREEN_AWAITING_HUMAN_DECISION — PR #641, head 3ca3720, CI e Trama verdes, revisao #535 CLOSED (0/0/0) por codex-amara cross-provider apos failover do revisor anterior. Duas remediacoes de evidencia/relatorio sem tocar o produto. PHYSICAL_MODULARIZATION_READY_TO_CLOSE=FALSE: INT-1 do inventario da #601 pendente de disposicao. Selo do a31 DENIED pelo vinculo do slot (velina).",
+  "project": "pinker-v0",
+  "started_at": "2026-09-09T00:12:55Z",
+  "state": "finished",
+  "task_id": "issue-640-main1-physical-decomposition",
+  "validation": null
+}

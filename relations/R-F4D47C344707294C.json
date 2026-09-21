@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-09-20T01:23:50Z",
+  "created_by": "velina",
+  "epistemic": "OBSERVED",
+  "from": "B-7K5R5MKQ8AOF",
+  "id": "R-F4D47C344707294C",
+  "oracle": null,
+  "to": "book:B-1AT0Q9MBPAV5",
+  "type": "depends_on"
+}

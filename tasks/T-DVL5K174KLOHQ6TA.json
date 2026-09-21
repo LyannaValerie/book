@@ -1,0 +1,18 @@
+{
+  "domain": null,
+  "external_task_ref": "pinker:probe-descartavel",
+  "finished_at": "2026-09-14T01:10:11Z",
+  "followed_refs": [],
+  "goal": "x",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "probe descartavel de descoberta de interface; nenhum conhecimento produzido",
+  "project": "pinker-v0",
+  "started_at": "2026-09-14T01:09:54Z",
+  "state": "finished",
+  "task_id": "T-DVL5K174KLOHQ6TA",
+  "validation": null
+}

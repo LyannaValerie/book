@@ -1,0 +1,66 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não vale para teste cujo objeto é a consistência interna do registro (por exemplo, que toda entrada resolve), onde a auto-referência é o próprio contrato.",
+    "Escrever a tabela dourada por extenso custa manutenção a cada mudança deliberada de superfície; o custo é o ponto, porque é ele que força a decisão a passar por revisão."
+  ],
+  "cues": [
+    "gate auto-consistente",
+    "oraculo",
+    "sensibilidade",
+    "tabela dourada",
+    "mutacao nao detectada",
+    "self-consistent"
+  ],
+  "discriminating_probe": {
+    "action": "mutar UMA entrada da autoridade que o gate percorre, repontando-a para outra identidade existente, e rodar só aquele gate",
+    "observable": "gate verde sob a mutação prova auto-consistência; gate vermelho prova oráculo independente"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "S5 do harness de sensibilidade da #505: mutação aplicada, gate filtrado verde, suíte inteira vermelha pela tabela dourada; depois da troca de oráculo o gate filtrado ficou vermelho e voltou ao verde revertido",
+      "source": "file:/pinker/artifacts/tasks/issue-505-intrinsic-inventory/sensitivity/resumo.tsv"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "injeção de sensibilidade S5 da #505: a mesma mutação deixa o gate verde com oráculo interno e vermelho com a tabela dourada",
+    "text": "Um gate estrutural precisa de oráculo INDEPENDENTE da autoridade que ele valida: tabela escrita por extenso no teste, baseline congelada ou medida externa. A prova de que o oráculo é independente é a injeção de sensibilidade: mute a autoridade e exija vermelho. Contar entradas nunca basta — a contagem sobrevive à troca de uma entrada por outra. Quando o gate percorre um registro por conveniência, o esperado ainda tem de vir de fora dele."
+  },
+  "id": "B-LQCHKQ7ORV8Y",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Na #505 o gate `import_seletivo_resolve_exatamente_a_identidade_do_par` percorria `all_public_intrinsic_members()` e comparava o callee canonicalizado contra `membro.identity.canonical_public_spelling()`. Repontar `acaso.criar` de `aleatorio_criar` para `criar_arquivo` deixou o gate VERDE: o esperado passou a ser `criar_arquivo` junto com o observado. Quem detectou a mutação foi outro teste, uma tabela dourada escrita por extenso fora do registro. Trocar o oráculo do gate para essa tabela o tornou vermelho sob a mesma mutação."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um gate percorre um registro e, para cada entrada, compara o comportamento observado contra um valor lido DAQUELE MESMO registro. Ele passa em todas as execuções e parece cobrir a superfície inteira, mas uma mutação no registro muda as duas pontas da comparação ao mesmo tempo e o gate continua verde."
+  },
+  "references": [],
+  "revision": {
+    "hash": "359d9dec3fe4eabff30ebc9dde1f1c063fd2e2dff80ee1d18001e5f65b0e24b9",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-27T14:37:03Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "testes",
+      "gates estruturais"
+    ],
+    "conditions": [
+      "gate estrutural que percorre um registro/tabela de autoridade",
+      "suíte com injeção de sensibilidade disponível"
+    ]
+  },
+  "status": "candidate",
+  "title": "Gate cujo esperado vem da mesma tabela que ele valida não pode ficar vermelho"
+}

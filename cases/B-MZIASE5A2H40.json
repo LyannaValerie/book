@@ -1,0 +1,64 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Não se aplica quando os recursos da Task já vivem sob um root único e a autoridade é uma só.",
+    "Não use um lock global para resolver o que isolamento de path resolve."
+  ],
+  "cues": [
+    "provisioner finalizer drift",
+    "recurso nao liberado",
+    "CLEAN_NOOP com bytes para tras",
+    "raiz de task orfa",
+    "cleanup nao cobre",
+    "reclaimed_bytes 0",
+    "cobertura do finalizador"
+  ],
+  "discriminating_probe": {
+    "action": "enumerar as raízes reais no filesystem por padrão <raiz>/tasks/<id> e comparar com o conjunto declarado pelo provisionador e pelo finalizador",
+    "observable": "existe pelo menos uma raiz com bytes que nenhuma das duas autoridades declara"
+  },
+  "environment": {
+    "component": "Forja",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "forja-task-storage provisionava apenas /pinker/artifacts/tasks/<task>; forja-limpar declarava 7 efêmeros e 6 preservados; /pinker/caches/tasks/<task> (4,9 GB) não aparecia em nenhum dos dois",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a01/artifacts/retirada-plano.json"
+    },
+    {
+      "class": "VALIDATED",
+      "description": "Issue #536: uma única tupla RECURSOS alimentando provision/observe/seal/retire; mutação de sensibilidade que faz o seal pular um recurso provisionado deixa a suíte vermelha (commit 71fc98db461bec93a87ca114f8377b100e8d24cb, PR #538)",
+      "oracle": "tests/forja/test_sensibilidade.py caso S2",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a01/worktree/scripts/forja/forja_agentes.py"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Não trate a paridade entre provisionar e finalizar como disciplina a manter; torne-a impossível de quebrar. Uma única tabela de recursos deve alimentar provisionamento, observação, selo e retirada, de modo que um recurso que o provisionador não conhece seja impossível de escrever como recurso que o finalizador libera. Valide o contrato na importação do módulo, não só no gate. Para detectar drift preexistente, não confie na lista conhecida: enumere o filesystem por padrão de caminho e compare com o que cada autoridade declara — a raiz órfã é justamente aquela que nenhuma lista cita. Teste de sensibilidade obrigatório: fazer o finalizador ignorar um recurso provisionado tem de deixar a suíte vermelha."
+  },
+  "id": "B-MZIASE5A2H40",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Inventário mecânico de uma Forja real: o provisionador delegado criava 1 namespace; o finalizador conhecia 7 efêmeros e 6 preservados; e o inventário do host revelou uma oitava raiz por Task, com 4,9 GB, que nenhum dos dois conhecia. Nenhuma das três listas mencionava as outras, e a divergência não produzia erro em lugar nenhum — só disco ocupado e recurso sem dono."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Uma Task espalha recursos por várias raízes. O provisionador cria um subconjunto, o finalizador conhece outro, e cada lado é mantido à mão. O sintoma aparece tarde: o fechamento reporta sucesso enquanto gigabytes ficam para trás, ou um recurso é apagado sem nunca ter sido provisionado."
+  },
+  "references": [],
+  "revision": {
+    "hash": "d725a055ad1a80ce7318db8914fb1361f92e6a56aa3aa87c80fc6918d1e5feb7",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-28T00:43:49Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": null,
+  "status": "candidate",
+  "title": "Provisionador e finalizador em listas separadas divergem até o recurso órfão aparecer"
+}

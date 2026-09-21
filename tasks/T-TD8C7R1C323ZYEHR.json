@@ -1,0 +1,18 @@
+{
+  "domain": "pinker-v0",
+  "external_task_ref": "pinker:issue-675-trama-t1-cartography-coverage",
+  "finished_at": "2026-09-14T01:10:55Z",
+  "followed_refs": [],
+  "goal": "T1 (#675): completar e proteger a cartografia corrente de producao da Trama Pinker",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "T1 concluida: cartografia corrente inventariada, lacunas reparadas e propriedade protegida no gate de make ci; PR #676 verde em 51fe6d3 aguardando decisao humana",
+  "project": "pinker-v0",
+  "started_at": "2026-09-14T01:09:41Z",
+  "state": "finished",
+  "task_id": "T-TD8C7R1C323ZYEHR",
+  "validation": null
+}

@@ -1,0 +1,10 @@
+{
+  "case_id": "B-QOS3720QJJSH",
+  "domain": "Pinker",
+  "synthetic": false,
+  "updated_at": "2026-08-27T00:00:46Z",
+  "views": [
+    "Pinker",
+    "Pinker/TestHarness"
+  ]
+}

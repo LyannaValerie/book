@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-08-27T00:01:09Z",
+  "created_by": "amara",
+  "epistemic": "OBSERVED",
+  "from": "B-ZI6WVTHJ4QMK",
+  "id": "R-67BA8AD3384CDD27",
+  "oracle": null,
+  "to": "file:/pinker/artifacts/tasks/issue-525-process-accessor-authority/sun-len-evidence.md",
+  "type": "learned_from"
+}

@@ -1,0 +1,18 @@
+{
+  "domain": "mutation-attribution",
+  "external_task_ref": "pinker:issue-711-u09a-machine-relaxed-params-load-bearing",
+  "finished_at": "2026-09-20T04:12:55Z",
+  "followed_refs": [],
+  "goal": "Targeted remediation of ADV-U09A-001: reconstruct the strict all-ten mutant and the behaviour-neutral control for U-09A and correct the evidence attribution",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "ADV-U09A-001 rejected with evidence as FALSE_OR_UNSUPPORTED; the original strict/neutral 15-failure claim was reproduced exactly; the ten classifications are unchanged; no product mutation",
+  "project": "pinker-v0",
+  "started_at": "2026-09-20T04:04:24Z",
+  "state": "finished",
+  "task_id": "issue-711-u09a-machine-relaxed-params-load-bearing",
+  "validation": null
+}

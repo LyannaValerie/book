@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-09-10T05:01:13Z",
+  "created_by": "amara",
+  "epistemic": "OBSERVED",
+  "from": "B-5K7O34R68OW6",
+  "id": "R-E435CBD13A2D08BD",
+  "oracle": "M4 e M5 compiladas ficam vermelhas no oraculo corrigido; a lacuna de contagem de chamadas de B-LFE2WJJJXR6J e outra porta",
+  "to": "B-LFE2WJJJXR6J",
+  "type": "references"
+}

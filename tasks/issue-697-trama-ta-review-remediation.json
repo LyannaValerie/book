@@ -1,0 +1,24 @@
+{
+  "domain": "trama",
+  "external_task_ref": "pinker:issue-697-trama-ta-historical-archive",
+  "finished_at": "2026-09-18T08:00:49Z",
+  "followed_refs": [],
+  "goal": "Fechar TA-R1..TA-R4 da review independente: ancorar a verificacao historica nas medidas FROZEN preservadas, exigir cobertura um-para-um do conjunto aceito, confinar os paths do arquivo e retirar o campo fantasma de override de projecao",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "TA-R1..TA-R4 fechadas no commit 51de290, com controle causal por finding, sensibilidade provada por quatro mutantes revertidos, e zero bytes historicos alterados.",
+  "project": "pinker-v0",
+  "started_at": "2026-09-18T07:59:17Z",
+  "state": "finished",
+  "task_id": "issue-697-trama-ta-review-remediation",
+  "validation": {
+    "oracle": "cada remediacao tem um mutante que a remove e um controle causal que fica RED quando ela some",
+    "outcome": "M1 removeu a ancoragem FROZEN: controle R1 RED (1/22). M2 removeu a cobertura um-para-um: controles R2 RED (3/22). M3 enfraqueceu o confinamento: controles R3/R2C RED (2/22). M4 ressuscitou o campo fantasma: controles de schema RED (1 lib + 2 f1). Todos revertidos; PINKER_EXIGE_NATIVO=1 make ci verde no HEAD 51de290 com rc 0, 139 binarios e 0 falhas.",
+    "passed": true,
+    "summary": "sensibilidade provada para as quatro findings",
+    "validated_at": "2026-09-18T08:00:13Z"
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "challenges": [
+    {
+      "evidence": [
+        {
+          "class": "OBSERVED",
+          "description": "Probe real das duas relocacoes de C1 repetido na Task #586: 36 hashes alterados, 29 chaves ja cobertas na receita (realinhamento do lado corrente) e 7 sem regra. Acrescentando 7 override-region de hash/summary SO na receita e ajustando o expected_overrides DELA, `pink nav projecao verificar` deu 13/13 MATCH.",
+          "source": "file:/pinker/repo/pinker-v0/agentes/a05/artifacts/c1probe-recipe.toml"
+        },
+        {
+          "class": "OBSERVED",
+          "description": "sha256 dos treze .pinker/projections/*.toml identico antes e depois do probe: nenhum snapshot FROZEN foi tocado.",
+          "source": "file:/pinker/repo/pinker-v0/agentes/a05/artifacts/c1probe-frozen-AFTER.txt"
+        },
+        {
+          "class": "OBSERVED",
+          "description": "Memoria factual da Task #586 (PR LyannaValerie/pinker-v0#587), com o probe, as sete chaves e as sete injecoes de sensibilidade.",
+          "source": "file:/pinker/repo/pinker-v0/agentes/a05/memory/task-586-facts.md"
+        }
+      ],
+      "id": "C-F4E2460F06",
+      "observed_at": "2026-09-03T23:00:00Z",
+      "references": [],
+      "reported_by": "velina",
+      "statement": {
+        "class": "ASSERTED",
+        "text": "A orientacao final do caso — 'Nao invente regra nova na receita para contornar: isso desloca expected_overrides do snapshot congelado' — e factualmente incorreta. Receita e snapshot tem orcamentos SEPARADOS: `expected_overrides` da receita e campo da propria receita, que e artefato mutavel, e nao do snapshot FROZEN que a consome. Acrescentar override-region na receita nao toca byte nenhum de snapshot congelado. As sete chaves que o caso declarou como 'bloqueio duro, sem remedio' foram normalizadas exatamente assim."
+      }
+    }
+  ],
+  "contraindications": [
+    "Nao confundir com B-VQPA0OHIQZQB: la a regiao e REMOVIDA e o erro e E-SNAP-REGIAO-REMOVIDA, com a contagem do catalogo caindo. Aqui a contagem nao muda e o erro e E-SNAP-OVERRIDE-BASE.",
+    "Nao confundir com B-L82QTHN2Z9EI: la o sintoma e hash agregado da capsula com contagem igual. Aqui a falha e nomeada, por regra de override, antes de qualquer medida agregada.",
+    "Um arquivo sem ancora @pinker-nav propria nao e evidencia de que move-lo e barato.",
+    "Mover arquivo cuja unica regiao esta sob exclude-key e seguro: a regiao nao participa da projecao historica, e o campo file pode mudar.",
+    "NAO reutilize a orientacao original deste caso: ela dizia que acrescentar regra na receita deslocaria expected_overrides de snapshot congelado. Isso e falso e esta registrado no challenge C-F4E2460F06.",
+    "Regiao sob exclude-key mudar de arquivo NAO e o mesmo problema que drift de hash. Diagnostique qual dos dois voce tem antes de escolher a regra: `to_file` nao resolve drift de hash, e override de hash nao resolve mudanca de caminho."
+  ],
+  "cues": [
+    "E-SNAP-OVERRIDE-BASE",
+    "renomear modulo",
+    "relocacao fisica",
+    "FROZEN",
+    "override-region",
+    "exclude-key",
+    "expected_overrides",
+    "orcamento de receita",
+    "recipe budget",
+    "receita mutavel",
+    "to_file",
+    "modularizacao seletiva",
+    "E-SNAP-RECEITA-AUSENTE",
+    "receita nao existe",
+    "expected_overrides desatualizado"
+  ],
+  "discriminating_probe": {
+    "action": "antes de renomear o modulo, sincronizar num clone sujo e comparar src/navigation.jsonl por chave, separando (a) chaves com hash/summary alterado de (b) chaves com campo `file` alterado; para cada uma, localizar se ja existe regra na receita ou dentro de um snapshot",
+    "observable": "chave com hash alterado e sem regra alguma NAO e bloqueio: a regra que falta entra na receita, cujo expected_overrides e proprio. Bloqueio real so aparece quando a regra a mudar ja mora dentro de um snapshot FROZEN. A contagem de ancoras dentro do arquivo movido nao prediz nada."
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "pink nav projecao verificar 13/13 MATCH apos reverter a relocacao e realinhar apenas as 8 regras tocadas pela consolidacao",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a04/logs/make-ci-2.log"
+    },
+    {
+      "class": "VALIDATED",
+      "description": "Execucao real da relocacao (Task issue-588-intrinsics-physical-closure, PR #589, baseline 0abb07d2). Os tres baldes previstos pela orientacao corrigida mediram exatamente: 40 regioes com drift, 11 sob exclude-key, 22 com override preexistente onde bastou realinhar o lado corrente, 7 sem regra que ganharam override-region na receita. expected_updates da RECEITA 167 -> 174; nenhum expected_overrides de snapshot tocado; sha256 dos 13 .pinker/projections/*.toml identico antes e depois; 13/13 MATCH. A unica regiao com campo file alterado (familia.superficie.registro) esta sob exclude-key, entao zero regras to_file foram necessarias mesmo com a capacidade ja disponivel desde a #587: CAPABILITY_EXISTS != CAPABILITY_REQUIRED.",
+      "oracle": "pink nav projecao verificar == 13/13 MATCH e sha256sum -c dos 13 snapshots FROZEN identico antes/depois",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a06/artifacts/step5-real-blocker-probe.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task #634 (SEM-3, slot a28): acrescentar uma regra override-region a normalizacao-corrente-para-historico.toml sem subir expected_overrides de 194 para 195 fez as treze projecoes FROZEN falharem com E-SNAP-RECEITA-AUSENTE e a mensagem 'receita nao existe'. O parser estrito rejeita a receita inteira quando o orcamento nao bate, e o snapshot so reporta que a receita nao resolveu - o diagnostico aponta para arquivo ausente, nao para orcamento. O censo do orcamento e override-hash + override-region (14 + 181 = 195); exclude-key tem orcamento proprio (expected_exclusions). Subir o numero em um resolveu as treze de uma vez.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a28/artifacts/EQUIVALENCIA.md"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "Depois de classificar e cobrir cada regiao com hash alterado, `pink nav projecao verificar` volta a 13/13 MATCH e o sha256 dos treze .pinker/projections/*.toml permanece identico ao de antes da relocacao.",
+    "text": "Trate renomeacao de modulo Rust como evento de cartografia de alcance repo-wide, proporcional ao numero de CITACOES do caminho, nao ao numero de ancoras do arquivo — um arquivo sem ancora propria pode derrubar as treze projecoes. Antes de mover, sincronize num clone sujo e classifique cada regiao com hash alterado em tres baldes: (1) coberta por exclude-key, que nao entra na projecao e pode mudar a vontade, inclusive o campo `file`; (2) coberta por override-region/override-hash, onde basta realinhar o lado corrente (`from_hash`/`from_summary`/`expect_file`) da regra; (3) sem regra alguma, onde a correcao e ACRESCENTAR a regra que falta. O balde tres NAO e bloqueio duro. A regra decisiva e de ONDE a regra nova mora: orcamento de receita e orcamento de snapshot sao campos separados, cada um do proprio artefato. A receita e mutavel e tem `expected_overrides` proprio; acrescentar override nela nao desloca nem toca o `expected_overrides` de nenhum snapshot FROZEN, que continua byte-imutavel. Como toda a cadeia congelada se apoia na receita da raiz, uma unica regra ali normaliza o drift para as treze projecoes de uma vez. So ha bloqueio real quando a regra que precisaria mudar ja mora DENTRO de um snapshot FROZEN — e mesmo esse caso costuma ser contornavel restaurando antes, na receita, o valor que a regra congelada espera. Restaurar o campo `file` de uma regiao que segue existindo tem operacao propria desde a #587: `to_file` em override-region, guardado por `expect_file`."
+  },
+  "id": "B-0FPBIZX5ZG9F",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O que quebra nao sao as regioes DO arquivo movido: sao as regioes QUE CITAM o caminho do modulo no corpo. Trocar `crate::intrinsic_authority::` por `crate::intrinsics::identity::` mudou o hash de cerca de trinta regioes espalhadas por src/ e tests/. A maioria tinha regra de override na receita e foi realinhavel; SETE nao tinham regra nenhuma e por isso passavam o hash corrente direto para a reconstrucao historica: ast.expressoes.representacao, cfg.modelo.representacao, machine.modelo.representacao, select.modelo.representacao, interpreter.intrinsecos.acaso, evidencia.ir.validacao-chamadas-e-nulo, evidencia.interpreter.diagnostico-runtime-avaliacao-e-chamadas. A leitura original de que essas sete nao teriam remedio foi FALSIFICADA pelo challenge C-F4E2460F06: acrescentar as sete override-region na receita, com o expected_overrides DA RECEITA ajustado, devolve 13/13 MATCH sem tocar byte de snapshot FROZEN. Alem disso, a unica regiao cujo campo `file` de fato muda nessa relocacao (familia.superficie.registro) esta sob exclude-key e portanto nao participa de nenhuma projecao historica."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Uma Task de consolidacao precisa mover src/intrinsic_authority.rs para src/intrinsics/identity.rs. O arquivo em si nao carrega nenhuma ancora @pinker-nav, o que sugere risco zero de Trama. Depois de `pink nav sincronizar`, `pink nav projecao verificar` devolve HARNESS_FAILURE nas 13 projecoes."
+  },
+  "references": [],
+  "revision": {
+    "hash": "00faba7a3966063f86e678f34004a42dd220591872c6fdb635daeb480656b009",
+    "number": 5,
+    "parent_hash": "12f2df0a3eee7faf7074b710f192b643d1cce350d8b3dae9f38f7560fc38ac7b",
+    "reason": "sintoma de recuperação: orçamento de receita desatualizado aparece como E-SNAP-RECEITA-AUSENTE",
+    "updated_at": "2026-09-08T16:33:16Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "pink nav projecao",
+      "recipes",
+      "navigation",
+      "src/navigation.jsonl",
+      "modularizacao fisica"
+    ],
+    "conditions": [
+      "Task move ou renomeia modulo Rust referenciado por outras regioes cartografadas"
+    ]
+  },
+  "status": "challenged",
+  "title": "Renomear modulo Rust citado dentro de regioes cartografadas bloqueia a relocacao fisica"
+}

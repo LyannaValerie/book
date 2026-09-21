@@ -1,0 +1,57 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao generaliza para archive sem indice de simbolos, onde a varredura realmente pode dominar: este tinha armap valido com 4699 entradas.",
+    "Nao generaliza para staticlib pequena: o efeito vem de a staticlib Rust conter std, core, alloc, gimli e rustc_demangle, de modo que qualquer programa puxa quase tudo.",
+    "O numero de 8.21 ms e com page cache quente; em cache frio a leitura do archive pesa mais. O ld le 151.7 MB de um archive de 29.6 MB em 36516 leituras de 4 KiB por link."
+  ],
+  "cues": [
+    "libpinker_rt.a",
+    "link nativo",
+    "pink build --nativo",
+    "staticlib",
+    "archive scan",
+    "GNU ld",
+    "collect2",
+    "cc driver",
+    "DWARF no executavel nativo",
+    "custo por link"
+  ],
+  "discriminating_probe": null,
+  "environment": null,
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Issue #548, baseline c818870d9d8cfca2319ed89de4edc03ca5b3ccef. Variantes de archive medidas no mesmo host com o mesmo objeto: debug 29.57 MB -> 224.82 ms; strip-debug 14.28 MB -> 167.76 ms; release 18.98 MB -> 119.94 ms; release+strip 11.77 MB -> 100.34 ms; shared object 10.14 MB -> 26.78 ms. Prova end-to-end: backend_nativo_tests, 69 links, somatorio caindo de 16310 ms para 9935 ms com o archive release, 75 passed / 0 failed nas duas variantes.",
+      "oracle": "membros puxados recontados de forma independente por um segundo agente com o proprio link map: 319 de 495, 92.97% dos bytes",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/causal-decomposition.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Antes de nomear um custo de link como varredura de archive, isole-o com tres links no mesmo host: objeto trivial sem o archive, objeto trivial COM o archive (nada puxado), e o objeto real. O segundo menos o primeiro e o unico custo que a palavra scan descreve. Se o terceiro dominar, o custo e materializacao por artefato e escala com o que o archive contribui, nao com o tamanho do archive: meca os membros puxados com `-Wl,-Map` (NAO com `-Wl,-t`, que em GNU ld imprime o caminho do archive uma vez e nao membro a membro), pese-os com `ar tv`, e olhe a composicao da saida com `size -A`. Quando o linker e GNU ld, `-Wl,--stats` da o tempo real do ld e separa o overhead do driver cc e do collect2 — cerca de 7.6 ms aqui. E confirme quem realmente linka: `cc` encaminha para collect2, que encaminha para /usr/bin/ld; a cadeia se prova com `strace -f -e trace=execve`, nao se presume."
+  },
+  "id": "B-KM5NK9UJMFLO",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Baseline c818870, GCC 15.2.0 e GNU ld (BFD) 2.46, 4 CPUs. Deltas controlados, mediana de 9: `cc trivial.o -o bin` = 16.46 ms; `cc trivial.o libpinker_rt.a ... -o bin` = 24.67 ms; `cc <objeto pinker> libpinker_rt.a ... -o bin` = 224.82 ms. Abrir o archive e percorrer o indice de 4699 simbolos, sem puxar membro nenhum, custa 8.21 ms, isto e 3.7% do link. Os 200.15 ms restantes sao puxar 319 dos 495 membros (92.97% dos bytes), relocar e escrever 8.62 MB, dos quais 6.82 MB (79.1%) sao DWARF do runtime. O menor programa Pinker possivel (`mimo 0;`, objeto de 984 bytes) ja puxa exatamente esse mesmo conjunto de 319 membros, identico ao de programas de 8.8 KB e 13.8 KB de assembly. Sobre os 376 links reais da suite, a correlacao de Pearson entre tamanho do objeto de entrada (variando 171x) e duracao do link e 0.096."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Ver `cc <obj> libpinker_rt.a -o bin` custar ~225 ms com um archive de 29.6 MB sugere que o custo e varrer o archive, e o nome de trabalho vira LIBPINKER_RT_A_SCAN_COST. A partir dai a busca por solucao vai para indice de simbolos, compressao e slim do archive, que sao os lugares errados."
+  },
+  "references": [],
+  "revision": {
+    "hash": "c6f2ff3e1806126ff9c3952f9da3414b03f4028e4bce0ee2499ef9009b5aadce",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-30T17:48:29Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": null,
+  "status": "candidate",
+  "title": "O custo do link nativo da Pinker e materializar o executavel estatico, nao varrer libpinker_rt.a"
+}

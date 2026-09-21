@@ -1,0 +1,88 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao generaliza para alvo dentro de docs/: ali a cartografia cobre e o candidato da Trama e utilizavel.",
+    "Nao autoriza estender a politica de cobertura da Trama nem mexer em scoring, alias, stemming ou exit code: a lacuna e de cobertura, nao de ranker.",
+    "Lista vazia da Trama tambem nao prova ausencia do simbolo no repositorio; a inversao continua invalida nas duas direcoes.",
+    "Nao vale como licenca para pular a Trama: a consulta e a evidencia da lacuna e precisa existir antes do fallback."
+  ],
+  "cues": [
+    "AGENTS.md",
+    "politica de agente do repositorio",
+    "pink nav buscar",
+    "rc=0 com resultados irrelevantes",
+    "docs/navigation.jsonl",
+    "TRAMA_COVERAGE_GAP",
+    "fallback delimitado",
+    "teste de governanca"
+  ],
+  "discriminating_probe": {
+    "action": "rodar a consulta conceitual e depois conferir se a raiz da superficie procurada aparece em docs/navigation.jsonl: `pink nav buscar \"repository governance rule test evidence\" --json --limite 10` seguido de procurar AGENTS.md no catalogo de cartografia",
+    "observable": "rc=0 com resultados pontuados enquanto o catalogo nao contem nenhum registro cuja raiz cubra o arquivo procurado; isso separa ausencia de cobertura de ausencia do simbolo no repositorio"
+  },
+  "environment": {
+    "baseline": "092ec19be81e069d9c8fa238b031f95ebf7f4ee1",
+    "repository": "LyannaValerie/pinker-v0",
+    "runner": "pink nav buscar sob pinker-run, binario Task-local"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Ledger observado e atestado da Task issue-705 T3: checkpoint P1 registra a tentativa exata, o resultado rc=0/42 resultados/score 21 e a limitacao de que AGENTS.md esta fora de toda raiz de escopo da politica de cobertura, com o fallback delimitado e a evidencia recuperada.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a28/memory/attestation.jsonl"
+    },
+    {
+      "class": "VALIDATED",
+      "description": "Verificacao independente no main pos-merge 73e518ba: docs/navigation.jsonl tem 56 registros, todas as raizes de path sao docs/, e nenhum registro menciona AGENTS.md.",
+      "oracle": "contagem de registros e conjunto de raizes de path extraidos de git show origin/main:docs/navigation.jsonl; zero ocorrencias da string AGENTS.md",
+      "source": "git:73e518bac30474dc8b7eb87e1d6bc3a957400095"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Saida bruta da rodada de Trama que motivou o fallback, incluindo a rota de documentacao consultada e a busca por procedimento de agente.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a28/artifacts/trama/P1-doc-route-agent-procedure.txt"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Trate rc=0 da Trama como sucesso operacional, nunca como prova de relevancia: o veredito de cobertura vem de confrontar a raiz do alvo com o catalogo de cartografia, nao do codigo de saida nem do tamanho da lista. Quando o alvo e a superficie de politica de agente do repositorio, espere TRAMA_COVERAGE_GAP = TRUE, registre a tentativa exata e o resultado, e use fallback delimitado com escopo declarado em vez de busca ampla disfarcada de \"Trama consultada\". Ancore o fallback no precedente executavel: o teste de governanca que ja le AGENTS.md e o candidato mais barato."
+  },
+  "id": "B-JZKO06LLJY6N",
+  "observed_at": "2026-09-19T12:11:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Na Task issue-705 a consulta `pink nav buscar \"repository governance rule test evidence\" --json --limite 10` retornou rc=0, 42 resultados, maior score 21, e nenhum candidato dono do procedimento de agente do repositorio. O catalogo docs/navigation.jsonl tem 56 registros, todos com raiz docs/, e zero mencao a AGENTS.md. O precedente que a consulta devia achar, tests/change_cutover_governance_tests.rs, que ja le AGENTS.md, foi recuperado por fallback delimitado a tests/ src/ Makefile* scripts/ com `ls tests/` e `grep -rln AGENTS.md`."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Numa Task cujo produto e texto de politica em AGENTS.md mais um teste de governanca que le esse texto, a consulta conceitual da Trama termina com sucesso operacional e mesmo assim nao entrega o alvo. O agente ve rc=0 e uma lista nao vazia de resultados pontuados e pode concluir que a Trama cobriu o assunto, quando nenhum dos candidatos e dono da superficie procurada."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a28/artifacts/trama/P1-agent-governance.txt",
+    "file:/pinker/repo/pinker-v0/agentes/a28/artifacts/trama/P1-doc-search-trama.txt"
+  ],
+  "revision": {
+    "hash": "79c375e0c7f2607dbacbdeff36650dae76db1f3835147f646791c63e06d5d1a7",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-19T16:49:56Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "pink nav buscar",
+      "docs/navigation.jsonl",
+      "AGENTS.md",
+      "tests/ familia de testes de governanca"
+    ],
+    "conditions": [
+      "a Task muta ou verifica regra de procedimento de agente escrita em AGENTS.md",
+      "a politica de cobertura da Trama enraiza a cartografia em docs/ apenas",
+      "o agente precisa localizar o precedente executavel de teste de governanca antes de qualquer busca ampla"
+    ]
+  },
+  "status": "candidate",
+  "title": "A Trama nao alcanca a superficie de politica de agente do repositorio: consulta conceitual sobre AGENTS.md retorna rc=0 com resultados e nenhum candidato dono"
+}

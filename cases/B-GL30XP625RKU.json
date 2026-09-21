@@ -1,0 +1,97 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao vale quando a paridade e provada no mesmo CI: ai a fonte versionada e de fato a que roda.",
+    "Nao autoriza remover teste do produto: a pergunta e de quem e a autoridade, nao se o gate e caro.",
+    "Nao confunda o diretorio com a autoridade; um teste dentro de tests/<subsistema>/ pode provar propriedade real do produto e permanecer.",
+    "Mover a fonte nao corrige o DRIFT por si so: a mudanca so termina quando o destino tem versionamento proprio e a copia instalada e reinstalada a partir dele, com recibo nomeando o commit fonte. Ate la trocou-se autoridade fantasma por autoridade sem historia."
+  ],
+  "cues": [
+    "source authority",
+    "paridade fonte instalado",
+    "DRIFT",
+    "provenance",
+    "gate fora do CI",
+    "ferramenta de host no repo do produto",
+    "fronteira produto infraestrutura",
+    "autoridade nominal",
+    "instalar --check",
+    "duplicacao sem consumidor",
+    "autoridade host-side versionada",
+    "recibo de instalacao com commit",
+    "COMMIT_DRIFT"
+  ],
+  "discriminating_probe": {
+    "action": "rodar o gate de paridade fonte/instalado e comparar sha256 dos dois lados, alem de olhar o commit gravado na provenance",
+    "observable": "paridade PASS significa que a fonte versionada e mesmo a que roda; DRIFT com commit ancestral significa que a autoridade e nominal e que os commits de correcao nunca chegaram ao consumidor"
+  },
+  "environment": {
+    "baseline": "d7d42d676bff9c81c48774ab80bb75aad7fa012f",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "main limpo d7d42d6: instalar.sh --check = DRIFT exit 5; sha fonte 1780a5f3470497ef, sha instalado 0abc66f285372f93, provenance source_commit 74973876 (ancestral). git log 74973876..d7d42d6 -- scripts/forja/forja_agentes.py lista 9 commits.",
+      "oracle": "gate de paridade do proprio repositorio mais comparacao de sha256 dos dois arquivos",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/forja-host-capability-before.json"
+    },
+    {
+      "class": "VALIDATED",
+      "description": "Custo medido em tres corridas frias do `ci` no mesmo host: forja-check 261972.1 ms e 254699.6 ms (media dos dois gates Forja 258417.2 ms, 30.01% do gate canonico). O delta ingenuo entre a primeira corrida e a corrida sem os gates dava 373006.7 ms; a corrida de controle mostrou que ~111 s vinham do page cache frio no alvo `test`, nao da Forja.",
+      "oracle": "tres corridas frias com o mesmo harness, variando apenas a omissao dos dois alvos",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/boundary-experiment.json"
+    },
+    {
+      "class": "VALIDATED",
+      "description": "Fechamento da mesma Issue #544: o diretorio host-side virou repositorio Git proprio da Forja (bootstrap importado de LyannaValerie/pinker-v0@d7d42d6, forja_agentes.py byte-identico entre referencia, fonte host e copia instalada), o instalador passou a gravar e conferir o commit fonte no recibo, e a reinstalacao levou o par a PARITY: source_commit == installed_source_commit, DRIFT=FALSE. O COMMIT_DRIFT foi exercitado ao vivo: bytes iguais com recibo de outro commit saiu rc=5.",
+      "oracle": "instalar-forja-agentes.sh --check comparando sha256 e commit fonte, mais test_instalar.py cobrindo recibo ausente, recibo de outro commit e bytes adulterados",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/authority-reconciliation-after.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Antes de tratar uma copia versionada como a autoridade efetiva, rode o gate de paridade e compare os hashes. Se o gate de paridade nao pode rodar no mesmo CI que roda a suite, a autoridade declarada e nominal: o repositorio hospeda o arquivo mas nao controla o que executa. Nesse estado, mover a fonte para junto do consumidor real custa menos do que parece, porque o consumidor nunca a consumiu. A pergunta que classifica e sempre a mesma: se este subsistema deixasse de existir amanha, o produto ainda precisaria deste codigo? Diretorio nao decide autoridade; consumidor decide. E o destino precisa aguentar ser autoridade: versionamento proprio e um recibo de instalacao que nomeie o commit fonte. Paridade de bytes deixa de bastar assim que a fonte tem historia — bytes iguais podem vir de outro commit, e foi esse silencio que deixou a copia instalada nove commits de correcao atras sem nada ficar vermelho."
+  },
+  "id": "B-GL30XP625RKU",
+  "observed_at": "2026-08-30T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Issue #544 em d7d42d6: `scripts/forja/instalar.sh --check` devolveu DRIFT exit 5 em main limpo. Fonte no repo sha 1780a5f3..., instalado /opt/pinker/bin/forja-agentes sha 0abc66f2... com provenance apontando o commit ancestral 74973876. Nove commits tocaram a fonte depois dele e nenhum chegou ao host. Enquanto isso `forja-check` rodava a suite dessa mesma fonte dentro do `make ci`, custando 254699-261972 ms por execucao, ~30% do gate canonico, x3 workflows por SHA. As 110 provas da suite e os 48 mutantes exercitavam um arquivo que nenhum agente executava."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A fonte de uma ferramenta operacional de host e colocada no repositorio do produto e declarada source authority. O gate que provaria a paridade fonte/instalado precisa do host, entao e deliberadamente mantido fora do CI do produto. A suite da ferramenta, essa sim, entra no CI. O resultado e o pior dos dois: o CI paga para testar um arquivo que ninguem executa, e a copia instalada diverge sem que nada fique vermelho."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/boundary-inventory.md",
+    "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/boundary-experiment.json",
+    "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/minimal-bridge.json",
+    "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/host-git-bootstrap.json",
+    "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/legacy-repo-source-reconciliation.json",
+    "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/install-receipt.json"
+  ],
+  "revision": {
+    "hash": "abad1e6779f06ee72fdd7a2ad6feda364634f6024e662db33ab117ee6cba015f",
+    "number": 2,
+    "parent_hash": "846ace2bb800de2424b1da565dcc2147c137a185d8f66137b17b3c2057b85e2c",
+    "reason": "fechamento da #544: autoridade host-side versionada e copia instalada ligada ao commit fonte",
+    "updated_at": "2026-08-30T02:12:01Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "Makefile ci",
+      "scripts/forja",
+      "tests/forja",
+      "/opt/pinker/bin",
+      "catalogo ls-forja"
+    ],
+    "conditions": [
+      "ferramenta operacional de host com fonte versionada no repositorio do produto"
+    ]
+  },
+  "status": "candidate",
+  "title": "Fonte versionada de ferramenta de host vira autoridade fantasma quando o gate de paridade nao cabe no CI do produto"
+}

@@ -1,0 +1,10 @@
+{
+  "case_id": "B-ZW6DR34376L0",
+  "domain": "Pinker",
+  "synthetic": false,
+  "updated_at": "2026-09-18T19:12:39Z",
+  "views": [
+    "Pinker/Forja",
+    "Pinker/Gates"
+  ]
+}

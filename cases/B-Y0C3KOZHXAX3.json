@@ -1,0 +1,85 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando o worktree mudou: ai binary_commit diferente do HEAD tem a causa do caso B-BO1XA591JAZ2, build antes do commit.",
+    "Nao explica binary_commit UNKNOWN no PRIMEIRO build da Task: esse e o estado normal de um build sem a variavel, ja registrado no desafio C-999C3EA6AC.",
+    "Nao autoriza mexer em build.rs: o conserto na origem e mudanca de produto e tem dono proprio."
+  ],
+  "cues": [
+    "binary_commit",
+    "PINKER_BUILD_COMMIT",
+    "version-json",
+    "UNKNOWN",
+    "cargo test",
+    "rerun-if-env-changed",
+    "evidencia",
+    "revisor",
+    "proveniencia"
+  ],
+  "discriminating_probe": {
+    "action": "rodar `pink --version-json` e `git rev-parse HEAD` no mesmo comando, imediatamente antes e imediatamente depois do bloco de evidencia; e checar se algum cargo test rodou entre o build carimbado e a captura",
+    "observable": "binary_commit UNKNOWN com worktree limpo e HEAD inalterado identifica a perda de carimbo por reconstrucao; o rebuild com a variavel devolve o SHA em segundos e a saida do replay nao muda"
+  },
+  "environment": {
+    "observed_at_commit": "815c4c9cdcb9e2124b3a380209ef5792f0c282bc",
+    "repository": "pinker-v0",
+    "slot": "a40"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "ANTES do rebuild: {\"schema\":3,\"binary_path\":\"/pinker/repo/pinker-v0/agentes/a40/target/debug/pink\",\"binary_version\":\"0.1.0\",\"binary_commit\":\"UNKNOWN\"}; DEPOIS de PINKER_BUILD_COMMIT=$(git rev-parse HEAD) cargo build --locked --bin pink: binary_commit 815c4c9cdcb9e2124b3a380209ef5792f0c282bc, em 3,26 s, com git status --porcelain vazio nos dois momentos.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a40/artifacts/convergence-verification-718.yaml"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "build.rs no HEAD 815c4c9 contem apenas println!(\"cargo:rerun-if-env-changed=PINKER_BUILD_COMMIT\") e nao deriva o commit do git.",
+      "source": "file:build.rs"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Replay reexecutado com o binario recarimbado: artifacts/probes/replay-718.txt prova o mesmo binary_commit na primeira e na ultima linha e a saida de todos os probes e identica a da execucao anterior.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a40/artifacts/probes/replay-718.txt"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Nao trate o carimbo como propriedade estavel da Task: trate como propriedade do MOMENTO da captura. Exporte PINKER_BUILD_COMMIT no ambiente da Task inteira, ou reconstrua imediatamente antes de gerar cada bloco de evidencia e grave `pink --version-json` ANTES e DEPOIS do replay, no mesmo arquivo de saida. Um replay cuja primeira e ultima linha provam o mesmo carimbo e atribuivel; um carimbo provado so no P0 nao prova nada sobre o que rodou depois. O conserto na origem seria build.rs derivar o commit quando a variavel esta ausente, e isso e mudanca de produto: pertence a proposta P-07 / contradicao C-08 da #714, rota CARRY_TO_#623."
+  },
+  "id": "B-Y0C3KOZHXAX3",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Task #718, slot a40, main 815c4c9, Task READ_ONLY. Sequencia: (1) PINKER_BUILD_COMMIT=$(git rev-parse HEAD) cargo build --locked --bin pink -> binary_commit 815c4c9; (2) probes de diagnostico executados com esse binario; (3) tres invocacoes de cargo test sem a variavel; (4) `pink --version-json` -> binary_commit UNKNOWN, com git status vazio e HEAD inalterado. Um revisor independente olhou o binario nesse estado, levantou o achado como MAJOR e classificou o registro inteiro como RECORD_NOT_SUPPORTED, porque a prova dinamica deixou de ser atribuivel ao SHA revisado. Um rebuild com a variavel devolveu 815c4c9 em 3,26 s e o replay repetido deu saida identica."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "build.rs declara `cargo:rerun-if-env-changed=PINKER_BUILD_COMMIT` e nada mais. A variavel passar de definida para ausente E uma mudanca de ambiente: o crate e reconstruido e o binario volta a anunciar binary_commit UNKNOWN, com o worktree intocado. `cargo test`, inclusive `cargo test --test <alvo>`, constroi os binarios do pacote e basta para isso. O gate PINK_BINARY_COMMIT == WORKTREE_HEAD passa no P0 e volta a ser falso no meio da Task, sem nenhum sinal, e quem le a evidencia depois nao consegue atribui-la ao SHA."
+  },
+  "references": [],
+  "revision": {
+    "hash": "9dad178412973a0e5de21bae407cf1867c95e76fdc7e37e7de2032e5ab25feb8",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-21T01:37:08Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "build.rs",
+      "src/pink_cli",
+      "cargo test",
+      "cargo build --locked --bin pink",
+      "pink --version-json"
+    ],
+    "conditions": [
+      "o binario da Task foi construido uma vez com PINKER_BUILD_COMMIT e o carimbo foi provado no P0",
+      "depois disso a Task roda qualquer cargo test ou cargo build sem exportar PINKER_BUILD_COMMIT",
+      "o worktree nao mudou: HEAD e o mesmo e a arvore esta limpa"
+    ]
+  },
+  "status": "candidate",
+  "title": "Binario pink carimbado perde o carimbo em qualquer cargo posterior sem PINKER_BUILD_COMMIT, e a evidencia deixa de ser atribuivel ao SHA"
+}

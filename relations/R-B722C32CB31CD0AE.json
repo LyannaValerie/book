@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-09-20T16:56:23Z",
+  "created_by": "athenna",
+  "epistemic": "OBSERVED",
+  "from": "B-CFUXBQHKZU9V",
+  "id": "R-B722C32CB31CD0AE",
+  "oracle": null,
+  "to": "book:B-GRWHF1EXY330",
+  "type": "references"
+}

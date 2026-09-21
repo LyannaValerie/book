@@ -1,0 +1,11 @@
+{
+  "case_id": "B-LFE2WJJJXR6J",
+  "domain": "Pinker",
+  "synthetic": false,
+  "updated_at": "2026-09-07T12:54:20Z",
+  "views": [
+    "Pinker/Semantic",
+    "Pinker/MethodDispatch",
+    "Pinker/TestHarness"
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando o executavel e produzido por um processo externo que ja terminou, como um compilador: os descritores dele morreram com ele e nenhum fork do processo de teste os herda.",
+    "Um teste que apenas verifica /proc/self/fd do proprio processo NAO detecta esta corrida: depois que a escrita retorna o pai nao tem mais descritor, e o perigo esta no filho forkado. E preciso um teste que execute sob fork concorrente."
+  ],
+  "cues": [
+    "ETXTBSY",
+    "Text file busy",
+    "ExecutableFileBusy",
+    "code: 26",
+    "fs::copy chmod execve",
+    "caminho unico nao protege",
+    "i_writecount",
+    "O_CLOEXEC",
+    "fork herda tabela de descritores",
+    "teste flaky que passa no rerun",
+    "native_quarantine_recovery_tests",
+    "publicar_executavel",
+    "executar_com_entrada Text file busy",
+    "pinker_rt stdin concorre",
+    "os error 26 em make ci"
+  ],
+  "discriminating_probe": {
+    "action": "rodar a suite com --test-threads=1 contra paralela; depois um probe com um unico copiador/executor e N threads que SO fazem fork+exec de /bin/true, sem escrever arquivo algum",
+    "observable": "serial nao falha nunca; com zero threads de ruido nao falha nunca; ETXTBSY aparece assim que existem threads que apenas forkam, e escala com a taxa de fork"
+  },
+  "environment": {
+    "backend": "native",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Issue #528, baseline c55f976. Antes: 67/300 execucoes da suite falham a 16 threads, 0/300 serial. Probe 400 rodadas: 0 ETXTBSY com 0 forkers; 18, 39 e 38 com 1, 4 e 8 forkers que nunca escrevem arquivo. Depois da publicacao em quatro passos: 0/300 falhas a 16 threads. Mutacao de sensibilidade restaurando fs::write+chmod: falha com ETXTBSY na rodada 14 apos 907 forks.",
+      "oracle": "probe controlado variando apenas o numero de threads que fazem fork+exec, e stress da suite antes e depois da correcao",
+      "source": "file:/pinker/artifacts/tasks/issue-528-quarantine-etxtbsy/etxtbsy-mecanismo.md"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Quarta ocorrencia, em componente fora da lista original: #640 targeted closure, HEAD d752486, PINKER_EXIGE_NATIVO=1 make ci. Falhou tests::stdin_concorre_com_espera_e_propaga_erros do crate pinker_rt com 'falha ao executar processo em executar_com_entrada: Text file busy (os error 26)' em runtime/pinker_rt/src/lib.rs:4959; 86 passed, 1 failed. Sonda discriminante do proprio caso aplicada antes de qualquer remedio: --test-threads=1 passou (1 passed, 0 failed). Reexecucao do gate completo ficou verde, 140 secoes ok. Nenhum sleep, retry ou serializacao adicionado. O delta do commit era um comentario de doc e nao toca pinker_rt.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a31/artifacts/red-2-sonda-serial.log"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Nao diagnostique como runner flaky e nao adicione sleep, retry nem serializacao da suite. Caminho unico nao protege: a disputa e pelo i_writecount do inode, nao pelo nome, e rename tambem nao resolve porque troca o nome e nao o inode. Elimine a condicao necessaria por construcao: o processo de teste nunca pode deter descritor gravavel sobre o inode que sera executado. O desenho ja provado neste repositorio, em tests/pinker_flake_runner_tests.rs, tem quatro passos: o pai escreve <destino>.fonte sem bit de execucao e fecha; um processo auxiliar (install -m 0755) materializa <destino>.parcial, sendo o unico a abrir aquele inode para escrita, de modo que nenhum fork do pai pode herdar o descritor; o pai valida status, tipo, permissao e conteudo fail-closed; e so entao renomeia para o nome final. Para provar que a protecao nao e ornamental, escreva um teste que publica e executa sob threads que apenas forkam: com o mecanismo antigo ele fica vermelho em poucas rodadas."
+  },
+  "id": "B-W81S5ABYTXTD",
+  "observed_at": "2026-08-27T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "ETXTBSY vale enquanto QUALQUER processo mantem descritor gravavel para o inode executado. fs::copy abre o destino para escrita no processo de teste, e fork copia a tabela de descritores do PROCESSO INTEIRO, nao da thread. Um fork disparado por outra thread durante a copia produz um filho que segura aquele descritor ate o seu proprio execve, porque O_CLOEXEC so fecha num execve bem-sucedido. Nesse intervalo o i_writecount do inode continua positivo e o execve do copiador recebe ETXTBSY, mesmo ele ja tendo fechado o proprio descritor. Medicao: suite inteira 67 falhas em 300 execucoes a 16 threads e 0 em 300 com --test-threads=1, com 15 testes diferentes atingidos; probe controlado com 400 rodadas deu 0 ETXTBSY sem threads de ruido e 18, 39 e 38 com 1, 4 e 8 threads que so faziam fork+exec."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um teste executa um script que ele mesmo acabou de copiar para um caminho unico por caso, pid e sequencia. O execve falha de forma intermitente com ETXTBSY (errno 26), remotamente e so as vezes: o mesmo SHA passa no rerun sem alteracao de codigo. Como o caminho e unico e nenhum outro teste escreve nele, a explicacao obvia -- escritor concorrente no mesmo arquivo -- nao se sustenta, e a investigacao tende a parar em 'o runner e flaky'."
+  },
+  "references": [],
+  "revision": {
+    "hash": "a2e5e97e997d6da4f1949a6c7e2227013afa911c7d63666678ee714950de439b",
+    "number": 2,
+    "parent_hash": "97a849437f08aec733173e076111a69dceaca6a4b34590bbaeed8c81d1a1d410",
+    "reason": "ocorrencia em componente fora da lista: pinker_rt tests::stdin_concorre_com_espera_e_propaga_erros; sonda discriminante do caso reproduziu o padrao serial/paralelo",
+    "updated_at": "2026-09-09T11:29:25Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "tests/native_quarantine_recovery_tests.rs",
+      "tests/pinker_flake_runner_tests.rs",
+      "qualquer teste que escreva um executavel e o execute no mesmo processo",
+      "runtime/pinker_rt (tests::stdin_concorre_com_espera_e_propaga_erros)"
+    ],
+    "conditions": [
+      "processo multi-thread",
+      "alguma thread cria processo (fork+exec) enquanto outra escreve um executavel",
+      "o executavel escrito e depois executado por execve direto"
+    ]
+  },
+  "status": "candidate",
+  "title": "ETXTBSY no exec de arquivo recem-copiado: fork de outra thread herda o descritor de escrita"
+}

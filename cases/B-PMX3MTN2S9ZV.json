@@ -1,0 +1,72 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando a mutacao substitui um retorno inteiro ou apaga a funcao: ali aplicacao e efeito coincidem."
+  ],
+  "cues": [
+    "sensitivity",
+    "mutacao",
+    "VERDE",
+    "guardiao cego",
+    "sha256",
+    "prova de aplicacao",
+    "mutacao inerte",
+    "mascaramento"
+  ],
+  "discriminating_probe": {
+    "action": "reaplicar a mutacao e observar diretamente a saida da funcao mutada, nao o alvo de teste",
+    "observable": "a funcao mutada produz o mesmo valor de antes, apesar do arquivo ter mudado"
+  },
+  "environment": {
+    "repo": "pinker-v0",
+    "toolchain": "rustc stable"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "M9 com reverse antes do sort_by: exit=0, failures vazio. M9 com reverse depois do sort_by: exit=101 nomeando parse_aceita_snapshot_valido. Mesmo alvo, mesmo commit.",
+      "oracle": "cargo test --locked --lib",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a21/artifacts/SENSITIVITY.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Antes de concluir que um oraculo esta cego, prove que a mutacao mudou o comportamento e nao so os bytes. Duas checagens baratas: (1) para mutacao dentro de funcao, confira a ordem -- a perturbacao precisa vir DEPOIS da operacao que voce quer quebrar, nao antes dela; (2) para mutacao que desliga uma validacao, confira se outra validacao anterior ja rejeita o mesmo caso, o que mascara a sua. O sinal de mascaramento e util: se desligar a validacao X nao muda nada, X e redundante naquele caminho, e isso e um achado por si so. Prova de aplicacao por hash continua obrigatoria, mas ela nao substitui um verde explicado."
+  },
+  "id": "B-PMX3MTN2S9ZV",
+  "observed_at": "2026-09-07T04:00:00Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "cargo test --locked --lib sob cada variante da mutacao, comparando o bloco failures:",
+    "text": "Task #617 (repo pinker-v0). M9 queria perturbar a ordenacao canonica das regras de reconstrucao e inseria rules.reverse() logo apos a abertura de sort_rules -- antes do proprio rules.sort_by. Inverter e depois ordenar da a mesma ordem: sha256 mudou, alvo verde, e o relatorio inicial marcou M9 como FAIL do guardiao. Movendo o reverse para depois do sort_by, o mesmo alvo ficou vermelho nomeando nav_projection_snapshot::tests::parse_aceita_snapshot_valido. Um segundo caso na mesma rodada: M8 desligava um if de autoridade de schema que outra validacao ja cobria antes, e tambem lia verde por mascaramento, nao por cegueira."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um harness de sensibilidade prova que a mutacao aplicou comparando sha256 antes e depois, roda o alvo e le o resultado. Se o alvo fica VERDE, a leitura natural e que o oraculo esta cego. Mas ha uma terceira possibilidade entre 'mutacao aplicou' e 'oraculo cego': a mutacao aplicou nos bytes e nao mudou o comportamento. Prova de aplicacao e prova sobre o arquivo, nunca sobre a semantica."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a21/artifacts/sensitivity.py",
+    "file:/pinker/repo/pinker-v0/agentes/a21/artifacts/SENSITIVITY.json"
+  ],
+  "revision": {
+    "hash": "05e229c9676032cc2825b201b8d2db573e5ae6c75afe2aee5b914f94c0bc6e33",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "primeiro registro, validado na Task issue-617-nps21-physical-decomposition",
+    "updated_at": "2026-09-07T04:00:00Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "harness de sensibilidade/mutacao",
+      "prova de aplicacao por sha256"
+    ],
+    "conditions": [
+      "a mutacao e inserida por ancora textual dentro de uma funcao",
+      "a operacao que se quer perturbar acontece depois do ponto de insercao"
+    ]
+  },
+  "status": "candidate",
+  "title": "Mutacao de sensibilidade aplicada mas semanticamente inerte le como guardiao cego"
+}

@@ -1,0 +1,108 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando o criterio de aceite e apenas 'a duplicacao conhecida foi removida': para isso o guard lexico basta e e barato.",
+    "Nao se aplica a guardas de fronteira que checam PRESENCA de simbolo ou de namespace, onde forma e o proprio fato.",
+    "Nao conclua que a consolidacao e falsa quando so a direcao concordante fica aberta. Reducao de realizacoes, exaustividade do dominio e preservacao de comportamento continuam provadas; o que falta e a ausencia de copia concordante futura.",
+    "Nao trate exaustividade por tipo no match da autoridade como resposta a este problema. Ela impede a celula desaparecer da AUTORIDADE; nao impede uma fase decidir ao lado dela."
+  ],
+  "cues": [
+    "651",
+    "653",
+    "AUTHORITY_GUARD_STILL_BYPASSABLE",
+    "COULD_THIS_GUARD_STAY_GREEN",
+    "PAPEIS_ISENTOS",
+    "PROOF_LEVEL_B",
+    "R-A R-B R-C R-D",
+    "REAL_CONSUMER_EDGE",
+    "TC-01",
+    "TC-02",
+    "U-01",
+    "U-02",
+    "aresta real medida",
+    "censo textual",
+    "concat!",
+    "consolidacao de autoridade",
+    "copia local concordante",
+    "escalonamento de nivel de prova",
+    "fragment-built literal",
+    "guard de autoridade",
+    "matches!",
+    "mutacao contrafactual por substituicao",
+    "regiao de derivacao",
+    "reimplementacao local",
+    "seam cfg(test)",
+    "token guard"
+  ],
+  "discriminating_probe": {
+    "action": "pegar uma mutacao que o guard ja marca RED e mover a MESMA expressao para uma funcao auxiliar no topo do mesmo arquivo, sem mudar o que ela decide; depois hospedar a tabela de contrato dentro de um dos arquivos da lista de isencao e consumi-la de um nao-isento",
+    "observable": "se qualquer um dos dois vira verde, o guard reconhece forma e posicao, nao a decisao; nenhuma excecao pontual fecha a classe"
+  },
+  "environment": {
+    "campaign": "#442",
+    "repo": "pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Parecer do revisor independente cross-provider (codex/GPT-6) sobre HEAD f8683d87: 21 mutacoes, 19 nao detectadas, 1 sobre-deteccao; A01, G01_MOVIDA, E01 e N02 reproduzidas de forma independente pelo agente PRIMARY com build e teste separados e restauracao confirmada.",
+      "oracle": "./ci_env.sh cargo build --locked --bin pink && ./ci_env.sh cargo test --locked --test issue_651_internal_operation_authority_tests, por mutacao, com git checkout -- src tests e git status vazio",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a37/artifacts/review-robustez-f8683d87/parecer.md"
+    },
+    {
+      "class": "VALIDATED",
+      "description": "Task #653/U-02, slot a38, HEAD 045018873007215ae44a3fdc31f668c0a7e6007c. A relacao (classe concreta de mapa, operacao generica) -> identidade monomorfica foi consolidada de cinco realizacoes para uma, com suite de nivel B de 13 testes verde, censo textual incluido. Tres injecoes de copia local CONCORDANTE com o literal montado por concat! — no desugaring de `para cada` (parser/lacos.rs), no lowering de `criar` (ir/lowering.rs) e na tabela do parser (parser/mod.rs) — compilaram e mantiveram verdes as cinco suites alvo. A mesma forma com celula ERRADA ficou vermelha ('para cada sobre VersoBombom nao emitiu mapa_verso_bombom_tamanho'). Levantado como MAJOR por revisao adversarial independente (Codex/Terra, effort high) e reproduzido pelo PRIMARY com as celulas corretas, porque o diff impresso pelo adversario era de celula errada. Confirma a classe desta caso numa Task e numa relacao diferentes das da #651.",
+      "oracle": "cargo test sobre issue_653_u02_map_specialization_authority_tests, issue_651_internal_operation_authority_tests, d6_generic_maps_adult_tests, parser_tests e semantic_tests, antes e depois de cada injecao, com reversao byte a byte verificada",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a38/tmp/verify-major.txt"
+    },
+    {
+      "class": "VALIDATED",
+      "description": "Task #653/U-02, HEAD 51710e0, escalonamento A autorizado pelo Guia (#653 comentario 5642352428) depois do contraexemplo. src/map_specialization/metamorphic_oracle.rs mede a grade de 120 pares e prova 68 arestas reais; M1..M5 reintroduzem copia local concordante por concat! nas cinco realizacoes historicas e todas ficam RED com o comportamento GREEN e o censo textual cego; o V1 original do relatorio adversarial, que mantinha o nivel B verde, tambem passa a RED. S1-S8 seguem RED nas duas camadas, NC1-NC4 GREEN nas duas, e PINKER_EXIGE_NATIVO=1 make ci exit 0 com o oraculo rodando dentro dos 278 unit tests da lib.",
+      "oracle": "cargo test --lib map_specialization antes e depois de cada injecao de copia concordante, com reversao byte a byte verificada, mais make ci integral",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a38/artifacts/make-ci-escalacao.log"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Num Task de consolidacao de autoridade, nao tente satisfazer 'o guard nao pode ficar verde com reimplementacao local' por inspecao lexica da arvore. Cada rodada fecha as instancias exibidas e deixa a classe aberta; o custo cresce e o veredito nao. Dois sinais de que voce esta nessa armadilha: a regra enumera operadores/formas sintaticas, e existe uma lista de arquivos isentos por papel. O par decisivo de teste e sempre o mesmo -- (base RED, mesma decisao movida de lugar) e (tabela hospedada em arquivo isento, lida de fora). Se o par quebra, pare de endurecer e proponha um oraculo POR EXECUCAO: mutar a tabela da autoridade e exigir que a resposta de CADA fase mude junto (uma fase com copia local mantem a resposta antiga), ou fazer aridade e tipo trafegarem num token opaco que so a autoridade emite, de modo que uma segunda decisao nem compile. Isso fecha a classe por construcao e independe de sintaxe. Guardiao lexico continua util como complemento barato, nunca como a prova de aceite. Extensao medida na #653/U-02: separe as DUAS direcoes antes de prometer qualquer coisa. A reintroducao DIVERGENTE — celula errada — e fechada pela projecao observavel de cada fase, e a sensibilidade por celula errada e a prova disso. A reintroducao CONCORDANTE — a copia local que responde exatamente o que a autoridade responderia — nao e vista pela projecao, porque o comportamento e identico, e escapa do censo assim que o literal do alvo deixa de aparecer inteiro no texto: concat!(\"mapa_\", \"verso_bombom_\", \"tamanho\") basta. Preservar literais no censo nao resolve, porque o limite nao e o strip de literal e sim a reescrita do texto; normalizar concat! e depois format! e a mesma corrida armamentista desta armadilha, um nivel acima. As duas saidas que fecham a classe continuam sendo as mesmas: oraculo por EXECUCAO, mutando o fato na autoridade e exigindo que a projecao de cada consumidor acompanhe; ou fechamento por TIPO, com o alvo existindo so como valor cujo construtor e privado a autoridade — que so funciona se os nos de AST/IR passarem a exigir esse tipo, portanto custa mudanca de representacao e precisa de autorizacao propria. REMEDIO EXECUTADO E VALIDADO na #653/U-02, e serve de molde para a proxima consolidacao de relacao FINITA. (1) Seam: a autoridade atende toda consulta por uma funcao de celula que, sob cfg(not(test)), E a tabela, com #[inline(always)], sem indirecao de dado, sem trait e sem token; sob cfg(test) ela consulta antes uma substituicao instalada por thread e desfeita no Drop. O seam precisa morar DENTRO da autoridade, como modulo cfg(test), porque cfg(test) nao vale para teste de integracao em tests/ — a prova roda como unit test da lib. (2) Unidade de obrigacao: NAO e o produto cartesiano celulas x consumidores. E a aresta REAL, (consumidor, celula) onde aquele consumidor de fato pergunta, e o conjunto tem de ser MEDIDO em vez de declarado: percorra a grade inteira, instale a mutacao, observe a selecao; moveu para o alvo mutado e aresta real provada, nao mudou nada e celula nao consultada, qualquer terceiro estado falha alto. Na #653 a grade de 120 pares devolveu 68 arestas (20/20/20/4/4) e 52 nao consultadas, cada uma caindo numa razao causal declarada que o proprio teste confere — e isso e o que torna UNEXPLAINED_SKIPS=0 medida. (3) Atribuicao: o observavel de um consumidor so prova algo se nenhum OUTRO decisor puder mover a mesma grafia dentro dele. Escolha testemunhas que isolem um decisor e verifique o isolamento no observavel canonico; onde a fase nao nomeia a escolha em nenhum artefato, o diagnostico dela pode servir, porque a mensagem de recusa NOMEIA o alvo selecionado. (4) Mutacao valida: outro alvo JA existente na autoridade publica, nunca um alvo inexistente — senao a recusa vem do mutante e nao da decisao. (5) Contraprova obrigatoria: reintroduza uma copia local CONCORDANTE em CADA realizacao historica, com o literal montado por concat!, e exija compila + comportamento preservado + censo textual cego + oraculo vermelho + verde ao remover so a copia. Sem essa contraprova o harness novo pode ser decorativo. Nao ha direcao permissiva a provar quando o dominio e fechado e funcional: uma mutacao por substituicao basta, e importar o aparato bidirecional inteiro e desproporcional."
+  },
+  "id": "B-QJSEX7D2DP3K",
+  "observed_at": "2026-09-11T01:40:00Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "21 mutacoes aplicadas, compiladas e com a suite do guard executada; 19 compilaram, reimplementaram materialmente aridade/operando/resultado e mantiveram 13/13 testes verdes",
+    "text": "Task #651 (U-01). Quatro rodadas sucessivas de endurecimento do mesmo guard: E1-E4 fechadas, depois F1-F5, depois G1-G3, e o revisor seguinte abriu 19 contraexemplos novos em sete familias. Tres causas independentes e estruturais: (1) a regra de aridade enumera os seis operadores de comparacao e o padrao de fatia, entao literal como argumento de macro (matches!(args.len(), 3)), tipo de array (<&[T; 3]>::try_from) ou aritmetica passam; (2) a regiao de derivacao e ancorada numa lista fixa de marcadores e encerra no primeiro bloco, entao helper local no topo do arquivo, valor guardado por match/.map() ou predicado novo que delega a autoridade tiram a decisao de alcance -- a MESMA expressao vira verde so por mudar de lugar; (3) R-C/R-D isentam arquivos inteiros por papel, entao a tabela de contrato que a regra recusaria torna-se legal dentro de native_symbol.rs e qualquer nao-isento a le. Houve tambem sobre-deteccao: a regra que proibe chamada a crate::outro::f( na regiao recusa um predicado de comparacao de tipo legitimo da fase."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "O criterio de aceite da Task exige que o guardiao de autoridade fique VERMELHO se um consumidor reimplementar localmente o contrato ja consolidado. O guardiao construido por inspecao lexica continua VERDE diante de reimplementacoes materiais equivalentes, e endurece-lo por rodadas fecha instancias sem fechar a classe."
+  },
+  "references": [],
+  "revision": {
+    "hash": "9c8992d0f8c5e4645675ba0cb93cec25b77d4c5ddf3c0f65487adad667d52d00",
+    "number": 3,
+    "parent_hash": "3801252197ea9454c3f80ae9564a94517ac55327075eb005637bcf0c56604132",
+    "reason": "Task #653/U-02: o remedio executado — seam cfg(test) na autoridade, aresta real MEDIDA em vez de produto cartesiano, e contraprova por copia concordante em cada realizacao",
+    "updated_at": "2026-09-12T01:37:22Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "guardiao de consolidacao de autoridade em geral",
+      "src/internal_operations.rs",
+      "src/map_specialization.rs",
+      "tests/common/rust_source.rs",
+      "tests/issue_651_internal_operation_authority_tests.rs",
+      "tests/issue_653_u02_map_specialization_authority_tests.rs"
+    ],
+    "conditions": [
+      "a Task exige que o guard responda NAO a 'este guard ficaria verde se um consumidor reimplementasse o mesmo contrato localmente?'",
+      "o guard reconhece a decisao por FORMA lexica (literal apos comparador, padrao de fatia, assinatura de funcao) dentro de uma REGIAO ancorada numa lista fixa de marcadores",
+      "o guard isenta arquivos inteiros por PAPEL (autoridade, identidade, corpo de interpretador, produtor)",
+      "o guard e um censo TEXTUAL que procura a grafia completa do alvo, ainda que preserve literais de texto"
+    ]
+  },
+  "status": "candidate",
+  "title": "Guardiao de autoridade por forma lexica mais isencao de arquivo por papel nao fecha a pergunta 'um consumidor poderia reimplementar isto localmente?'"
+}

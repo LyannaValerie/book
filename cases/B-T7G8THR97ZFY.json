@@ -1,0 +1,66 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao generalizar para 'ler sempre cru': a razao de existir de codigo_executavel continua valida, e um censo de decisao lido cru acusa qualquer comentario que mencione a construcao proibida."
+  ],
+  "cues": [
+    "codigo_executavel apaga literal",
+    "guardiao verde por assercao cega",
+    "fonte crua versus codigo executavel",
+    "tabela de simbolos de runtime no backend",
+    "sensitivity nao mata a mutacao",
+    "rust_source.rs literais removidos"
+  ],
+  "discriminating_probe": {
+    "action": "plantar no arquivo alvo exatamente o literal que a asserção procura e rodar o teste",
+    "observable": "com codigo_executavel o teste passa; com a fonte crua ele falha nomeando o literal plantado"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0",
+    "toolchain": "rustc 1.78.0, edition 2021"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "sensitivity M5 da Task #610: com codigo_executavel, 6 passed 0 failed sob a mutacao aplicada (6 linhas divergentes provadas por diff contra o snapshot); com fonte crua, 5 passed 1 failed com a mensagem 'dormir: simbolo de runtime passou a ser decidido em src/backend_s/tests.rs'.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a18/artifacts/sensitivity.txt"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Escolha a leitura pela natureza do alvo, não pelo hábito. Alvo que é declaração, qualificador ou chamada: codigo_executavel, para não acusar comentário. Alvo que é literal de texto: fonte crua, porque é o literal que decide. Os oráculos C1 e C5 já fazem essa distinção e são o modelo a copiar: fonte_sem_testes e a varredura de `\"__impl_` leem cru; os censos de decisão leem executável. E nunca aceite um guardião novo sem a mutação que deveria matá-lo: aqui a asserção parecia correta na leitura e só a sensitivity mostrou que ela não observava nada."
+  },
+  "id": "B-T7G8THR97ZFY",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Medido na Task #610. Um guardião novo afirmava que src/backend_s/tests.rs não reconstrói a tabela de símbolos de runtime, iterando registry::HISTORICAL e recusando `format!(\"\\\"{spelling}\\\" => Some(\\\"{simbolo}\\\")\")`. Escrito sobre codigo_executavel(fonte), ele passou verde com a mutação de sensitivity M5 aplicada — uma função com `\"dormir\" => Some(\"pinker_dormir\")` plantada no arquivo. Trocada a leitura para a fonte crua, exatamente como tests/c1_intrinsic_registry_tests.rs já faz com fonte_sem_testes, a mesma mutação ficou vermelha nomeando 'dormir'. Os outros cinco testes do mesmo arquivo continuaram corretos sobre codigo_executavel, porque seus alvos são declarações (`mod x;`, `pub(crate)`, `pub use`), não literais."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "tests/common/rust_source.rs::codigo_executavel remove comentários, literais de texto e literais de caractere, e é a leitura correta para a pergunta 'esta camada ainda DECIDE X por conta própria?', porque comentário e literal mentem nos dois sentidos. Mas parte dos oráculos deste repositório procura exatamente um literal — o braço `\"grafia\" => Some(\"pinker_simbolo\")` de uma tabela de runtime, a grafia crua de um prefixo sintético, o nome de um símbolo reservado. Aplicar codigo_executavel a esses apaga o alvo, a asserção negativa passa a comparar contra a string vazia, e o guardião fica permanentemente verde."
+  },
+  "references": [],
+  "revision": {
+    "hash": "02d6c53ddac81b4a611e5dc25e694c22943e22fb8b2d28efde43f4b227e72197",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-06T12:35:58Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "tests/common/rust_source.rs",
+      "tests/c1_intrinsic_registry_tests.rs",
+      "tests/c5_materialized_default_body_tests.rs",
+      "tests/backend_s_module_layout_tests.rs"
+    ],
+    "conditions": [
+      "escrever ou revisar oraculo estrutural textual sobre fontes Rust deste repositorio"
+    ]
+  },
+  "status": "candidate",
+  "title": "Censo estrutural cujo alvo é um literal de texto não pode ler codigo_executavel(): a asserção fica cega e verde"
+}

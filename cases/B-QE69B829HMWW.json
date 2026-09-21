@@ -1,0 +1,69 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao vale para campo opcional que continua tendo produtor em outro caminho: ausencia numa execucao nao e ausencia de produtor.",
+    "Nao use o bump como licenca para reorganizar o resto do relatorio na mesma mudanca; o que justifica a versao nova e a remocao provada, nao a oportunidade."
+  ],
+  "cues": [
+    "TOOLING_SCHEMA",
+    "preflight",
+    "campo sem produtor",
+    "expected_deferred",
+    "documentation-frozen",
+    "warnings vazio",
+    "relatorio publico",
+    "consumidor de JSON de ferramenta"
+  ],
+  "discriminating_probe": {
+    "action": "para cada campo do relatorio, procurar quem o produz e quem o consome depois da remocao do mecanismo; um campo cujo unico produtor sumiu e morto mesmo que o parser continue aceitando",
+    "observable": "o conjunto de campos sem produtor e maior que o campo obviamente removido, e a fronteira so fica visivel na matriz produtor/consumidor"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "PR #700 removeu pinker_change, expected_deferred, --documentation-frozen e warnings do preflight e migrou TOOLING_SCHEMA 2 -> 3.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a25/artifacts/pr-body.md"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Trate remocao de campo de relatorio publico como mudanca de contrato: levante a matriz produtor/consumidor, colete todos os campos que ficaram sem produtor junto com o que motivou a remocao, e suba a versao do schema na mesma mudanca. Um schema que continua na mesma versao descrevendo duas formas diferentes e pior que um bump, porque transfere para o consumidor a deteccao de algo que ele nao tem como ver."
+  },
+  "id": "B-QE69B829HMWW",
+  "observed_at": "2026-09-18T19:10:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "A TM/#698 tirou pinker_change, expected_deferred, --documentation-frozen e warnings na mesma mudanca e subiu TOOLING_SCHEMA de 2 para 3 como migracao publica explicita, em vez de deixar o schema 2 significar duas formas diferentes."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Quando pinker_change deixou de ser obrigacao, o campo homonimo do relatorio de preflight perdeu o produtor. Manter o campo entrega para sempre um valor que nunca mais pode ser diferente de vazio, e remover so ele deixa para tras a corte que existia apenas para classifica-lo: expected_deferred, a flag --documentation-frozen e warnings, que ficou sem nenhum produtor. Nos dois casos o consumidor que le a saida por schema fixo nao tem como perceber a mudanca."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a25/artifacts/pr-body.md"
+  ],
+  "revision": {
+    "hash": "effb0cda4ef0bb57734cce28c08462a67690193c5132f44ab66b4b166ab0dada",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-18T22:12:27Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "src/tooling.rs",
+      "relatorio de preflight",
+      "consumidores do JSON de ferramenta"
+    ],
+    "conditions": [
+      "um campo do relatorio publico perde o mecanismo que o produzia"
+    ]
+  },
+  "status": "candidate",
+  "title": "Remover um campo do relatorio publico arrasta os campos que so existiam para sustenta-lo, e isso e bump de schema, nao faxina"
+}

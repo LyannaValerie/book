@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-09-20T04:05:00Z",
+  "created_by": "athenna",
+  "epistemic": "OBSERVED",
+  "from": "B-V628W9SWOWNR",
+  "id": "R-B9A78D0EB689B58D",
+  "oracle": "both observe that a source-derived catalog guardian fires on any textual mutation; B-UOHK5USNO4B2 covers the sensitivity gate, B-V628W9SWOWNR covers the attribution control that must share the same footprint",
+  "to": "B-UOHK5USNO4B2",
+  "type": "references"
+}

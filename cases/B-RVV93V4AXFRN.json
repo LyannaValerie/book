@@ -1,0 +1,67 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Fragmento montado por `format!` fora de um literal com cabeçalho não tem onde ancorar import: a ferramenta deve RECUSAR e reportar, não adivinhar.",
+    "Onde o programa liga localmente um nome homônimo do membro (`saida`, `texto`, `vazio`), a forma bare é sombreada e só a forma qualificada resolve; isso é decisão por arquivo e não se automatiza bem."
+  ],
+  "cues": [
+    "fonte embutida",
+    "literal rust",
+    "raw string",
+    "migracao mecanica",
+    "idempotencia",
+    "import duplicado",
+    "trazer no topo"
+  ],
+  "discriminating_probe": {
+    "action": "rodar a ferramenta duas vezes seguidas sobre a mesma árvore e diffar",
+    "observable": "qualquer mudança na segunda execução é não-idempotência, e o conteúdo dela nomeia qual das armadilhas disparou"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "As quatro armadilhas foram observadas em execuções reais e forçaram reversão de arquivos já migrados; a versão final da ferramenta está preservada com o registro",
+      "source": "file:/pinker/artifacts/tasks/issue-505-intrinsic-inventory/support/tools/migrar_fontes_embutidas.py"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "segunda execução da ferramenta sobre a árvore já migrada produz diff vazio",
+    "text": "Torne a ferramenta idempotente por construção e prove: rode duas vezes e exija diff vazio na segunda. Ao recompor imports, faça UNIÃO entre os que já existem e os que a análise pede, em vez de remover-e-reinserir. Ignore grafia que o próprio literal já liga por import. Ancore a inserção só quando o `pacote` abre o programa. E edite o TEXTO DO LITERAL — renomear identificador e inserir statement valem igual no literal cru e no escapado —, em vez de decodificar e recodificar, que reescreve a formatação do arquivo inteiro e esconde o que mudou de fato."
+  },
+  "id": "B-RVV93V4AXFRN",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Quatro armadilhas medidas na #505, todas com estrago silencioso: (1) NÃO IDEMPOTENTE — reexecutar acrescenta o import de novo e o compilador recusa por import duplicado; (2) REMOÇÃO CEGA DE IMPORT — remover os `trazer` antes de reinserir apaga os que são FIXTURE NEGATIVA, e o teste que provava a recusa de `trazer texto.juntar_verso;` passa a não ter sujeito; (3) GRAFIA JÁ MIGRADA — a grafia nova do membro (`criar`) também é chave do mapa antigo, então a segunda passagem remigra `acaso.criar` para `arquivo.criar`; (4) ÂNCORA ERRADA — inserir o import depois de qualquer `pacote` encontrado quebra o literal em que `pacote` não abre o programa, porque `trazer` só vale no topo. Some-se a isso que uma regex de literal comum que aceita `\\n` real pode engolir a região inteira entre duas aspas soltas do código Rust."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Migrar milhares de chamadas embutidas em literais Rust exige ferramenta. A ferramenta parece funcionar na primeira passagem e produz estrago na segunda, ou em arquivos que já haviam sido tocados por uma versão anterior dela."
+  },
+  "references": [],
+  "revision": {
+    "hash": "13662a1a738c84e7d4e0140856972d9cd4166828a47228ea9a140e3ac19f8bf5",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-27T16:10:19Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "ferramenta de migracao",
+      "suites de teste"
+    ],
+    "conditions": [
+      "linguagem cujo programa vive dentro de literais de outra linguagem",
+      "migração de superfície pública que exige acrescentar declaração de import"
+    ]
+  },
+  "status": "candidate",
+  "title": "Migrar fonte embutida em literal Rust: quatro armadilhas que aparecem só na segunda passagem"
+}

@@ -1,0 +1,74 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando o ledger ja registra o SHA e o hash da arvore e ambos batem com o HEAD.",
+    "Nao autoriza reimplementar nem reabrir review: reprovar sensitivity e verificacao, nao reinicio de Task.",
+    "Nao transforma toda mudanca posterior em invalidacao: um delta que nao toca nenhum arquivo do harness nem o alvo da injecao nao exige reprova."
+  ],
+  "cues": [
+    "sensitivity presa a arvore anterior",
+    "recommit muda o SHA e desliga a evidencia",
+    "SENSITIVITY-FILE-REF divergente do worktree",
+    "reflog reset seguido de commit unico",
+    "failover herda gate PASS de outro HEAD",
+    "RESTORATION_HASH_MATCH contra referencia velha"
+  ],
+  "discriminating_probe": {
+    "action": "comparar o sha256 corrente de cada arquivo tocado pelo harness com o SENSITIVITY-FILE-REF gravado na hora da prova, e rodar `git diff <tree-ref-da-prova> <HEAD>`",
+    "observable": "quais arquivos divergem e se a divergencia e de logica de assercao ou so de mensagem/comentario"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "checkpoint da #626 registrava head 36e27feb enquanto o worktree estava em 32f60211; git diff entre os dois commits e vazio (a arvore sobreviveu ao reset+recommit), mas o SENSITIVITY-FILE-REF apontava para a versao anterior do guardiao",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a25/artifacts/SENSITIVITY-FILE-REF.txt"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "reprova integral das 13 injecoes contra 32f60211: todas MUTATION_APPLIED=TRUE, OBSERVED_RED=TRUE e RESTORATION_HASH_MATCH=TRUE, worktree limpo ao fim",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a25/artifacts/SENSITIVITY-FAILOVER.txt"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Evidencia de sensitivity vale contra o HEAD que ela prova, nao contra um vizinho dele. Grave sempre o SHA do commit e o hash da arvore junto do ledger, nao so o hash dos arquivos. Ao herdar um gate SENSITIVITY=PASS de outra sessao: (1) compare o HEAD do checkpoint com o HEAD real e o file-ref com o disco; (2) se divergirem, classifique o delta antes de decidir — logica de assercao invalida a prova, mensagem ou comentario a enfraquece; (3) em qualquer dos dois casos, prefira reprovar a argumentar, porque o harness ja existe e o custo e de minutos enquanto o custo de um ledger que aponta para uma arvore inexistente e a propria credibilidade do #537; (4) mantenha o ledger antigo no relatorio — verde posterior nao apaga vermelho anterior, e a rodada nova soma, nao substitui."
+  },
+  "id": "B-FOM5L98JIJID",
+  "observed_at": "2026-09-08T00:45:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Na #626, so tests/ir_module_layout_tests.rs divergiu (51b468ad -> 6c248372) e o diff eram cinco mensagens de assercao, nenhuma logica; os quatro arquivos de producao batiam byte a byte. Mesmo assim a reprova integral das 13 injecoes contra o HEAD custou poucos minutos, porque o alvo compila incrementalmente, e devolveu um ledger que aponta para um SHA que existe. Duas injecoes mudaram de razao de vermelho em relacao a rodada anterior sem mudar de classe."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "O checkpoint diz SENSITIVITY = PASS e os logs das injecoes existem, mas o HEAD registrado nele nao e o HEAD do worktree: a sessao anterior fez amend e depois reset para o baseline seguido de um commit unico. O gate parece fechado e nao esta ligado a nenhuma arvore verificavel. O risco nao e teorico: quase toda injecao mira o arquivo de guardiao, e foi exatamente esse arquivo que mudou entre a prova e o HEAD."
+  },
+  "references": [],
+  "revision": {
+    "hash": "b59035dc8ed668c4091270ed6fe0353f5cdaa339f4084c227585b0a39bd28255",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-08T01:01:43Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "harness de sensitivity por injecao",
+      "checkpoint de Task Pinker",
+      "guardiao estrutural em tests/",
+      "failover entre executoras"
+    ],
+    "conditions": [
+      "a sensitivity foi provada e so depois a serie de commits foi reescrita (amend, squash, reset+recommit)",
+      "o checkpoint registra SENSITIVITY=PASS sem dizer contra qual arvore",
+      "quem le a evidencia e uma sessao posterior, nao quem a produziu"
+    ]
+  },
+  "status": "candidate",
+  "title": "Sensitivity provada antes do recommit fica presa a uma arvore que nao e mais o HEAD"
+}

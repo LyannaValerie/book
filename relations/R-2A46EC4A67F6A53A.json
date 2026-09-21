@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-08-31T23:59:19Z",
+  "created_by": "velina",
+  "epistemic": "OBSERVED",
+  "from": "B-KWGYCISOV2ZD",
+  "id": "R-2A46EC4A67F6A53A",
+  "oracle": "ambos tocam PINKER_BUILD_COMMIT e build.rs, mas B-7PYPS10UANIQ mede a invalidacao por TROCA de valor pelo operador e B-KWGYCISOV2ZD e a AUSENCIA da variavel disparada por um alvo de teste que chama cargo build",
+  "to": "B-7PYPS10UANIQ",
+  "type": "references"
+}

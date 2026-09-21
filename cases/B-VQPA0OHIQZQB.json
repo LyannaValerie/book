@@ -1,0 +1,77 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao confundir com B-L82QTHN2Z9EI: la a contagem de regioes e IGUAL e o sintoma e hash agregado. Aqui a contagem CAI e o erro e nomeado.",
+    "Materializacao exige schema 4 do snapshot. Em schema 1, 2 ou 3 a operacao e o campo `expected_materializations` falham com E-SNAP-CAPACIDADE-SCHEMA — os artefatos antigos nao ganham interpretacao nova.",
+    "`expected_materializations` tem orcamento proprio: nao some em `expected_exclusions` nem em `expected_overrides`. Ausente significa zero, e por isso snapshot congelado antigo continua byte-identico.",
+    "A regiao materializada existe SO na reconstrucao. Ela nao volta para src/navigation.jsonl, nao vira fato do codigo corrente e nao ganha offset.",
+    "Se a chave ainda existe no estado quando a regra roda, e colisao (E-SNAP-MATERIALIZACAO-COLISAO), nao sobrescrita. Para modelar chave reaproveitada, exclua a corrente antes.",
+    "Duas regras materializando a mesma chave falham mesmo byte-identicas: um fato historico, uma autoridade explicita.",
+    "Nao use `pink nav projecao preparar/aceitar`: aquele fluxo cria marco novo e nao reconcilia o acervo anterior."
+  ],
+  "cues": [
+    "E-SNAP-REGIAO-REMOVIDA",
+    "E-SNAP-BASE-DIVERGENTE",
+    "E-SNAP-MATERIALIZACAO-COLISAO",
+    "materialize-region",
+    "regiao removida",
+    "FROZEN",
+    "base_snapshot",
+    "projecao",
+    "override-region",
+    "exclude-key",
+    "schema 4"
+  ],
+  "discriminating_probe": {
+    "action": "apagar os dois marcadores @pinker-nav:start/end de UMA regiao, rodar `pink nav sincronizar` e depois `pink nav projecao verificar`",
+    "observable": "13/13 HARNESS_FAILURE com E-SNAP-REGIAO-REMOVIDA; a contagem do catalogo cai em 1 (621 -> 620). Se o sintoma fosse hash divergente com contagem igual, o caso aplicavel seria outro."
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Probe 1: remover development.agent.artifacts de src/agent.rs -> catalogo 621->620 -> 13/13 HARNESS_FAILURE E-SNAP-REGIAO-REMOVIDA. Probe 2: remover tambem a regra override-region da receita e ajustar expected_overrides 160->159 -> onda-8f-anterior E-SNAP-BASE-DIVERGENTE 'base onda-pink-agente-d nao bate: esperado regioes=484, observado 483'. Ambos revertidos; worktree limpa.",
+      "source": "file:/pinker/artifacts/evidence-store (ev-550-artifacts): artifacts/blocker-trama-removed-region.json e artifacts/raw/reproduzir-blocker-regiao-removida.sh"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "tests/nav_projection_removed_region_tests.rs (26/26) no HEAD fae212a6fcc582f25fb82744707738a09eab115c de LyannaValerie/pinker-v0; as 13 projecoes reais verificam MATCH sem um byte alterado em .pinker/projections/; PINKER_EXIGE_NATIVO=1 make ci exit 0",
+    "text": "Desde a #551 existe remedio, e a regra e outra: se a regiao removida participa de algum estado historico, declare-a com `materialize-region` no snapshot que parte do catalogo corrente — os descendentes a herdam pela `base_snapshot`. A regra carrega os oito campos que a projecao estavel le (key, kind, domain, layer, file, summary, hash, status) e nada alem: offset de linha nao entra, porque regiao sem codigo corrente nao tem posicao. Aplica-se por ultimo, depois de exclusoes e overrides, o que torna impossivel excluir o que acabou de ser materializado ou aplicar override sobre regiao que so existe ali. Continua proibido recalibrar medida FROZEN, apagar snapshot para contornar e manter regiao morta no catalogo. Materializar e do snapshot: uma receita e transformacao reutilizavel, sem medida nem estado, e recusa a operacao com E-SNAP-OPERACAO-FORA-DA-AUTORIDADE. Antes de planejar remocao de codigo, ainda vale contar quantas regioes ele carrega e verificar se alguma esta no acervo — mas agora a resposta e escrever a regra, nao parar."
+  },
+  "id": "B-VQPA0OHIQZQB",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Toda projecao historica e reconstruida A PARTIR do catalogo corrente. As operacoes disponiveis sao override-hash, override-region, exclude-key, exclude-key-prefix, exclude-file e exclude-file-prefix: todas removem ou alteram regiao PRESENTE, e nenhuma materializa regiao ausente. Como SnapshotState so aceita FROZEN ou CANDIDATE e medida congelada nao e recalibrada, uma regiao que existia no acervo historico e imortal no catalogo corrente. No baseline c818870 a cadeia inteira (onda-8*, capsula-*) pende por base_snapshot de onda-pink-agente-d, 484 regioes, entao apagar uma regiao coberta por ele derruba as 13 de uma vez."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Uma Task precisa apagar codigo que carrega ancoras @pinker-nav. Depois de `pink nav sincronizar`, `pink nav projecao verificar` devolve HARNESS_FAILURE nas 13 projecoes, nao DRIFT, com E-SNAP-REGIAO-REMOVIDA. Remover tambem a regra que nomeia a regiao nao resolve: a proxima falha e E-SNAP-BASE-DIVERGENTE, porque a medida congelada do snapshot base conta aquela regiao."
+  },
+  "references": [],
+  "revision": {
+    "hash": "e196b2f9bb4d67e0aa04fe7460738aea6feb86a2474ba4d1153bb85d1f0f2f52",
+    "number": 2,
+    "parent_hash": "997972bbd929d38fdf643a2f4324ab5a4ffcf485eec4674e39478502479c733a",
+    "reason": "a #551 fechou o gap: materialize-region existe desde o schema 4 do snapshot, e o caso passa de bloqueio a remedio validado",
+    "updated_at": "2026-08-30T23:23:59Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "pink nav projecao",
+      "recipes",
+      "navigation",
+      "src/navigation.jsonl"
+    ],
+    "conditions": [
+      "Task precisa REMOVER uma regiao do catalogo corrente, nao apenas modifica-la"
+    ]
+  },
+  "status": "candidate",
+  "title": "Remover regiao @pinker-nav do catalogo corrente torna todo o acervo FROZEN irreconstrutivel"
+}

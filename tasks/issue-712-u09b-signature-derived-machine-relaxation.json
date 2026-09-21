@@ -1,0 +1,24 @@
+{
+  "domain": "maquina abstrata",
+  "external_task_ref": "pinker:issue-712-u09b-signature-derived-machine-relaxation",
+  "finished_at": "2026-09-20T12:15:54Z",
+  "followed_refs": [],
+  "goal": "U-09B / TC-09: substituir a lista de excecoes machine_relaxed_params por criterio derivado da assinatura, e corrigir a evidencia apos revisao adversarial ampla",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "U-09B entregue; PR #713 aberto, CI rust SUCCESS no FINAL_HEAD 4e762b9, aguardando merge humano. ADV-U09B-001 CLOSED por correcao de evidencia, sem mudanca de semantica de produto.",
+  "project": "pinker-v0",
+  "started_at": "2026-09-20T11:55:49Z",
+  "state": "finished",
+  "task_id": "issue-712-u09b-signature-derived-machine-relaxation",
+  "validation": {
+    "oracle": "contar, nos dois commits, quantas posicoes de parametro declaradas projetam para StackValueType::Unknown; delta zero prova que a unidade mudou politica de excecao e nao comportamento de compatibilidade",
+    "outcome": "22 de 179 posicoes projetam para Unknown na base e no HEAD; delta 0. Revisor independente reproduziu com parser proprio.",
+    "passed": true,
+    "summary": "ADV-U09B-001 fechado por correcao de evidencia; nenhuma semantica de produto mudou",
+    "validated_at": "2026-09-20T12:15:03Z"
+  }
+}

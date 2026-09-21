@@ -1,0 +1,95 @@
+{
+  "challenges": [
+    {
+      "evidence": [
+        {
+          "class": "OBSERVED",
+          "description": "Task #612: com `mod render_abi;` no topo do pai, a assercao do guardiao da BS-3 continua verde (o marcador nao se moveu), e ainda assim plantar uma tabela grafia->simbolo de runtime em src/backend_s/render_abi.rs passava despercebido por C1 ate o repoint para backend_s_producao(). Sensitivity M5b ficou VERMELHA so depois do repoint.",
+          "source": "file:/pinker/repo/pinker-v0/agentes/a19/artifacts/sensitivity.log"
+        }
+      ],
+      "id": "C-0D051C4E62",
+      "observed_at": "2026-09-06T00:00:00Z",
+      "references": [
+        "file:/pinker/repo/pinker-v0/agentes/a19/artifacts/bs2.diff"
+      ],
+      "reported_by": "amara",
+      "statement": {
+        "class": "ASSERTED",
+        "text": "A contraindicacao 'um irmao de producao nao desloca o marcador de truncamento, logo a cegueira nao existe' esta correta sobre o MARCADOR e errada sobre a CEGUEIRA. Na unidade BS-2 de src/backend_s.rs (Task #612) o irmao e producao, `mod render_abi;` fica acima do primeiro #[cfg(test)] e o marcador nao se move — e mesmo assim os tres oraculos do grupo (a) perderam alcance, porque a producao que eles queriam observar mudou de arquivo. Quem move producao paga o repoint do grupo (a) tambem, nao so do grupo (b)."
+      }
+    }
+  ],
+  "contraindications": [
+    "Nao substitui B-D3R0F3WSMJYR: la a forma e src/X.rs -> src/X/mod.rs e o custo de receita e proporcional a TODAS as regioes do arquivo. Aqui o pai sobrevive como arquivo e so as regioes movidas mudam `file`.",
+    "A cegueira descrita so existe quando o irmao e um modulo de teste. Um irmao de producao, como src/interpreter/hosted_intrinsics.rs da #608, e declarado por um `mod` sem cfg(test) e nao desloca o marcador de truncamento."
+  ],
+  "cues": [
+    "X.rs mais X/filho.rs sem mod.rs",
+    "fonte_sem_testes trunca no primeiro cfg(test)",
+    "mod tests no topo do pai cega o oraculo",
+    "OG-1 falha silenciosa de guardiao por caminho",
+    "override-hash convertida em override-region",
+    "expected_overrides inalterado por conversao",
+    "custo proporcional as regioes que saem"
+  ],
+  "discriminating_probe": {
+    "action": "mover a declaracao `#[cfg(test)] mod filho;` do fim para o topo do pai e rodar a suite inteira",
+    "observable": "tudo continua verde, e os oraculos que truncam no primeiro cfg(test) passam a ler zero linha de producao; so um guardiao que assere a posicao da declaracao fica vermelho"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0",
+    "toolchain": "rustc 1.78.0, edition 2021"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Task #610 / PR #611 sobre f0051ec: 605 linhas movidas byte a byte identicas (sha256 4430c60bf28d1d674a3b8e64ee4234f7947002a4139ee5111382ba04f3a7042d), producao do pai identica, 2 regioes com file alterado e fnv1a64 preservado, 1 regra de receita convertida, 13 snapshots FROZEN intactos, PINKER_EXIGE_NATIVO=1 make ci exit 0 com 137 blocos ok.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a18/artifacts/make-ci-head-final.txt"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Matriz de sensitivity M0..M6 com snapshot em disco e restauracao provada por sha256: M0 (mod tests; no topo do pai) so fica vermelha no guardiao de posicao; M1..M4 vermelhas no guardiao de layout; M5 no censo de tabela de simbolos; M6 no oraculo C5 a_grafia_crua_do_prefixo_tem_donos_declarados.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a18/artifacts/sensitivity.txt"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Antes de escolher a forma, faça `grep -rn 'src/X.rs' tests/` e classifique cada consumidor em três grupos, porque o remédio de cada um é diferente: (a) quem trunca no primeiro `#[cfg(test)]` quer só produção e continua correto se — e somente se — a declaração do irmão for o último item do pai; (b) quem lê o arquivo inteiro para um censo, tipicamente uma asserção negativa, precisa ser reapontado para a fonte composta do módulo em tests/common/fonte_de_modulo.rs; (c) quem extrai um corpo de função específico não é afetado se aquela função não saiu. Depois escreva um guardião que recuse a hoisting do grupo (a): assertar que tudo depois do primeiro `#[cfg(test)]` no pai é exatamente a declaração do irmão é uma asserção pequena, determinística, que não congela LOC nem árvore, e é a única coisa que separa esta forma de uma falha silenciosa. A mutação que a valida é subir `mod filho;` para o topo do pai: ela compila e fica verde em tudo o mais."
+  },
+  "id": "B-DFJ5RHVJRYPY",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Medido na unidade BS-3 da #601 (Task #610), movendo os dois mod de teste de src/backend_s.rs para src/backend_s/tests.rs. Custo de Trama: apenas as 2 regiões movidas mudaram `file`, contra as 24 e 19 regiões que a conversão para mod.rs mudou em parser.rs e interpreter.rs — manter o pai como arquivo torna o custo proporcional ao que sai, não ao tamanho do arquivo. Uma única regra da receita precisou mudar: a `override-hash` de evidencia.backend-s.proveniencia-de-ponteiro virou `override-region` para carregar expect_file novo e to_file histórico; expected_overrides continuou 187 porque a regra foi convertida e não acrescentada, e a segunda região já era exclude-key. Custo de visibilidade: zero pub(super), zero pub(crate). Os hashes fnv1a64 das duas regiões ficaram idênticos. Do outro lado, três oráculos de produção — tests/c1_intrinsic_registry_tests.rs (fonte_sem_testes), tests/part_g_familia_superficie_tests.rs e tests/issue497_abi_symbol_isolation_tests.rs — truncam src/backend_s.rs no primeiro `#[cfg(test)]`. Com `mod tests;` no fim do pai eles continuam vendo as 4.460 linhas de produção; movendo a mesma declaração para o topo do arquivo o crate compila, os vinte testes movidos passam, e os três passam a observar zero linha de produção sem que nada fique vermelho."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Ao decompor fisicamente um monólito Rust deste repositório existem duas formas: converter src/X.rs em src/X/mod.rs, ou manter src/X.rs como pai e pôr o irmão em src/X/filho.rs. A segunda é obrigatória quando algum oráculo lê src/X.rs por caminho literal, porque a conversão faz o arquivo deixar de existir e o teste panica. Mas ela troca um problema visível por um invisível: quando o irmão é o módulo de teste, a declaração `#[cfg(test)] mod filho;` passa a ser o primeiro `#[cfg(test)]` do pai, e todo oráculo que trunca a fonte nesse marcador passa a observar só o que vem antes dela."
+  },
+  "references": [],
+  "revision": {
+    "hash": "5793578b0d71e84399bb43f6b6f6b16d8ec09e8460f97461dea85e3712317dfc",
+    "number": 2,
+    "parent_hash": "17dba90f58ff8db38c90f607ff62061c659ac96b1c7c603cbc99e2c9f3997c47",
+    "reason": "contraexemplo medido na unidade seguinte do mesmo arquivo",
+    "updated_at": "2026-09-06T18:42:22Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "src/backend_s.rs",
+      "src/interpreter.rs",
+      "tests/common/fonte_de_modulo.rs",
+      "tests/c1_intrinsic_registry_tests.rs",
+      "nav_projection_recipe"
+    ],
+    "conditions": [
+      "decomposicao fisica de monolito Rust em que algum oraculo le o arquivo pai por caminho literal",
+      "o irmao movido e um modulo de teste"
+    ]
+  },
+  "status": "challenged",
+  "title": "Manter o pai como arquivo em X.rs + X/filho.rs custa uma regra de receita, mas cria uma cegueira nova nos oráculos que cortam no primeiro #[cfg(test)]"
+}

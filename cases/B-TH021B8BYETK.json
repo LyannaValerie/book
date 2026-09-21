@@ -1,0 +1,69 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao substitui censo de consumidores: quem le a constante em vez de chamar a funcao permanece invisivel.",
+    "Nao autoriza mutacao contrafactual de runtime ou interpretador: a prova termina antes de exigir execucao de assinatura que producao nunca implementou."
+  ],
+  "cues": [
+    "costura de teste",
+    "contract_table",
+    "thread_local mutado",
+    "token opaco nao autorizado",
+    "mutar a tabela canonica em execucao",
+    "cfg(not(test)) e a tabela",
+    "guarda que desfaz no Drop"
+  ],
+  "discriminating_probe": {
+    "action": "instalar a variante mutada numa thread e consultar a autoridade noutra",
+    "observable": "com a costura correta a segunda thread ve a tabela canonica e a primeira ve a mutada; um consumidor que leia a constante direto ve a canonica nas duas e nunca acompanha a mutacao"
+  },
+  "environment": {
+    "backend": "hosted",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Task #651, de acb6ac6 a 50e5637: a costura sustentou todas as baterias metamorficas (mutantes materiais RED, controles negativos GREEN) sem token opaco de producao e com PRODUCTION_DATA_FLOW_CHANGE = NONE.",
+      "oracle": "sem_mutacao_instalada_a_autoridade_e_a_tabela_canonica e a_mutacao_e_local_a_thread_e_termina_com_o_guarda",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a37/state/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Quando a prova precisa de autoridade mutavel e o redesign de producao nao esta autorizado, canalize TODA consulta por uma funcao interna e faca a mutabilidade existir so sob cfg(test): fora de teste a funcao e a tabela, dentro dela consulta uma variante por thread. Escreva os dois testes de guarda junto — 'sem mutacao instalada a autoridade e a tabela canonica' e 'a mutacao e local a thread e termina com o guarda' — porque sem eles a costura passa a ser uma segunda autoridade silenciosa. Condicao para isso valer: a autoridade tem de ser consultada por funcao, nunca por acesso direto a constante; se algum consumidor le a constante, ele fica fora da prova sem aparecer."
+  },
+  "id": "B-TH021B8BYETK",
+  "observed_at": "2026-09-11T00:00:00Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "dois testes de guarda da propria costura, mais a bateria de mutantes materiais rodando atraves dela",
+    "text": "Task #651/U-01. Remedio: toda consulta da autoridade passa a atender por uma funcao unica, contract_table(). Sob cfg(not(test)) essa funcao E a tabela — devolve a constante, sem indireccao que o otimizador veja. Sob cfg(test) ela consulta antes uma variante MUTADA instalada por thread (thread_local + Cell), desfeita pelo Drop de um guarda com #[must_use]. Nenhum dado de producao muda de forma, nenhum trait novo atravessa o compilador, nenhuma fase precisa ser generica. Ser thread_local e o que permite cargo test rodar as provas em paralelo sem uma mutacao vazar para outra. Dois testes fecham a costura: sem guarda instalado toda consulta enxerga exatamente a tabela canonica, e a mutacao termina com o guarda."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A pergunta terminal de uma consolidacao de autoridade ('todo consumidor real acompanha a mutacao do fato?') so e respondivel mutando a autoridade em EXECUCAO. As formas obvias exigem redesign de producao: token opaco carregado entre fases, indirecao por trait, ou tabela injetavel — todas recusadas pela disposicao, que manda PARAR e reportar se o fechamento exigir isso."
+  },
+  "references": [],
+  "revision": {
+    "hash": "a48c1dd32eb1722c521ce51e44f40cead674dde7ac8358ad12e303b58576eca5",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-11T22:48:54Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "src/internal_operations.rs",
+      "oraculo metamorfico de autoridade unica"
+    ],
+    "conditions": [
+      "prova de autoridade unica que precisa alterar o fato canonico em tempo de execucao",
+      "disposicao proibe token opaco de producao, representacao nova entre fases e dependencia nova"
+    ]
+  },
+  "status": "candidate",
+  "title": "Prova metamorfica exige mutar a autoridade em execucao, e o redesign de producao nao esta autorizado: a saida e costura sob cfg(test) que e a propria tabela fora de teste"
+}

@@ -1,0 +1,91 @@
+{
+  "challenges": [
+    {
+      "evidence": [
+        {
+          "class": "VALIDATED",
+          "description": "Issue #680 / PR #682: duas regioes novas (trama.simbolos.extracao em src/symbol_extraction.rs e evidencia.simbolos.extracao em tests/symbol_extraction_cli_tests.rs) levaram o catalogo de 747 para 749 e quebraram as projecoes FROZEN com E-SNAP-OVERRIDE-BASE. Declarar as duas chaves como op = exclude-key na receita e subir expected_exclusions de 263 para 265 devolveu pink nav projecao verificar a 27/27 MATCH, com git status sem nenhum arquivo .pinker/projections/*.toml modificado. Precedente sancionado: commit 4e146a3 fez o mesmo para as duas regioes da #663.",
+          "oracle": "pink nav projecao verificar 27/27 MATCH com git status sem nenhum .pinker/projections/*.toml modificado; PINKER_EXIGE_NATIVO=1 make ci exit 0",
+          "source": "git:69c941a5bfd816de6f4e8182b9e17cfd8b7c9f1c"
+        }
+      ],
+      "id": "C-6F39B52218",
+      "observed_at": "2026-09-16T07:20:00Z",
+      "references": [
+        "book:B-RC06GDJODCDD"
+      ],
+      "reported_by": "amara",
+      "statement": {
+        "class": "VALIDATED",
+        "oracle": "pink nav projecao verificar 27/27 MATCH sem nenhum snapshot alterado, no HEAD 69c941a5bfd816de6f4e8182b9e17cfd8b7c9f1c",
+        "text": "A guidance ASSERTED parte da premissa de que declarar uma exclusao seria mutacao de artefato historico, e por isso conclui que a unica saida e nao marcar o arquivo novo. A premissa e falsa: a regra op = exclude-key vai na RECEITA (.pinker/projections/recipes/*.toml), nao no snapshot FROZEN, e o snapshot permanece byte-identico. A recomendacao de nao marcar continua defensavel como economia em tests/, mas nao como unica saida, e nao se aplica a src/**, onde a politica de cobertura marca a raiz com file_enforcement required. Ver B-RC06GDJODCDD."
+      }
+    }
+  ],
+  "contraindications": [
+    "Não vale para arquivo de src/**, onde a região é a autoridade de cartografia esperada.",
+    "Não autoriza recalibrar measures nem editar contrato de projeção FROZEN para acomodar região nova."
+  ],
+  "cues": [
+    "pinker-nav",
+    "projecao",
+    "FROZEN",
+    "DRIFT",
+    "nav sincronizar",
+    "tests",
+    "arquivo novo",
+    "regioes"
+  ],
+  "discriminating_probe": {
+    "action": "pink nav sincronizar seguido de pink nav projecao verificar, comparando o total de regiões antes e depois do arquivo novo",
+    "observable": "outcome MATCH/DRIFT da projeção FROZEN base e o total de regiões do catálogo"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Task #645/U-04, baseline d2eb7d744e66114f66e35bca6e11468f8d964f6a: com marcadores, esperado regioes=484 comprimento=213110 fnv1a64:82f01949c23e3019 vs observado regioes=486 comprimento=214943 fnv1a64:ec82ce1b8fa2445d, 12 projeções bloqueadas; sem marcadores, observado == esperado.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a34/artifacts/sensitivity-injections.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Em arquivo de teste NOVO, não crie região @pinker-nav. Documente o propósito da suíte em comentário Rust comum. Editar o texto DENTRO de uma região existente é seguro — inclusive o campo summary — porque não muda a contagem; o que quebra é acrescentar ou remover região. Rode `pink nav sincronizar` e `pink nav projecao verificar` antes de commitar e exija MATCH nas 13 projeções."
+  },
+  "id": "B-PNC9LEZTRIM8",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Marcador em arquivo de teste novo NÃO é convenção obrigatória: 47 dos 116 arquivos de tests/ não têm nenhum @pinker-nav, incluindo irmãos diretos do assunto (c2_method_dispatch_authority_tests.rs, c5_materialized_default_body_tests.rs). Removidos os marcadores e resincronizado o catálogo, a contagem voltou a 611 regiões e todas as 13 projeções voltaram a MATCH."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Marcar um arquivo de teste novo acrescenta regiões ao catálogo corrente. A reconstrução histórica das projeções conta regiões: `pink nav projecao verificar` passou de MATCH (484 regiões, comprimento 213110) para DRIFT (486 regiões, 214943) e bloqueou as outras 12 projeções em cascata com 'base onda-pink-agente-d não corresponde às próprias medidas'. Medidas FROZEN são imutáveis, então recalibrar não é opção, e escrever regra de exclusão em contrato congelado é mutação de artefato histórico."
+  },
+  "references": [],
+  "revision": {
+    "hash": "dbec8042229a83c8e2fb1e59912df40fc1332c8ffe475c2d804bbe299fe836f9",
+    "number": 2,
+    "parent_hash": "0aac37290cfa1752341d72212503d67db4f8c10e58a0693976bd84720440bb52",
+    "reason": "rota de exclusao validada contradiz a premissa da guidance",
+    "updated_at": "2026-09-16T07:17:01Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "pink nav sincronizar",
+      "pink nav projecao verificar",
+      "src/navigation.jsonl",
+      ".pinker/projections"
+    ],
+    "conditions": [
+      "Task cria um arquivo de teste novo em tests/",
+      "o agente adiciona @pinker-nav:start/summary/end nele por analogia com arquivos vizinhos que têm marcador"
+    ]
+  },
+  "status": "challenged",
+  "title": "Arquivo de teste NOVO com marcadores @pinker-nav derruba todas as projeções FROZEN; a convenção é não marcá-lo"
+}

@@ -1,0 +1,18 @@
+{
+  "domain": "processos",
+  "external_task_ref": "pinker:issue-596-remote-diagnostic-580",
+  "finished_at": "2026-09-04T23:16:06Z",
+  "followed_refs": [],
+  "goal": "Medir no runner GitHub Actions se o SIGABRT de #580 corresponde a falha de alocacao sob RLIMIT_AS do guest",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "NOT_OBSERVED: 5/5 attempts remotos verdes, sem SIGABRT. Medido no runner: VmPeak 528452 kB sob RLIMIT_AS de 1 GiB, um degrau de dobra acima da maquina local, com os dois casos a uma dobra do teto. Retido B-WYBIRXOBXVZV; revisado B-580ASABORT01.",
+  "project": "pinker-v0",
+  "started_at": "2026-09-04T21:32:58Z",
+  "state": "finished",
+  "task_id": "issue-596-remote-diagnostic-580",
+  "validation": null
+}

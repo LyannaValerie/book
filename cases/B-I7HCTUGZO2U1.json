@@ -1,0 +1,77 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao confundir com achado adversarial invalido: em #649 a DESCOBERTA estava certa e foi confirmada; o que estava errado foi a DISPOSICAO dada a ela.",
+    "Nao serve de licenca para reverter o nucleo da Task: o Guia preservou POLICY_B inteira e recusou apenas a expansao.",
+    "Nao inverter para o outro extremo: recusar o delta legitimo tambem e erro. PREC-3 da mesma Task e delta de alcance real e teve de ENTRAR na tabela."
+  ],
+  "cues": [
+    "delta intencional",
+    "absorvido",
+    "BEFORE/AFTER",
+    "REJECTED_BY_GUIDE",
+    "reachability",
+    "precedence",
+    "selection",
+    "expansao de escopo semantico",
+    "pela mesma razao",
+    "aceite semantico"
+  ],
+  "discriminating_probe": {
+    "action": "montar a topologia em que TUDO o que a decisao recebida governa permanece constante, e medir o comportamento nos dois estados",
+    "observable": "se o comportamento muda com o conjunto governado constante, a mudanca NAO e consequencia da decisao: e efeito da implementacao, e precisa de autoridade propria. Se so muda quando o conjunto muda, e delta legitimo."
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Medicao nos dois estados com pink construido do src/ de cada um. PREC-1: baseline ambiguo, candidato recusado ambiguo apos remediacao (antes da remediacao executava 3). PREC-2: baseline 20, candidato 20 apos remediacao (antes executava ambiguo). Em ambos o conjunto de relacoes alcancaveis e identico nos dois estados, que e o que prova a expansao. Mutacao M6 reproduz a fusao e deixa os dois controles vermelhos.",
+      "oracle": "mesmo fonte executado por pink do src/ da baseline e por pink do candidato, com o conjunto alcancavel fixado",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a36/artifacts/before-after-matrix.yaml"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "CI verde nos dois workflows do candidato recusado (runs 34455360491 e 34455360488) e PR mergeavel: nenhum gate mecanico detectou a expansao. So o aceite semantico detectou.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a36/artifacts/review/codex-round1.log"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Diante de um achado adversarial de mudanca de comportamento, a pergunta NAO e 'isto e coerente com a politica?' — quase tudo e, por analogia. A pergunta e 'a politica decidiu ISTO?'. Construa o discriminante que separa a decisao recebida do efeito colateral: fixe tudo o que a decisao governa e veja se o comportamento ainda muda. Na #649 a decisao era sobre ALCANCE, e o discriminante foi 'o conjunto de relacoes alcancaveis mudou?'. Onde o conjunto era IDENTICO e mesmo assim o vencedor mudava, o que tinha mudado era PRECEDENCIA — outra pergunta, de outra autoridade (C2/#590), que a Task tinha ordem de preservar. Sinal de alarme textual: quando a justificativa do delta contem 'e, pela mesma razao, tambem X', 'X' quase sempre e uma segunda decisao que ninguem tomou. Duas relacoes semanticas distintas nao herdam conclusao uma da outra so por compartilharem uma entrada. Remedio estrutural: separar as duas decisoes em funcoes com ENTRADAS diferentes e compo-las em ordem explicita (filtrar, depois classificar), de modo que a fusao volte a ser uma mutacao visivel em vez de uma consequencia invisivel; e cobrir a separacao com um par de casos — um em que o conjunto governado muda e o resultado muda, outro em que ele nao muda e o resultado tem de nao mudar."
+  },
+  "id": "B-I7HCTUGZO2U1",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Task #649/U-03B: o Guia recusou o aceite semantico com G649-01/BLOCKER sobre o candidato 2b90158, apesar de CI verde nos dois workflows, PR mergeavel e base correta. A remediacao separou `alcanca(fonte_da_relacao)` de `precedencia(trait_name)`, devolveu PREC-1 e PREC-2 ao baseline, manteve B1/B3/B5 recusados, e a contagem de deltas foi de 10 para 8 e depois para 9 com o residual G649-01-R1."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A revisao adversarial acha uma mudanca de comportamento que a Task nao tinha declarado. O PRIMARY confirma o achado materialmente, conclui que a mudanca e consequencia da politica ratificada, declara-a como delta intencional e fecha. O Guia recusa: a mudanca era consequencia da IMPLEMENTACAO escolhida, nao da politica, e absorve-la ampliou por analogia uma decisao humana que ninguem tomou."
+  },
+  "references": [],
+  "revision": {
+    "hash": "cca59accdb182ae61facee977d2b2cbffd4bde5e97623f97d3f2d1a172dcce01",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-10T12:55:27Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "revisao adversarial #535",
+      "tabela BEFORE/AFTER",
+      "aceite semantico do Guia"
+    ],
+    "conditions": [
+      "Task de classe SEMANTIC_CHANGE que executa uma decisao humana ja tomada",
+      "achado adversarial de mudanca de comportamento nao declarada"
+    ]
+  },
+  "status": "candidate",
+  "title": "Absorver achado adversarial como delta intencional pode expandir a decisao que a Task recebeu"
+}

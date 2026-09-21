@@ -1,0 +1,69 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao vale onde core_pattern e um caminho de arquivo comum: ali RLIMIT_CORE=0 realmente suprime o dump e o bit.",
+    "Nao generalize para outros sistemas operacionais."
+  ],
+  "cues": [
+    "core dumped",
+    "WCOREDUMP",
+    "RLIMIT_CORE",
+    "core_pattern",
+    "systemd-coredump",
+    "SIGABRT",
+    "ulimit -c"
+  ],
+  "discriminating_probe": {
+    "action": "cat /proc/sys/kernel/core_pattern e, se comecar com '|', rodar o mesmo binario que aborta sob RLIMIT_CORE=0 e sob RLIMIT_CORE=inf comparando os.WCOREDUMP.",
+    "observable": "WCOREDUMP identico nos dois casos prova que o bit nao carrega informacao sobre o rlimit; um core file realmente escrito apareceria em coredumpctl, o bit sozinho nao."
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "RLIMIT_CORE=0 (igual ao launcher) AS=512MB -> signaled=True sig=6 coredump_flag=True; RLIMIT_CORE=inf AS=512MB -> identico. core_pattern = |/usr/lib/systemd/systemd-coredump",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a09/artifacts/dossie-triagem-580.md"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "Medido com fork + setrlimit(RLIMIT_CORE,(0,inf)) + execv + waitpid lendo os.WCOREDUMP: True nos dois casos, RLIMIT_CORE=0 e RLIMIT_CORE=inf, na mesma maquina com core_pattern de pipe.",
+    "text": "Trate o bit WCOREDUMP como NEUTRO ate ler /proc/sys/kernel/core_pattern. Se o padrao comeca com '|', o bit nao prova que um core foi escrito nem que RLIMIT_CORE deixou de ser aplicado, e nao serve como confirmacao de hipotese nenhuma. Isso corta nos dois sentidos: nao use o '(core dumped)' para acusar o harness de nao aplicar limites, e tambem nao o cite como 'batida exata' ao comparar uma reproducao local com um log de CI."
+  },
+  "id": "B-COREDUMPPIPE",
+  "observed_at": "2026-09-04T17:30:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Com RLIMIT_CORE=0 no filho, WCOREDUMP continua True e o sinal continua 6, identico ao caso com RLIMIT_CORE infinito. A causa e /proc/sys/kernel/core_pattern comecar com '|' (aqui |/usr/lib/systemd/systemd-coredump): o kernel Linux ignora RLIMIT_CORE quando o padrao e um pipe."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um status de processo reportado como 'signal: 6 (SIGABRT) (core dumped)' parece incompativel com um harness que impoe setrlimit(RLIMIT_CORE, 0) ao filho e com um ci_env que faz 'ulimit -S -c 0'. Isso leva a tratar o bit WCOREDUMP como anomalia a investigar, ou pior, como confirmacao de que algum limite nao foi aplicado."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a09/artifacts/dossie-triagem-580.md"
+  ],
+  "revision": {
+    "hash": "478f31a9526e396f0087e90031ce7d7dfddce3e02b2feec8485dbea5a3fa3a8b",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "achado colateral da triagem #580; refutou uma objecao do revisor independente",
+    "updated_at": "2026-09-04T17:30:00Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "harness-de-testes-nativos",
+      "diagnostico-de-processos"
+    ],
+    "conditions": [
+      "Linux com core_pattern encaminhado a um coletor por pipe",
+      "status de processo lido via waitpid/ExitStatus"
+    ]
+  },
+  "status": "candidate",
+  "title": "\"(core dumped)\" no status nao contradiz RLIMIT_CORE=0 quando core_pattern e um pipe"
+}

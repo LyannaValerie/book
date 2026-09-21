@@ -1,0 +1,75 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao autoriza remover target/ de outro slot: para isso vale o caso B-X4KN6418LMZC, que exige medida pronta e decisao humana.",
+    "Nao remova <worktree>/target inteiro sem recriar a ponte da staticlib nativa: part_d_native_process_tests falha com 'staticlib nativa ausente'.",
+    "Nao troque <worktree>/target por symlink para um diretorio externo: o sandbox nativo canonicaliza a raiz e recusa com PermissionDenied.",
+    "Nao vale quando o crescimento nao esta no proprio slot; ai o diagnostico e outro."
+  ],
+  "cues": [
+    "No space left on device",
+    "final link failed No space left on device",
+    "couldnt generate documentation No space left on device",
+    "codex exec revisao adversarial",
+    "worktree/target/debug inesperado",
+    "CARGO_TARGET_DIR nao herdado",
+    "disco cheio sem slot alheio culpado"
+  ],
+  "discriminating_probe": {
+    "action": "du -sh <TASK_ROOT>/* e du -sh <TASK_ROOT>/worktree/target/*; comparar com du -sh /pinker/repo/pinker-v0/agentes/*/target",
+    "observable": "o slot da propria Task aparece com o dobro do esperado porque worktree/target/debug existe ao lado de TASK_ROOT/target; nenhum slot alheio cresceu"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Task issue-698 (TM, slot a25): apos a revisao adversarial via codex exec -C <worktree>, df mostrava /pinker 46G 100%. du -sh do slot deu 17G: <TASK_ROOT>/target 9,2G mais <worktree>/target/debug 7,3G. Removidos target/{incremental,doc} (3,6G) e worktree/target/debug (7,3G), com a ponte da staticlib recriada; volume caiu para 84% com 7,3G livres e PINKER_EXIGE_NATIVO=1 make ci voltou a passar inteiro. Nenhum slot alheio foi tocado; a11, suspenso, ficou intacto.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a25/state/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Antes de lancar um agente auxiliar dentro do worktree, exporte CARGO_TARGET_DIR no ambiente que ele vai realmente usar e verifique depois com du -sh <worktree>/target. Quando o estouro ja aconteceu, meca primeiro dentro do proprio slot: a fatia recuperavel e derivada e pertence a esta Task, entao nao exige autorizacao alheia. Remova <worktree>/target/debug e <TASK_ROOT>/target/{incremental,doc}, recrie a ponte <worktree>/target/debug/libpinker_rt.a para <TASK_ROOT>/target/debug/libpinker_rt.a que os testes nativos exigem, e so entao repita o gate. Rodar o gate com CARGO_INCREMENTAL=0 evita que os 3,5 GB de incremental voltem no meio da suite. Medir a propria Task antes de olhar para slots alheios muda a natureza do bloqueio: de pedido de autorizacao para reclaim que o executor ja pode fazer."
+  },
+  "id": "B-ZW6DR34376L0",
+  "observed_at": "2026-09-18T22:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Remover o target extra dentro do worktree e o incremental da propria Task devolveu 7,3 GB e o gate integral voltou a passar, sem tocar em slot alheio."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Depois de uma revisao adversarial nao interativa lancada com -C <worktree>, o volume da Forja vai a 100% e os gates locais passam a morrer com 'No space left on device' no link e no cargo doc. A leitura obvia culpa os slots grandes de outras Tasks, mas o crescimento esta dentro da propria Task: alem de <TASK_ROOT>/target existe um segundo <worktree>/target/debug do mesmo tamanho. O processo auxiliar rodou ./ci_env.sh make ci sem herdar CARGO_TARGET_DIR, e o AGENTS.md do repositorio ja avisa que sem ele o build cai em <worktree>/target, fora do escopo que o finalizador sabe liberar."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a25/state/checkpoint.yaml"
+  ],
+  "revision": {
+    "hash": "620e6f3942c6e7c5809eb7c04ef93772403e3e3642977d82159f521c8980de9d",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-18T19:12:39Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "CARGO_TARGET_DIR",
+      "agentes/<slot>/worktree/target",
+      "codex exec",
+      "ci_env.sh",
+      "make ci",
+      "part_d_native_process_tests"
+    ],
+    "conditions": [
+      "um agente auxiliar nao interativo e lancado com -C <worktree> durante a Task",
+      "o processo auxiliar roda um gate que chama cargo sem herdar CARGO_TARGET_DIR",
+      "o volume que hospeda /pinker/repo/pinker-v0/agentes chega a 100%"
+    ]
+  },
+  "status": "candidate",
+  "title": "Revisor auxiliar lancado no worktree constroi um segundo target dentro dele e dobra o disco da propria Task"
+}

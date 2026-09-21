@@ -1,0 +1,68 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando o mutante verde ataca uma regra que o contrato nao exige provar",
+    "Nao se aplica a mutantes que tocam codigo morto por construcao"
+  ],
+  "cues": [
+    "sensitivity",
+    "mutante verde",
+    "controle ausente",
+    "caminho nao exercitado",
+    "aridade do format",
+    "erro de compilacao nao e RED"
+  ],
+  "discriminating_probe": {
+    "action": "para cada mutante verde, instrumentar ou inspecionar a funcao mutada durante o controle que deveria ficar vermelho; para cada mutante vermelho, exigir a linha 'test result: FAILED' e a asercao que falhou, nunca so o codigo de saida",
+    "observable": "a funcao mutada nao participa da execucao do controle; ou o log traz 'error[E...]' em vez de uma asercao"
+  },
+  "environment": {
+    "backend": "rust",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "TH/#695: mutante older-to-hash-overwritten verde contra h2 (entrada so de hash, caminho mecanico) e vermelho contra h2b (identidade + hash, caminho reconciled_restoration_rule). Mutantes current-hash-not-fingerprinted e historical-hash-not-fingerprinted quebravam format! com 10 posicionais para 9 argumentos ate a injecao passar a usar um valor neutro. Resultado final: 12 mutantes, 12 vermelhos por asercao, nenhum persistido.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a23/artifacts/evidence/SENSITIVITY.txt"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Um mutante verde e uma hipotese sobre a cobertura, nunca uma licenca para descartar o mutante. Antes de reescrever ou abandonar a injecao, pergunte qual classe de entrada alcanca a funcao mutada e verifique se algum controle constroi aquela classe; se nenhum constroi, o achado e o controle que falta, e ele costuma ser a classe que os dados reais mais exercitam. Para a injecao em si, prefira neutralizar o valor a remover o termo: apagar um argumento de macro, um braco de match ou um elemento de tupla muda a forma do codigo e produz vermelho de compilacao, que a politica nao aceita como causal. Leia sempre a asercao que falhou, e nao o codigo de saida: cargo devolve 101 tanto para teste vermelho quanto para build quebrado. Distingue-se de 'mutacao aplicada mas inerte' porque aqui a mutacao muda comportamento de verdade: o que falta e uma entrada que chegue nela."
+  },
+  "id": "B-MVJ7QSQBPFJK",
+  "observed_at": "2026-09-18T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "O verde revelou um buraco real de cobertura: a classe 'identidade + hash sobre regra que ja restaura hash' — exatamente a classe das duas regioes ja cobertas no repositorio real — nao tinha controle nenhum. Criado o controle, o mesmo mutante virou vermelho. Nos dois de impressao digital, trocar a remocao do argumento por um valor neutro que preserva a aridade devolveu um vermelho por asercao."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Numa rodada de doze mutantes causais, dois deram leitura falsa por razoes opostas. O mutante que invertia a preferencia entre o destino historico da regra existente e o do mapa ficou VERDE: o controle da classe 'so hash' passava por um caminho mecanico que nunca chama a funcao mutada, porque aquela funcao so roda para entradas que restauram identidade. E dois mutantes de impressao digital ficaram VERMELHOS pela razao errada: remover um argumento de format! quebrou a aridade e o vermelho era erro de compilacao, nao comportamento."
+  },
+  "references": [],
+  "revision": {
+    "hash": "cb05850f2defa2964a184d63bd620ff18fa8d14cd2ae517aff0c6092f3547926",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-18T05:22:30Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "rodada de sensibilidade",
+      "controles de CLI",
+      "reconciliacao de receita"
+    ],
+    "conditions": [
+      "a funcao mutada so e alcancada por uma classe de entrada",
+      "os controles existentes constroem outra classe de entrada",
+      "a injecao textual do mutante altera a aridade de uma macro"
+    ]
+  },
+  "status": "candidate",
+  "title": "Mutante que fica verde localiza um caminho que nenhum controle alcanca, nao um mutante invalido"
+}

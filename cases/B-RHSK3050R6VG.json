@@ -1,5 +1,25 @@
 {
-  "challenges": [],
+  "challenges": [
+    {
+      "evidence": [
+        {
+          "class": "OBSERVED",
+          "description": "PR #700 removeu DocSub::ImportarPr, run_doc_importar, Change::parse_pr_body, extract_block, render_yaml, semantically_equal e tooling::freeze_import, preservando parse_manifest/parse_block/validate e Manifests::load/render_ledger/ledger_json.",
+          "source": "file:/pinker/repo/pinker-v0/agentes/a25/artifacts/pr-body.md"
+        }
+      ],
+      "id": "C-29C8C0DA13",
+      "observed_at": "2026-09-18T19:10:00Z",
+      "references": [
+        "file:/pinker/repo/pinker-v0/agentes/a25/artifacts/pr-body.md"
+      ],
+      "reported_by": "velina",
+      "statement": {
+        "class": "ASSERTED",
+        "text": "O mapa de subcomandos deste guia ficou desatualizado num ponto especifico apos a TM/#698: pink doc importar-pr foi removido junto com o gate universal de pinker-change, entao as entradas que descrevem importar-pr como escritor mutante e o --corpo/--check como validacao de corpo de PR nao correspondem mais a CLI. O restante do guia continua valendo; o leitor historico minimo de manifestos foi preservado."
+      }
+    }
+  ],
   "contraindications": [
     "Não substituir a ajuda da versão instalada por este registro; a árvore é volátil.",
     "Não executar sincronizar, importar-pr mutante ou projeções autorizadas apenas para explorar.",
@@ -83,12 +103,12 @@
     "trama:development.pink-agent.contract"
   ],
   "revision": {
-    "hash": "8d99424cde30317f9c761d24cf395cb567dd5eb56c787f0540b433cf3895931e",
-    "number": 1,
-    "parent_hash": null,
-    "reason": "created through semantic authoring",
-    "updated_at": "2026-08-25T04:28:21Z",
-    "updated_by": "amara"
+    "hash": "0b34814a4b9632a9d396d9c61aebe4b81881a858899fc45e7daa7de702a93274",
+    "number": 2,
+    "parent_hash": "8d99424cde30317f9c761d24cf395cb567dd5eb56c787f0540b433cf3895931e",
+    "reason": "subcomando removido pela TM/#698",
+    "updated_at": "2026-09-18T22:12:56Z",
+    "updated_by": "velina"
   },
   "schema_version": 1,
   "scope": {
@@ -107,6 +127,6 @@
       "comandos e flags devem ser reconfirmados na versão instalada"
     ]
   },
-  "status": "candidate",
+  "status": "challenged",
   "title": "Guia operacional do binário pink e seus subcomandos"
 }

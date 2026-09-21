@@ -1,0 +1,71 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica a build frio nem ao CI remoto atual, que nao tem cache Cargo.",
+    "Nao explica o custo de execucao da suite: compilacao inteira a frio e 89257 ms contra 577140 ms de execucao dos testes."
+  ],
+  "cues": [
+    "PINKER_BUILD_COMMIT",
+    "rerun-if-env-changed",
+    "build.rs",
+    "relink",
+    "recompilacao a cada commit",
+    "cache quente",
+    "cargo test --no-run lento",
+    "option_env"
+  ],
+  "discriminating_probe": {
+    "action": "na MESMA arvore e no MESMO CARGO_TARGET_DIR, buildar com o valor A, repetir com A, buildar com um valor B experimental, repetir com B e voltar para A, contando invocacoes de rustc em cada passo",
+    "observable": "com o mesmo valor o build e no-op; com valor trocado o build script reroda e os executaveis de teste relinkam"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0",
+    "runner": "cargo build/test --locked"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "artifacts/pinker-build-commit-probe.json com os cinco passos A, A2, B, B2, A3 no mesmo target dir, contagem de invocacoes de rustc e de reruns do build script por passo.",
+      "oracle": "mesma arvore, mesmo target dir, mesmo comando, unica variavel alterada, com retorno ao valor original",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a01/artifacts/pinker-build-commit-probe.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "O efeito e real e mensuravel, mas so importa onde existe cache quente: 35 s por commit num loop local, cerca de 3.9% de um make ci quente. No CI remoto do repositorio nao ha cache Cargo nenhum, entao o grafo ja e frio e essa invalidacao nao acrescenta custo la. Antes de propor mexer nisso, decida qual dos dois mundos voce esta otimizando. Para medir de novo, exporte PINKER_BUILD_COMMIT explicitamente: ci_env.sh so o deriva do HEAD quando a variavel esta ausente, e sem fixa-la voce mede duas variaveis de uma vez. Nunca instale nem use como autoridade Pinker o binario construido com o valor experimental."
+  },
+  "id": "B-7PYPS10UANIQ",
+  "observed_at": "2026-08-29T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Medido em d7d42d6, Issue #539. Mesmo valor: build 17.9 ms, cargo test --no-run 53.3 ms, zero invocacoes de rustc. Valor trocado: build 5035.4 ms com 1 rerun do build script, 1 crate recompilada e 13 invocacoes de rustc; em seguida cargo test --no-run 30343.8 ms com 113 invocacoes de rustc, ou seja TODOS os executaveis de teste relinkam. Custo extra medido por troca de valor: 35379 ms sobre cache quente. Reproduziu simetricamente ao voltar para o valor original: 4615.3 ms + 30973.9 ms. build.rs contem apenas println!(cargo:rerun-if-env-changed=PINKER_BUILD_COMMIT) e src/tooling.rs le option_env!(PINKER_BUILD_COMMIT), e ci_env.sh define a variavel a partir de git rev-parse HEAD quando ela nao vem do ambiente."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Suspeita recorrente de que a suite fica lenta porque PINKER_BUILD_COMMIT muda a cada commit e invalida parte material do grafo de build. A suspeita circulava como fato sem probe controlado."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a01/artifacts/raw/buildcommit-B_build_changed_value.log"
+  ],
+  "revision": {
+    "hash": "cd4ec0029e61c7e2742d7245e4c9e9686760406d4b0c1de7873c8e09cf53704f",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-29T13:25:20Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "build.rs",
+      "ci_env.sh",
+      "src/tooling.rs"
+    ],
+    "conditions": [
+      "loop local com cache quente onde o HEAD muda entre execucoes"
+    ]
+  },
+  "status": "candidate",
+  "title": "PINKER_BUILD_COMMIT relinka todos os executaveis de teste quando muda"
+}

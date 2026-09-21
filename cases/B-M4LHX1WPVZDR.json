@@ -1,0 +1,74 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando a autoridade e uma tabela de celulas: ali a renomeacao nao existe e a substituicao por celula continua sendo o contrafactual certo.",
+    "Nao se aplica quando cunhagem e reconhecimento NAO compartilham a constante: renomear so o reconhecimento faz todo consumidor quebrar de uma vez e o oraculo deixa de discriminar.",
+    "Nao use isto para justificar seam em producao: o contrafactual e cfg(test), sem estado de producao, sem superficie publica nova e sem ABI nova. Se a funcao de prefixo puder ser privada, deixe privada.",
+    "Nao conclua 'inerte' de um consumidor que ficou GREEN sem inverter a decisao a forca e sem tentar construir o caso que a tornaria observavel."
+  ],
+  "cues": [
+    "consolidacao de reconhecimento",
+    "censo textual burlavel",
+    "concat! escapa do censo",
+    "regra local concordante continua verde",
+    "contrafactual cfg(test)",
+    "prefixo sintetico",
+    "namespace reservado",
+    "S4 sensitivity",
+    "oraculo metamorfico proporcional"
+  ],
+  "discriminating_probe": {
+    "action": "Injete em cada consumidor real, um a um, a regra local escondida (por exemplo starts_with(&[\"__anon_\", \"carinho_\"].concat())), reconstrua e rode so o oraculo in-crate; registre veredito e testemunha por sitio.",
+    "observable": "Consumidor coberto fica RED nomeando a testemunha; consumidor GREEN e cobertura faltando, decisao inerte ou ramo inalcancavel — e a diferenca entre os tres exige inversao forcada, nao interpretacao."
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Task #655 / U-05: 16 consumidores migrados, 0 regras locais. Sob a grafia renomeada e sem copia local, 1421 provas comportamentais seguiram verdes. Com a copia escondida por concatenacao injetada sitio a sitio, 14 dos 16 ficaram vermelhos por prova de execucao (12 pelas testemunhas do oraculo em src/anonymous_identity/recognition_oracle.rs, 2 pelas testemunhas que moram em src/module_resolve.rs); 1 esta no binario (pink_cli) e ficou com perturbacao no build; 1 e ramo inalcancavel a partir da fonte. O censo textual passou intacto pela copia escondida, e foi a execucao que recusou.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a39/memory/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Antes de importar o aparato metamorfico da unidade anterior, pergunte de que TIPO e a autoridade. Tabela de celulas pede substituicao de celula. Constante de texto compartilhada por cunhagem e reconhecimento pede renomeacao da grafia, e ai o oraculo pode ser comportamental: rode o corpus que ja existe sob a grafia nova e exija observavel identico depois de apagar o prefixo dos dois lados. Nao pergunte ao helper dentro da testemunha — observe o que a fase PRODUZ (IR renderizada, texto de diagnostico, lista de referencias colhidas) — senao a prova vira circular.\n\nMeca a cobertura em vez de declara-la: injete a copia local escondida em cada consumidor real e registre o veredito. Para consumidor que fica GREEN, inverta a decisao a forca antes de chamar de inerte; e se ele mora numa fase que o seam nao alcanca (grafo de modulos, binario), escreva a testemunha ONDE ele mora, com o mesmo predicado, em vez de reproduzir o carregador dentro do oraculo.\n\nConte os consumidores pelo que eles DECIDEM, nao pelo que eles leem: na #655 o inventario historico dizia 13 sitios e a medicao devolveu 16, porque quatro liam a constante da autoridade e ainda assim aplicavam starts_with por conta propria. Ler a constante certa e decidir sozinho nao e uma decisao a menos.\n\nO censo textual continua util e continua suplementar. Deixe o proprio teste dizer isso de si mesmo."
+  },
+  "id": "B-M4LHX1WPVZDR",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Quando a MESMA constante e lida pela cunhagem e pelo reconhecimento, o contrafactual minimo nao e mutar uma celula: e renomear a grafia. Uma funcao privada devolve o prefixo efetivo; sob #[cfg(test)] um thread-local desfeito no Drop troca o valor. Renomeado o namespace, quem deriva da autoridade acompanha e o observavel canonico nao muda; quem tem copia local — inclusive escondida por concatenacao — continua procurando a grafia antiga e fica vermelho. Duas armadilhas medidas na #655: (1) a grafia contrafactual precisa entrar na tabela de namespaces possuidos sob cfg(test), senao a renomeacao muda DUAS coisas (a grafia e o fato de o nome ser identidade gerada) e a falha nao distingue as causas; (2) o cfg(test) da biblioteca NAO alcanca consumidores que moram no binario, porque a lib linkada nos testes do bin e compilada sem cfg(test) — esses ficam com perturbacao da constante no build mais as provas de integracao."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Depois de migrar todos os consumidores para uma frente unica de reconhecimento, o unico detector duravel proposto e o censo textual. Uma revisao adversarial troca um consumidor real por starts_with(&[\"__anon_\", \"carinho_\"].concat()): a decisao local volta, o censo nao ve o literal e o terminal continua verde. Copiar o aparato metamorfico por celula de U-01/U-02 parece a unica saida e e desproporcional quando a autoridade e uma string so."
+  },
+  "references": [],
+  "revision": {
+    "hash": "5d20dfa65fbf26994b33788c0400b3b3cd52cf0fb3f5649c0b97d3c27bb74c29",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-12T08:34:40Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "consolidacao de autoridade (campanha TC-XX)",
+      "prefixo/namespace sintetico do compilador",
+      "#[cfg(test)] counterfactual",
+      "native_symbol::PINKER_OWNED_NAMESPACES",
+      "censo textual"
+    ],
+    "conditions": [
+      "a Task consolida uma pergunta de RECONHECIMENTO rederivada em varios consumidores",
+      "a autoridade inteira e uma constante de texto, nao uma tabela de celulas",
+      "o censo textual e a unica guarda durável proposta"
+    ]
+  },
+  "status": "candidate",
+  "title": "Autoridade que cabe numa string: o contrafactual duravel e renomear a grafia compartilhada por cunhagem e reconhecimento"
+}

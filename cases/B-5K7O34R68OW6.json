@@ -1,0 +1,83 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao substitui oraculo comportamental: consolidacao sem mudanca de comportamento precisa dos dois, e a mutacao da PROPRIA autoridade tem de mudar o veredito nas DUAS fases para provar que ambas derivam dela.",
+    "Nao se aplica quando o guardiao conta chamadas em vez de varrer predicados: esse furo e o de B-LFE2WJJJXR6J, e la a decisao local escapa por nao mudar contagem.",
+    "A janela de caracteres e calibracao, nao constante universal: janela grande demais cola comparacoes vizinhas e acusa a construcao de candidatos da chamada nao qualificada, que e pergunta diferente.",
+    "Nenhuma varredura lexical prova contagem universal de decisores. Estreite a alegacao do relatorio para as formas que o oraculo reconhece."
+  ],
+  "cues": [
+    "oraculo estrutural",
+    "autoridade unica",
+    "AUTHORITY_CONSOLIDATION",
+    "consolidacao sem mudanca de comportamento",
+    "ordem de operandos",
+    "eq em vez de ==",
+    "dedup por arquivo",
+    "identidade qualificada",
+    "method_identity",
+    "U-03A",
+    "M4 M5"
+  ],
+  "discriminating_probe": {
+    "action": "inserir a decisao local imediatamente ANTES da consulta canonica em duas grafias - operandos invertidos e .eq(...) - compilar cada uma e rodar o oraculo estrutural",
+    "observable": "o guardiao fica verde nas duas antes da correcao e vermelho nas duas depois, nomeando os dois sitios"
+  },
+  "environment": {
+    "backend": "interpreter+native",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "M4 e M5 compiladas em src/semantic/calls.rs deixam a_regra_de_correspondencia_qualificada_existe_uma_unica_vez_em_src vermelho nomeando os dois decisores; revertidas em seguida",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a35/memory/task.jsonl"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "relatorios adversariais cross-provider das duas rodadas",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a35/artifacts/review/codex-closure.txt"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Um guardiao estrutural de autoridade nao pode procurar a GRAFIA da comparacao; tem de procurar a RELACAO. Tres correcoes bastaram e sobreviveram a duas rodadas adversariais. (1) Normalize antes de varrer: '.eq(' e '.ne(' sao '==' por extenso, e um replace textual para '==' os traz para a mesma porta. (2) Marque um campo como comparado quando ele aparece de QUALQUER um dos dois lados de um '==', dentro de uma janela limitada de caracteres; uma janela de 40 alcanca 'meta.identity.trait_name' do outro lado do operador sem colar comparacoes vizinhas. (3) Conte decisores por FUNCAO, nao por arquivo, e imprima a assinatura de cada um: o relatorio vira a evidencia. A janela e o que separa este oraculo de um 'contains' ingenuo; sem ela, um corpo que apenas MENCIONA o campo - 'trait_name: identity.trait_name.clone()', que constroi candidato de despacho e nao decide identidade - vira falso positivo. Rode as variantes COMPILADAS, nao so em memoria: o revisor adversarial que simulou M5 acertou o diagnostico, mas foi a compilacao que provou o vermelho."
+  },
+  "id": "B-5K7O34R68OW6",
+  "observed_at": "2026-09-10T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Duas variantes compiladas restauram a decisao local e mantem o guardiao verde. M4 inverte os operandos: 'trato == meta.identity.trait_name' nao contem a substring '.trait_name =='. M5 troca o operador pela chamada: 'meta.identity.trait_name.eq(trato)'. Nos dois casos a decisao positiva volta a fase e a consulta canonica sobrevive como fallback morto, entao contagem de chamadas tambem nao acusa. O terceiro furo e de contagem: dedup por ARQUIVO faz dois decisores no mesmo arquivo contarem como um."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Consolidar duas decisoes locais numa autoridade unica nao muda comportamento nenhum. Reintroduzir a decisao local passa por qualquer oraculo comportamental, entao so um oraculo estrutural fecha a promessa. Um guardiao escrito como varredura lexical do predicado - procurar '.trait_name ==', '.target ==' e '.method_name ==' no mesmo corpo de funcao - parece material: pega as duas implementacoes historicas e distingue as perguntas vizinhas de duas componentes. Ele e, ainda assim, permissivo de tres jeitos independentes."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a35/artifacts/run_matrix.sh"
+  ],
+  "revision": {
+    "hash": "c571082fa53a09c7440213da5fc5ef52237ad04f3dec1b1d4fb92e43ea071bb2",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-10T05:00:19Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "tests/issue_647_qualified_identity_authority_tests.rs",
+      "src/method_identity.rs",
+      "src/semantic/calls.rs",
+      "src/ir/lowering.rs",
+      "harness de sensibilidade/mutacao"
+    ],
+    "conditions": [
+      "Task de AUTHORITY_CONSOLIDATION cujo ganho e estrutural: o comportamento nao muda, entao so um oraculo estrutural detecta a reintroducao da decisao local",
+      "o guardiao varre a FONTE procurando o predicado de correspondencia, em vez de contar chamadas"
+    ]
+  },
+  "status": "candidate",
+  "title": "Guardiao de autoridade que varre predicados de comparacao cai por ordem de operandos e por .eq("
+}

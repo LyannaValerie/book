@@ -1,0 +1,10 @@
+{
+  "case_id": "B-YW5BJ9GCWJCE",
+  "domain": "Pinker",
+  "synthetic": false,
+  "updated_at": "2026-08-29T13:01:50Z",
+  "views": [
+    "Pinker/TestHarness",
+    "Pinker/Forja"
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Does not apply when the working tree predates nothing: if no predecessor changed the architecture, ordinary recovery already answers.",
+    "Classification is not license to weaken a gate. A test that still encodes a live invariant is migrated, not deleted."
+  ],
+  "cues": [
+    "dirty worktree",
+    "preserved WIP",
+    "superseded capability",
+    "architectural predecessor",
+    "recovery",
+    "classification",
+    "replay",
+    "long-lived task"
+  ],
+  "discriminating_probe": {
+    "action": "preserve the dirty tree as its own branch, then classify each hunk against current main as TASK_OWNED, SUPERSEDED_CAPABILITY_WIP or SHARED_REQUIRED_ADAPTATION before reapplying anything",
+    "observable": "each hunk is attributed to a current authority, or is shown to have no current authority left"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Classification of the 233 recovered files and the merged outcome of PR #701.",
+      "source": "event:E-4A9C9FF56AACD3FF5DEE"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Preserved WIP is evidence, not a patch queue. Give it a durable branch first so nothing forces a choice between losing it and replaying it, then classify it hunk by hunk against the architecture that exists now. Work whose justification a predecessor removed is deleted, not merged; only work that still has a current authority is re-materialized. Test history is part of the same classification: a test that only encodes the superseded surface does not prove the capability is still in scope."
+  },
+  "id": "B-7O5ZVOFJBZ9H",
+  "observed_at": "2026-09-19T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "The preserved tree became branch tl-preintegration-ta-tm-57e7c59 at commit f7a7aa7. Classification kept only the current-metadata migration, which was re-materialized over current main from the preserved rename maps; every reconstruction capability was dropped. The result merged as PR #701 at 092ec19 with 735 renamed identities, zero dangling references, zero duplicate canonical identities, and the historical archive byte-identical at 13/13 projections."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "TL (#681) was interrupted holding 233 dirty files written before TA/#697 materialized historical projections and TM/#698 removed the universal pinker-change obligation. Re-applying that working tree would have reintroduced a rename-map reconstruction recipe, nav_projection reconstruction modules, historical reconstruction tests and universal-ledger assumptions that the predecessors had already made obsolete. Discarding the working tree instead would have lost the only copy of the migration itself."
+  },
+  "references": [
+    "event:E-4A9C9FF56AACD3FF5DEE"
+  ],
+  "revision": {
+    "hash": "29c6a14545f72ea25c323c2ff8400639712f07948350ffb0d0264c4530838aa0",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-19T01:44:23Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "task-lifecycle",
+      "recovery",
+      "trama"
+    ],
+    "conditions": [
+      "a Task is interrupted and resumed after other Tasks changed the architecture it depended on",
+      "the recovered working tree is large and mixes still-valid work with work the predecessors superseded"
+    ]
+  },
+  "status": "candidate",
+  "title": "WIP preserved from before an architectural predecessor is classified against the new architecture, never replayed"
+}

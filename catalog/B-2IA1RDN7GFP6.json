@@ -1,0 +1,10 @@
+{
+  "case_id": "B-2IA1RDN7GFP6",
+  "domain": "Pinker",
+  "synthetic": false,
+  "updated_at": "2026-09-10T05:00:46Z",
+  "views": [
+    "Pinker/CI",
+    "Pinker/Trama"
+  ]
+}

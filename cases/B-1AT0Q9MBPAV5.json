@@ -1,0 +1,95 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Does not apply to code added under src/ or runtime/pinker_rt/src, which are production/required roots and are measured.",
+    "Does not authorize adding a root, demoting a root, recalibrating a FROZEN projection or inventing markers to obtain green.",
+    "Says nothing about whether the contract crates SHOULD become roots; that is a Guide decision (the outstanding half of HD-04)."
+  ],
+  "cues": [
+    "official_scan_roots",
+    "ROOT_CONTRACT",
+    "coverage-policy-v1.jsonl",
+    "nav cobertura",
+    "contract crate",
+    "runtime",
+    "unvalidated authority",
+    "E-COVERAGE-POLICY-ROOTS",
+    "HD-04",
+    "shared declaration"
+  ],
+  "discriminating_probe": {
+    "action": "pink nav cobertura and pink nav mostrar <key of a marker that lives in a runtime/*_contract crate>, compared against grep -rn '@pinker-nav:start' runtime/pinker_*_contract/",
+    "observable": "the marker exists in the file, the key does not resolve in the catalog, and cobertura emits no row for the crate while reporting src and runtime/pinker_rt/src COMPLETE with lacunas=0"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "pink nav cobertura at main 73e518ba: apps 1/1, runtime/pinker_rt/src 1/1, src 117/117, tests inventory, lacunas=0, rc=0, and zero rows for the four runtime/*_contract crates.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a30/artifacts/u08-delivery-coverage-block.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "grep -rn '@pinker-nav:start' runtime/pinker_*_contract/ finds 8 markers (argv 1, json 5, memory 1, sha256 1); pink nav mostrar runtime.memoria.contrato-publico answers 'chave de codigo nao encontrada'.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a30/artifacts/trama-supervised-checkpoints.jsonl"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "src/nav.rs:818-825 official_scan_roots() = [src, runtime/pinker_rt/src, tests, apps]; src/nav_coverage.rs:103 ROOT_CONTRACT and the load-time errors E-COVERAGE-POLICY-SCOPE-CONTRACT (:294) and E-COVERAGE-POLICY-ROOTS (:300).",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a30/artifacts/u08-delivery-coverage-block.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Fifth crate merged in the same form; pink nav cobertura at FINAL_HEAD 0975663 emits verso_contract_rows=0 with the four official roots green, and pink doctor reports compatibility EXACT, navigation CURRENT, projections INTACT.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a30/artifacts/logs/final-gates-g710-01.log"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Merged main d066563 with postmerge CI run 35478568229 conclusion success; #709 still OPEN and not implemented.",
+      "source": "git:d066563dca978d90e846ca5a7f46b20f459ba3a0"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Do not assume the coverage gap can be closed by appending a scope line to .pinker/cartography/coverage-policy-v1.jsonl. src/nav_coverage.rs refuses at load time with E-COVERAGE-POLICY-ROOTS ('escopos declarados nao cobrem exatamente as raizes oficiais') and E-COVERAGE-POLICY-SCOPE-CONTRACT ('o nivel de obrigacao de uma raiz nao e declaravel na autoridade'), and ROOT_CONTRACT fails closed for an official root with no code contract. Bringing a new root in means mutating official_scan_roots(), ROOT_CONTRACT, the policy JSONL and the tests that fix the root list as a code contract, then resynchronizing the catalog over a larger scanned universe — which is the class of change that puts the 13 FROZEN projections at risk. Before designing such a placement, check whether the current Task actually holds authority over the cartography-root surface; if it does not, the honest terminal is a delivery-constraint block that returns the root decision to the Guide, not a transparently reported gap. A declared gap does not return the gate to green. What U-08 established is the shape of the Guide's answer when the decision comes back: the unit may proceed with the crate in the sibling form provided the unvalidated status is stated in the source, asserted by a test that refuses to claim coverage, and tracked by the open policy Issue (#709). Write EXPLICITLY_UNVALIDATED_BY_CURRENT_COVERAGE as a fact of the delivery, never as 'covered'; the two are not the same and rewriting one as the other is the failure this case exists to prevent."
+  },
+  "id": "B-1AT0Q9MBPAV5",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "At main 73e518bac30474dc8b7eb87e1d6bc3a957400095: pink nav cobertura reports apps 1/1, runtime/pinker_rt/src 1/1, src 117/117, tests inventory, lacunas=0, rc=0, and zero rows for the four contract crates; grep finds 8 @pinker-nav:start markers in them (argv 1, json 5, memory 1, sha256 1), matching HD-04's historical count exactly; pink nav mostrar runtime.memoria.contrato-publico does not resolve. The gate is green while 8 regions of shared authority are unmeasured. RESOLUTION OBSERVED (U-08, PR #710, main d066563dca978d90e846ca5a7f46b20f459ba3a0, postmerge CI run 35478568229 SUCCESS): the fifth crate runtime/pinker_verso_contract was placed in exactly this form and the predicted invisibility held — pink nav cobertura at the merged head still emits zero rows for it while reporting the four official roots with lacunas=0 and rc=0. The Guide's accepted disposition was neither to widen the roots nor to hide the gap: the crate carries its @pinker-nav region for consistency with its siblings, its own doc comment and the LAW-08 test state EXPLICITLY_UNVALIDATED_BY_CURRENT_COVERAGE != COVERED in the source itself, a test (cobertura_nao_e_reivindicada_para_o_crate_de_contrato) asserts that the unit claims no coverage it did not measure, and the cartography-policy debt stays with #709, which remained OPEN and unauthorized through the whole unit. A unit blocked by this case can therefore proceed: declaring the authority unvalidated and tracking it separately is an accepted terminal, distinct from both a silent gap and a root mutation."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "official_scan_roots() in src/nav.rs declares exactly [src, runtime/pinker_rt/src, tests, apps]. It is the single source for both the Trama catalog (pink nav sincronizar/verificar) and, through ROOT_CONTRACT plus .pinker/cartography/coverage-policy-v1.jsonl, for pink nav cobertura. The four existing shared contract crates live at runtime/pinker_argv_contract, runtime/pinker_json_contract, runtime/pinker_memory_contract and runtime/pinker_sha256_contract, i.e. outside every root. They carry 8 @pinker-nav:start markers that are absent from the catalog: pink nav mostrar runtime.memoria.contrato-publico answers 'chave de codigo nao encontrada' while the marker is physically present at runtime/pinker_memory_contract/src/lib.rs:7, and pink nav cobertura returns no row for any of the four. A fifth crate placed in the same form inherits the same invisibility: the new authority is unvalidated by construction, not by omission."
+  },
+  "references": [
+    "book:B-7K5R5MKQ8AOF"
+  ],
+  "revision": {
+    "hash": "f54f12506ecf3afa4b850a086c946c8f4888fe7762273f8cf322cdd1c44da0d2",
+    "number": 2,
+    "parent_hash": "66a6d6eb6a65cc2ab28ad03c70cd5c32d2ea9087ef6c4196c531f7820575aecc",
+    "reason": "U-08 executed the placement this case predicted: records the observed resolution and the accepted EXPLICITLY_UNVALIDATED disposition",
+    "updated_at": "2026-09-20T01:24:33Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "runtime/pinker_*_contract shared pure crates",
+      "src/nav.rs official_scan_roots()",
+      "src/nav_coverage.rs ROOT_CONTRACT + .pinker/cartography/coverage-policy-v1.jsonl",
+      "pink nav sincronizar / verificar / cobertura",
+      "FROZEN projection archive"
+    ],
+    "conditions": [
+      "a unit must place a new shared semantic authority in the form of the existing contract crates",
+      "the delivery contract forbids introducing an unvalidated authority or reopening the cartography-coverage unit"
+    ]
+  },
+  "status": "candidate",
+  "title": "A new shared contract crate under runtime/ is born outside the official roots: neither the Trama catalog nor nav cobertura measures it"
+}

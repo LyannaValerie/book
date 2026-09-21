@@ -1,0 +1,69 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Vale onde a dimensao e alargavel sem inventar representacao. Onde a mutacao TROCA a classe em vez de acrescentar, o artefato expandido nao existe e a construcao e outra.",
+    "Aridade de forma fixa nao tem quadrante: uma ramificacao com um operando a mais nao e um ramo, e a fase a recusa pela forma antes de qualquer contrato."
+  ],
+  "cues": [
+    "direcao permissiva",
+    "duplicacao aditiva concorde",
+    "celula que a fase nao pergunta",
+    "artefato expandido",
+    "operando a mais",
+    "ausencia de caminho independente",
+    "uma dimensao por mutacao",
+    "contar sitios de chamada"
+  ],
+  "discriminating_probe": {
+    "action": "instalar no consumidor uma checagem local do fato ANDada com a consulta a autoridade, concordante no estado canonico, e rodar as duas direcoes",
+    "observable": "a direcao restritiva fica verde com a duplicata instalada; a direcao permissiva fica vermelha, porque a copia continua recusando o caso que a autoridade mutada passou a admitir"
+  },
+  "environment": {
+    "backend": "hosted",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Task #651, HEAD 26a65d3: 105 derivacoes e 41 ausencias provadas na direcao permissiva, com piso por dominio (todas as 31 operacoes); I36 (duplicacao aditiva) e I18 (celula nao consultada) RED, junto com P03 e P04, que os reproduzem noutras fases.",
+      "oracle": "direcao permissiva por aridade, com exigencia de admissao nas celulas consultadas e de aceite duplo nas celulas com carve-out",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a37/state/checkpoint.yaml"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Ao desenhar oraculo metamorfico, pergunte desde o inicio quais mutacoes ALARGAM o contrato e qual artefato elas tornam legal — nao apenas quais estreitam. A prova de duplicacao aditiva concorde e a admissao: um caso novo que so o contrato mutado aceita, e que a copia local concorde continua recusando. Exija tambem o lado da ausencia: onde a fase declara nao perguntar o fato, ela tem de ACEITAR nos dois estados, senao tem caminho independente para o que diz nao decidir. Garanta que a mutacao move UMA dimensao por vez, conte os sitios em vez de presumir completude da varredura, e registre a razao medida onde o artefato nao for construtivel em vez de pular em silencio."
+  },
+  "id": "B-9LV2CHOA9KMF",
+  "observed_at": "2026-09-11T00:00:00Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "matriz com exigencia dos dois lados, mais mutantes que reintroduzem duplicacao aditiva e decisao em celula nao consultada",
+    "text": "Task #651/U-01, HEAD 26a65d3. Remedio: o artefato EXPANDIDO — a mesma sonda com o ultimo operando repetido em cada chamada a operacao —, ilegal sob a autoridade canonica e legal sob a mutacao de aridade. A matriz passa a exigir dos dois lados: celula que consulta o fato precisa RECUSAR sob a canonica e ACEITAR sob a mutacao; celula com carve-out precisa ACEITAR nos DOIS estados, e essa e a prova de AUSENCIA de caminho independente que a direcao restritiva nao consegue produzir. Tres cuidados fizeram a diferenca: a mutacao de aridade repete o ultimo operando DECLARADO em vez de acrescentar uma classe nova, senao ela move duas dimensoes e o artefato expandido deixa de conformar ao contrato mutado; os sitios de chamada sao CONTADOS no texto do artefato, e expansao que nao alcanca todos e recusada com a razao escrita; e onde a descida nao constroi o artefato de ponta a ponta, cada validador ainda e perguntado pelo artefato do estagio que ELE examina."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Mutar o fato canonico para ESTREITAR e exigir que o consumidor passe a recusar prova dependencia de um lado so. Duas decisoes locais sobrevivem a essa metade: a tabela local ADITIVA e concorde, que roda ao lado da autoridade e concorda com ela no estado canonico — o caminho da autoridade continua vivo, ainda move a resposta, e a duplicacao fica coberta por ele; e a decisao local numa celula que a fase nao PERGUNTA, onde 'nao pergunta' passa por 'nao decide'. O PRIMARY declarou as duas como limite terminal e o Guia recusou."
+  },
+  "references": [],
+  "revision": {
+    "hash": "87984aa9ddc5c65f8495ccbd87aa18ef34baf8dc3f7b6d9b40eae609affab383",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-11T22:48:55Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "src/internal_operations/metamorphic_oracle.rs"
+    ],
+    "conditions": [
+      "oraculo metamorfico que muta o fato para ESTREITAR e exige que o consumidor passe a recusar",
+      "existe dimensao do fato que pode ser ALARGADA sem inventar representacao"
+    ]
+  },
+  "status": "candidate",
+  "title": "Direcao restritiva sozinha nao ve duplicacao aditiva concorde: a metade que falta e o artefato que a mutacao passa a ADMITIR"
+}

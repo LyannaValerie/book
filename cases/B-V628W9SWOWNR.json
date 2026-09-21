@@ -1,0 +1,75 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando as duas execucoes cobriram comprovadamente o mesmo universo: ai a divergencia e causal e precisa de investigacao real.",
+    "Nao autoriza descartar um achado adversarial por suspeita: a truncagem tem de ser demonstrada no proprio log.",
+    "A exigencia de mesma pegada estrutural vale para o controle de atribuicao; nao transforma o controle em segundo mutante, que continua sem conteudo comportamental."
+  ],
+  "cues": [
+    "revisao adversarial contradiz evidencia registrada",
+    "duas contagens de falhas diferentes no mesmo HEAD",
+    "log de cargo test truncado",
+    "binarios iniciados maior que linhas test result",
+    "teste em disputa nao aparece no log",
+    "controle neutro sub-controla",
+    "comentario fora da regiao nav nao dessincroniza catalogo",
+    "marcador de fim da regiao e a ultima linha do arquivo",
+    "mutante deixado aplicado por set -e em grep -c"
+  ],
+  "discriminating_probe": null,
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Task issue-711-u09a-machine-relaxed-params-load-bearing, slot a31, HEAD d066563dca978d90e846ca5a7f46b20f459ba3a0. Log adversarial: 69 'Running', 68 'test result:', 1722 testes, 2 falhas. Logs originais e reconstruidos: 137 'Running', 144 'test result:', 3388 testes. Baseline limpo reconstruido: 3378 passed, 0 failed, 10 ignored. Mutante estrito reconstruido: 3363 passed, 15 failed, conjunto byte-identico ao original. Controle dentro da regiao: 3363 passed, 15 failed, conjunto identico ao do mutante.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a31/artifacts/remediation/adv-u09a-001-reconstruction.md"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Controle anexado apos o fim do arquivo (fora da regiao nav) produziu 12 falhas, das quais 10 eram ruido de ambiente e 2 os testes de preflight; nenhum dos 13 testes de cartografia falhou, porque a regiao nao foi tocada.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a31/artifacts/remediation/tests-neutral.log"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "para cada log comparado, o numero de linhas 'Running' de binarios e menor ou igual ao numero de linhas 'test result:', e a soma passed+failed+ignored bate com o total esperado da suite; para o par mutante/controle, ambos dessincronizam a mesma regiao do catalogo",
+    "text": "Antes de tratar duas medicoes como contraditorias, prove que ambas mediram o mesmo universo.\n\n1. Conte os binarios iniciados contra as linhas de resultado. Em cargo test, 'Running <alvo>' aparece por binario e 'test result:' por binario mais doctests; resultados MENOS que iniciados significa execucao interrompida. Um log que termina em saida passante sem linha 'test result:' final foi truncado, nao concluido.\n2. Confirme que os testes em disputa aparecem no log. Se o nome nao ocorre nenhuma vez, ele nao rodou, e a ausencia de falha nao e evidencia de aprovacao.\n3. So depois compare conjuntos completos de nomes de teste. Contagens iguais nao provam conjuntos iguais e contagens diferentes nao provam divergencia causal.\n\nPara o controle de atribuicao, em repositorio com catalogo derivado do fonte: o controle neutro precisa ter a MESMA pegada estrutural do mutante. Se o mutante altera uma regiao cartografada, o controle tem de alterar a mesma regiao; um byte fora dela nao aciona o guardiao do catalogo e sub-controla silenciosamente, produzindo conjuntos diferentes por artefato do desenho. Verifique onde ficam os marcadores da regiao antes de escolher o ponto de insercao — quando o marcador de fim e a ultima linha do arquivo, qualquer append cai fora.\n\nInstrumente o experimento para nao poder mentir: assegure estruturalmente a mutacao ANTES de rodar (contagem de slots mutados e nao mutados, contagem de linhas), restaure por trap que dispara em qualquer saida, e confirme o sha256 restaurado. Um script com 'set -e' morre num 'grep -c' que retorna 0 legitimamente e deixa o mutante aplicado."
+  },
+  "id": "B-V628W9SWOWNR",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "A medicao do revisor vinha de uma execucao truncada. O log iniciou 69 binarios de teste e emitiu apenas 68 linhas 'test result:', terminando no meio de saida passante sem linha final; cobriu 1722 dos 3388 testes. Os 13 testes de cartografia que ele 'nao viu falhar' aparecem ZERO vezes no log: nunca executaram. 2 e 15 nao se contradiziam; eram execucao parcial e execucao completa. Reconstruido em HEAD d066563d com 137 binarios: 3363 passed, 15 failed, conjunto de falhas byte-identico ao original. Segundo achado, no controle: a regiao nav intrinsics.registry.declarative-binding vai das linhas 35 a 1837 de src/intrinsics/registry.rs e seu marcador de fim E a ultima linha do arquivo. Um comentario neutro anexado no fim do arquivo cai FORA da regiao, nao dessincroniza catalogo nenhum e falha so 2 dos 15 — sub-controla. O log do controle original preservava a prova de posicionamento correto: continha a regiao com content_end 1836 (comitado) e 1837 (regenerado), o deslocamento de uma linha de uma insercao dentro da regiao. Com o comentario dentro da regiao o controle reproduz os 15 identicos."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Uma revisao adversarial declarou MAJOR contra a evidencia da #711/U-09A: o mutante estrito das dez entradas teria falhado 2 testes, nao os 15 registrados. Duas medicoes do mesmo HEAD discordavam e nao havia como saber qual estava errada lendo apenas as contagens."
+  },
+  "references": [],
+  "revision": {
+    "hash": "3209c355c0a0b2e543f3fb6bdd69500b1a402fcd69b336dc048dbf7e8d0a8551",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-20T04:04:41Z",
+    "updated_by": "athenna"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "cargo test",
+      "adversarial review",
+      "mutation attribution",
+      "nav catalog"
+    ],
+    "conditions": [
+      "uma revisao adversarial reporta um numero de falhas que contradiz a evidencia registrada pela Task",
+      "a atribuicao de falhas depende de comparar um mutante contra um controle sem conteudo comportamental",
+      "o repositorio tem catalogo/projecao derivados do fonte"
+    ]
+  },
+  "status": "candidate",
+  "title": "Contradicao entre duas medicoes de suite exige provar cobertura igual e controle com a mesma pegada estrutural"
+}

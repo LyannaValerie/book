@@ -1,0 +1,80 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao vale para harness que opera sobre arvore comprovadamente limpa e commitada; ali `git checkout` e correto e mais barato.",
+    "Nao autoriza tratar `git stash` como backup: o stash usado na recuperacao existia por acaso, ja tinha sido dropado, e so sobreviveu como commit dangling ate a proxima coleta de lixo do Git.",
+    "Restaurar por copia nao substitui provar que a mutacao aplicou: uma ancora que nao casa continua tendo de reprovar a rodada, senao o vermelho pode vir de outra causa.",
+    "Nao generaliza para ferramentas que precisam legitimamente reverter ao HEAD, como um finalizador que verifica invariantes de Git."
+  ],
+  "cues": [
+    "sensibilidade",
+    "harness de mutacao",
+    "git checkout -- src/",
+    "trabalho nao commitado perdido",
+    "restauracao por copia",
+    "git fsck lost-found",
+    "commit dangling de stash dropado",
+    "candidato commitado antes de mutar"
+  ],
+  "discriminating_probe": {
+    "action": "com a arvore suja, rodar o harness e depois comparar `git diff HEAD --stat` com a lista de arquivos que o candidato deveria ter alterado",
+    "observable": "se o diff estiver vazio ou menor que o candidato, a restauracao apagou trabalho em vez de desfazer a mutacao; um harness correto devolve exatamente o mesmo diff que existia antes da primeira mutacao"
+  },
+  "environment": {
+    "baseline": "562112f4cd88b3c60c0e590e866d19eaf1a26ef1",
+    "repository": "LyannaValerie/pinker-v0",
+    "runner": "bash + cargo test"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Reincidencia na Task issue-590-method-dispatch-authority (C2, baseline 610e7298). O harness usava `git checkout -- src tests` para reverter cada mutacao com o candidato ainda nao commitado: as edicoes de semantic.rs, ir.rs e lib.rs voltaram a baseline de uma vez. A recuperacao foi barata so porque as edicoes tinham sido aplicadas por script python reexecutavel; sem isso seria refazer a mao. Confirma as duas medidas do remedio: o candidato foi commitado antes de qualquer mutacao e as 15 rodadas seguintes revertaram exatas.",
+      "oracle": "apos commitar o candidato, `git status --porcelain` vazio e `git rev-parse HEAD` igual ao SHA congelado ao fim de cada mutacao",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a07/artifacts/step14-sensitivity.txt"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Segunda direcao da mesma confusao, nao coberta pelo texto anterior: `git checkout -- <path>` tambem NAO desfaz mutacao aplicada a arquivo NAO RASTREADO. Na mesma Task, o modulo novo src/method_dispatch.rs ainda era untracked; duas mutacoes aplicadas nele (precedencia invertida e default vencendo explicito) sobreviveram ao revert e contaminaram silenciosamente as rodadas seguintes, aparecendo depois como falhas de teste que pareciam regressao da implementacao. O sinal foi o mesmo do caso original: `git status` limpo para o que era rastreado, com o defeito ativo em outro lugar.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a07/artifacts/mutate.sh"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "REMEDIO VALIDADO: Duas medidas independentes, ambas necessarias. (1) O harness restaura por copia: salva os arquivos que vai mutar num diretorio de scratch antes da primeira mutacao e restaura copiando de volta, nunca por comando de Git. Assim a restauracao e exata mesmo com arvore suja e nao depende do estado do HEAD. (2) O candidato e commitado ANTES de rodar sensibilidade, para que mesmo uma restauracao por Git tenha o candidato como HEAD. A ordem correta e implementar, validar, commitar, e so entao mutar.\n\nTrate qualquer comando de Git dentro de ferramenta auxiliar como operacao destrutiva sobre o trabalho do operador, nao como utilitario de arquivo. Um harness que precisa desfazer o que ele mesmo fez deve desfazer a partir do que ele mesmo guardou; usar o HEAD como memoria e confundir 'voltar ao que eu mudei' com 'voltar ao que o repositorio tinha'. O sinal de alarme e a assimetria: o harness sabe exatamente quais arquivos mutou, mas o comando de restauracao recebe um diretorio inteiro."
+  },
+  "id": "B-QI61VCL1T4I9",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Issue #567, baseline 562112f4cd88b3c60c0e590e866d19eaf1a26ef1: o harness rodou com src/ nao commitado. As quatro mutacoes falharam ao aplicar (as ancoras nao casavam mais depois de `cargo fmt`), mas a funcao `restaurar` ja tinha executado `git checkout -- src/` no inicio de cada rodada e no trap de EXIT. As seis mudancas em src/ voltaram a baseline. O sintoma que apareceu primeiro nao foi a perda: foi um teste vermelho com a mensagem do defeito original, o que induz a procurar regressao na correcao em vez de perda da correcao. A recuperacao veio de `git fsck --lost-found`, pelo commit dangling de um `git stash` que tinha sido feito para outro fim horas antes e ja tinha sido dropado — ele guardava src/ num estado anterior, e as edicoes posteriores foram reaplicadas a mao.\n\nCAUSA CONFIRMADA: `git checkout -- <path>` restaura do indice/HEAD, nao de um backup do harness. Ele nao distingue a mutacao que o harness aplicou do trabalho legitimo que o operador ainda nao commitou, porque para o Git nao ha diferenca entre os dois: ambos sao alteracao nao commitada no mesmo caminho."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um harness de sensibilidade aplica uma mutacao por vez em arquivos versionados e desfaz cada uma com `git checkout -- src/`. Quando a arvore ainda nao foi commitada, esse comando nao restaura a mutacao: restaura o HEAD, e o HEAD e a baseline. Toda a implementacao candidata desaparece sem erro, sem confirmacao e sem residuo visivel — `git status` fica limpo, que e exatamente o sinal que um operador leria como sucesso."
+  },
+  "references": [
+    "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/sensibilidade.sh"
+  ],
+  "revision": {
+    "hash": "9896e28be4aa5f7a99055dc908331507736b3be38d305d041ce476be94028905",
+    "number": 2,
+    "parent_hash": "2f6a4dccf87f0d17dcbefa142b358299f7beb44dbb33e476d95d2656f34c4d16",
+    "reason": "reincidencia validada em C2 e a direcao untracked, que o texto anterior nao cobria",
+    "updated_at": "2026-09-04T04:05:43Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "harness de sensibilidade/mutacao",
+      "worktree de Task com trabalho nao commitado",
+      "git checkout -- <path>"
+    ],
+    "conditions": [
+      "o harness muta arquivos versionados e precisa desfazer a mutacao entre rodadas",
+      "a arvore contem alteracoes ainda nao commitadas"
+    ]
+  },
+  "status": "candidate",
+  "title": "Harness de sensibilidade que restaura com git checkout apaga o candidato nao commitado"
+}

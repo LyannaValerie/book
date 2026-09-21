@@ -1,0 +1,27 @@
+{
+  "domain": "trama",
+  "external_task_ref": "pinker:issue-697-trama-ta-historical-archive",
+  "finished_at": "2026-09-18T12:24:16Z",
+  "followed_refs": [],
+  "goal": "TA/#697 POSTMERGE_PHYSICAL_CLOSURE: reconciliar retencao, provar plano de reclaim, zerar residuo efemero e finalizar o lifecycle do slot a24 apos merge da PR #699 e CI pos-merge verde em main",
+  "hypotheses": [],
+  "known": [
+    "EXECUTION_SEAL do a24 ja fora aplicado em 2026-09-18T10:24:21Z pelo agente vinculado (amara), recuperando 16136934889 bytes efemeros; o fecho fisico pos-merge herda target/cache/tmp/scratch/logs vazios (B-CX0MJL9YDYOS)",
+    "O active context de athenna (generation 2) continua ACTIVE apontando para a Task mergeada; selar o slot nao retira o context (B-GRWHF1EXY330)"
+  ],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "TA_PHYSICAL_CLOSURE_READY_FOR_GUIDE: slot a24 SEALED, residuo efemero zero, durables preservados, active context de athenna retirado e verificado, recursos de Tasks estrangeiras inalterados (TL/a11 incluso)",
+  "project": "pinker-v0",
+  "started_at": "2026-09-18T12:18:45Z",
+  "state": "finished",
+  "task_id": "issue-697-trama-ta-postmerge-closure",
+  "validation": {
+    "oracle": "forja-agentes verify status OK com problems vazio e a24 SEALED sem missing_resources; residuo efemero da Task = 0 entradas; forja-contexto-ativo show --agent athenna = NO_ACTIVE_CONTEXT; fingerprint de 232 linhas dos recursos de Tasks estrangeiras identico antes e depois",
+    "outcome": "TA_PHYSICAL_CLOSURE_READY_FOR_GUIDE",
+    "passed": true,
+    "summary": "Fecho fisico pos-merge da TA/#697 completo: retencao reconciliada, 36926 bytes em 10 entradas efemeras recuperadas (worktree/target + worktree/build), residuo zero, durables preservados, Forja verify OK, slot a24 SEALED e active context de athenna retirado. Issue, branch e sucessor permanecem com o Guia.",
+    "validated_at": "2026-09-18T12:24:07Z"
+  }
+}

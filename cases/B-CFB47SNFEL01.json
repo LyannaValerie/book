@@ -1,0 +1,67 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Contagem de testes por si só não basta: renomear um teste mantém a contagem e muda o inventário, e é por isso que a comparação é por NOME e não por número.",
+    "Suíte verde depois da edição não é evidência de preservação — é o sintoma esperado do apagamento."
+  ],
+  "cues": [
+    "migracao de teste",
+    "apagou teste",
+    "edicao textual",
+    "inventario de funcoes",
+    "nao enfraquecer testes",
+    "slice",
+    "regex"
+  ],
+  "discriminating_probe": {
+    "action": "extrair e comparar o inventário de nomes de função do arquivo antes e depois da edição",
+    "observable": "nomes que sumiram sem renomeação correspondente"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Edição em tests/issue492_argumento_nomeado_paridade_tests.rs removeu 8 testes; detectada pela comparação de inventário e desfeita com git checkout antes do commit",
+      "source": "file:/pinker/artifacts/tasks/issue-505-intrinsic-inventory/terminal-report-505-migracao.md"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "comm -23 inventario-antes.txt inventario-depois.txt precisa conter só os nomes deliberadamente renomeados",
+    "text": "Antes e depois de qualquer edição por script em arquivo de teste, extraia o inventário de funções (`grep -oE '^fn [a-z0-9_]+' | sort`) e faça `comm` entre os dois. A diferença esperada é exatamente o conjunto renomeado; qualquer outra coisa é apagamento. Trate contagem de testes que CAI como falha de migração, nunca como simplificação. Prefira substituição de string exata e ancorada a recorte por índice; quando precisar recortar, delimite pelo fim do bloco (`\\n}\\n`) e não por varredura para trás sobre comentários."
+  },
+  "id": "B-CFB47SNFEL01",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Na #505, um recorte que recuava sobre linhas `///` para achar o início de um teste apagou 8 testes reais junto com o alvo, entre eles a única cobertura de paridade de `tem_chave` e `tem_flag`. A suíte ficou VERDE depois do estrago. O que revelou foi comparar a lista de `^fn ` antes e depois: 21 -> 13. Warnings de constante não usada apareceram como sintoma secundário, mas só porque as fontes viraram órfãs; um apagamento que levasse junto as constantes não teria emitido warning nenhum."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Numa migração que quebra dezenas de suítes, a edição por script é a única via prática. Mas um recorte por índice de string ou uma regex ampla pode engolir vizinhos silenciosamente, e o sinal normal — a suíte continua verde — é justamente o que a remoção produz: menos testes, todos passando."
+  },
+  "references": [],
+  "revision": {
+    "hash": "fbcf029485aebc1f2553467951596e1c7d3fbb2fc6527d3dc13c4a07bb46fa0a",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-27T16:09:22Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "suites de teste",
+      "ferramenta de migracao"
+    ],
+    "conditions": [
+      "migração autorizada de superfície pública que quebra muitas suítes",
+      "edição por script sobre arquivos de teste grandes"
+    ]
+  },
+  "status": "candidate",
+  "title": "Migração em massa de testes: só o inventário de funções prova que nada foi apagado"
+}

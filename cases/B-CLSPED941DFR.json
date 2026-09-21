@@ -1,0 +1,72 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao serve para push: isto cobre leitura. Publicacao remota exige autoridade propria e o mesmo helper pode nao estar autorizado a escrever.",
+    "Nao aplique em Task cujo contrato proibe tocar o checkout canonico; sincronizar a mae e ato de lifecycle, nao mutacao de conteudo, mas ainda precisa estar no escopo.",
+    "Se o alias existir e resolver em outro host, nada disto e necessario - confirme com git ls-remote antes de concluir que o alias esta quebrado."
+  ],
+  "cues": [
+    "Could not resolve hostname",
+    "github-pinker",
+    "git fetch origin falha",
+    "alias ssh",
+    "sincronizar checkout canonico",
+    "origin/main desatualizado",
+    "gh auth git-credential"
+  ],
+  "discriminating_probe": {
+    "action": "git ls-remote https://github.com/<owner>/<repo>.git refs/heads/main",
+    "observable": "se devolve o SHA, o problema e so o transporte ssh e o caminho HTTPS resolve; se tambem falha, o problema e credencial ou rede, nao o alias"
+  },
+  "environment": {
+    "host": "Forja, kernel 6.18.10-forja-pinker-netfilter-v1",
+    "remote": "git@github-pinker:LyannaValerie/pinker-v0.git",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "fetch HTTPS levou o checkout canonico de 223dbfa para c818870 e o merge --ff-only deixou HEAD igual a origin/main, com git status limpo; o remote continuou o mesmo alias ssh",
+      "oracle": "HEAD do checkout canonico = c818870d9d8cfca2319ed89de4edc03ca5b3ccef, identico ao mergeCommit da PR #546 reportado pelo gh",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/final-report.md"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "git rev-parse refs/remotes/origin/main passa a bater com o head que gh-velina reporta para a branch, e git remote -v continua mostrando o mesmo alias ssh de antes",
+    "text": "Nao troque a URL do remote e nao invente config de ssh. Busque a URL HTTPS uma vez, com refspec explicito, e deixe o remote como esta: git fetch https://github.com/<owner>/<repo>.git '+refs/heads/main:refs/remotes/origin/main' e depois git merge --ff-only origin/main no checkout canonico. A credencial vem do helper do gh ja configurado no ~/.gitconfig do perfil. Registre a divergencia como achado fora de escopo em vez de 'consertar' o remote: mudar a URL e mutacao de configuracao que a Task de caracterizacao nao esta autorizada a fazer, e o alias pode ser deliberado em outros hosts."
+  },
+  "id": "B-CLSPED941DFR",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Com o alias inutil, o fetch por ssh e impossivel; o acesso HTTPS funciona porque ~/.gitconfig registra o credential helper 'gh auth git-credential' para https://github.com. git ls-remote https://github.com/LyannaValerie/pinker-v0.git devolveu o SHA de main na hora, e o fetch explicito do refspec atualizou refs/remotes/origin/main sem tocar na configuracao do remote."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "git fetch origin falha com 'ssh: Could not resolve hostname github-pinker: Name or service not known' e 'fatal: Could not read from remote repository'. O remote e git@github-pinker:LyannaValerie/pinker-v0.git, um alias de Host do ssh, mas /home/<agente>/.ssh contem apenas authorized_keys e known_hosts - nao ha config que defina o alias nem chave privada, e /etc/ssh/ssh_config.d nao o define."
+  },
+  "references": [],
+  "revision": {
+    "hash": "370871942cb143eefdaa0a8f687089d2a25a2e81665781a8042c9630d47fc14b",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-30T11:45:02Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "/pinker/repo/pinker-v0",
+      "git remote origin",
+      "sincronizacao do checkout canonico"
+    ],
+    "conditions": [
+      "Task precisa levar o checkout canonico ate origin/main",
+      "o host nao tem ~/.ssh/config nem chave privada para o alias"
+    ]
+  },
+  "status": "candidate",
+  "title": "origin do pinker-v0 usa alias ssh que nao resolve no host da Forja: sincronize o checkout canonico por HTTPS com a credencial do gh"
+}

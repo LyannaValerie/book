@@ -1,0 +1,18 @@
+{
+  "domain": "trama",
+  "external_task_ref": "pinker:issue-680-trama-t2-symbol-discovery-snippets",
+  "finished_at": "2026-09-16T07:17:58Z",
+  "followed_refs": [],
+  "goal": "Trama T2: descoberta automatica de simbolos por extracao lexical no pink nav localizar",
+  "hypotheses": [],
+  "known": [],
+  "loaded_refs": [],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "T2 entregue: PR #682 verde em 69c941a, aguardando decisao humana",
+  "project": "pinker",
+  "started_at": "2026-09-16T07:13:47Z",
+  "state": "finished",
+  "task_id": "T-56PZWJU9FT9EDYDN",
+  "validation": null
+}

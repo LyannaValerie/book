@@ -1,0 +1,31 @@
+{
+  "domain": "trama",
+  "external_task_ref": "pinker:issue-697-trama-ta-historical-archive",
+  "finished_at": "2026-09-18T07:26:16Z",
+  "followed_refs": [],
+  "goal": "TA/#697 recovery continuation: historical archive cutover under executor transfer amara -> athenna",
+  "hypotheses": [],
+  "known": [
+    "Failover entre perfis move o active context mas nao o vinculo do slot: state/seal/retire de layout ficam DENIED no slot herdado (B-CX0MJL9YDYOS, confirmado em a24 com exit 20)",
+    "Num cutover, a propriedade aposentada pode sobreviver como uma asserção dentro de um teste cujo assunto continua valido; classificar por asserção (B-ACHM9T7TIDFG)",
+    "Editar o corpo da PR reexecuta os workflows no mesmo SHA neste repositorio (B-EPYSTACF4LNX); confirmado: run 35317782411 em adc808f"
+  ],
+  "loaded_refs": [
+    "B-CX0MJL9YDYOS",
+    "B-EPYSTACF4LNX"
+  ],
+  "missing": [],
+  "next_probe": null,
+  "outcome": "TRAMA_TA_PR_GREEN_AWAITING_HUMAN_DECISION; REVIEW_PENDING",
+  "project": "pinker-v0",
+  "started_at": "2026-09-18T06:59:47Z",
+  "state": "finished",
+  "task_id": "issue-697-trama-ta-historical-archive",
+  "validation": {
+    "oracle": "PINKER_EXIGE_NATIVO=1 make ci verde no FINAL_HEAD, CI e Trama remotos verdes em 682ca31, pink nav projecao verificar INTACT 13/13 sem ler catalogo corrente",
+    "outcome": "TRAMA_TA_PR_GREEN_AWAITING_HUMAN_DECISION com REVIEW_PENDING",
+    "passed": true,
+    "summary": "Cutover do arquivo historico concluido sob transferencia de executor; review adversarial pendente por ausencia de rota independente autorizada para o perfil athenna",
+    "validated_at": "2026-09-18T07:25:26Z"
+  }
+}

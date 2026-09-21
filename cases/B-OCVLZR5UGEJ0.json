@@ -1,0 +1,57 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica a suite estritamente serial, onde soma e uniao coincidem por construcao.",
+    "O shim precisa ser medido: fork+exec+waitpid custa cerca de 1.3 ms por invocacao, desprezivel para um subprocesso de 220 ms e nao para um de 2 ms.",
+    "Um wrapper de driver C precisa entregar o caminho REAL em argv[0]: gcc deriva o prefixo de instalacao dele e falha a busca de liblto_plugin.so se receber o caminho do shim.",
+    "O shim deve calcular digests de entrada ANTES de ler o relogio, senao a instrumentacao entra na duracao medida."
+  ],
+  "cues": [
+    "soma serial",
+    "wall atribuivel",
+    "uniao temporal",
+    "janela de subprocesso",
+    "sobreposicao",
+    "SUM vs UNION",
+    "atribuicao de custo externo",
+    "shim de cc",
+    "CLOCK_MONOTONIC"
+  ],
+  "discriminating_probe": null,
+  "environment": null,
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "Issue #548, baseline c818870d9d8cfca2319ed89de4edc03ca5b3ccef. Execucao integral instrumentada: 1406 invocacoes registradas, 0 linhas malformadas, 376 runtime_link. SUM 86260.4 ms, UNION 63523.1 ms, wall 438245.6 ms, share 14.495%. Overhead do shim medido a parte: +1.345 ms / 0.62%, 9 amostras por braco preservadas.",
+      "oracle": "recomputo independente da uniao, da soma e do share por um segundo agente read-only a partir do timeline preservado; bateu digito a digito",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a02/artifacts/real-wall-attribution.json"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Para atribuir custo de subprocesso ao wall de uma suite concorrente: (1) instrumente o processo externo com um shim que registre inicio e fim em CLOCK_MONOTONIC, base compartilhada por todos os processos do host, e meca o overhead do shim a parte com amostras preservadas; (2) publique SUM e UNION como campos separados e nomeados, nunca so um; (3) publique tambem o numero errado que a leitura somada produziria, para que ninguem o reconstrua sozinho; (4) lembre que nem a uniao e ganho maximo: liberar uma janela nao devolve wall 1:1, porque outro trabalho da suite pode ocupar o intervalo. UNION e teto; SUM nao e teto de nada."
+  },
+  "id": "B-OCVLZR5UGEJ0",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Suite Pinker no baseline c818870, PINKER_EXIGE_NATIVO=1. As 376 linkedicoes nativas somam 86260.4 ms. A uniao temporal das mesmas janelas, medida com CLOCK_MONOTONIC compartilhado por todos os processos, e 63523.1 ms: fator de sobreposicao 1.358, pico de 4 links simultaneos em 4 CPUs logicas. Contra um wall de suite de 438245.6 ms, a leitura somada daria 19.68% e a atribuicao real e 14.50%. A Task anterior, sem a uniao, so pode declarar a faixa ~4.7% a ~18.9% e deixou a atribuicao aberta."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Uma caracterizacao de performance conta N invocacoes de um processo externo, multiplica pelo custo unitario medido e apresenta o produto como parcela do wall da suite. Sob execucao concorrente esse produto e uma soma serial que nao existe no relogio, e o erro aponta sempre para cima."
+  },
+  "references": [],
+  "revision": {
+    "hash": "6f851c560d0c7e22576c1acd7c2d1a3b183a1e0dc5dd9a4e699cda69cfc74305",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-30T17:47:52Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": null,
+  "status": "candidate",
+  "title": "Soma de duracao de subprocesso nao e wall atribuivel: meca a uniao temporal das janelas"
+}

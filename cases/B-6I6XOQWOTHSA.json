@@ -1,0 +1,78 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando a unidade pode simplesmente exigir cobertura total: ai a catraca e desnecessaria e o gate deve recusar qualquer descoberto.",
+    "Nao autoriza usar a impressao digital como identidade de linha: ela identifica o conjunto descoberto do arquivo, nao uma linha especifica.",
+    "Uma relocacao fisica que preserva exatamente o mesmo conteudo descoberto passa por desenho; coordenada de linha nao e identidade de divida."
+  ],
+  "cues": [
+    "catraca de divida",
+    "ratchet de cobertura",
+    "divida declarada por contagem",
+    "troca de divida mesma contagem",
+    "DEBT_INCREASED",
+    "DEBT_STALE",
+    "DEBT_CHANGED",
+    "impressao digital de conteudo descoberto",
+    "gate aceita divida nova",
+    "cobertura parcial aceita pelo gate"
+  ],
+  "discriminating_probe": {
+    "action": "num clone isolado, apague N linhas relevantes descobertas de um arquivo com divida declarada e acrescente N linhas relevantes descobertas novas em outro ponto do MESMO arquivo; rode o gate",
+    "observable": "o gate retorna sucesso mesmo com responsabilidade descoberta inteiramente diferente: a catraca mede cardinalidade, nao identidade"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Task issue-675 (T1 da Trama Pinker, PR #676): a revisao adversarial independente reportou o bypass no HEAD a284c1c, onde a catraca so comparava contagem. Com a impressao digital acrescentada em 51fe6d3, a mesma probe passou a falhar com E-COVERAGE-DEBT-CHANGED, e a rodada seguinte de revisao fechou o blocker com BLOCKERS=0.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a11/artifacts/t1-adversarial-round3-closure.md"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Probe direta no worktree da Task: removidas 3 linhas descobertas de runtime/pinker_rt/src/lib.rs e acrescentadas 3 novas; contagem inalterada em 11; o gate recusou com E-COVERAGE-DEBT-CHANGED apontando fnv1a64:adcd730cb5cc746c -> fnv1a64:9a7039f8d0eefd48.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a11/memory/checkpoint.json"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "um controle que troca divida mantendo a contagem precisa falhar com DEBT_CHANGED e NAO com DEBT_INCREASED; e uma injecao de sensibilidade que desliga a comparacao de impressao digital precisa deixar esse controle vermelho",
+    "text": "Faca a divida declarada carregar tambem uma impressao digital do CONTEUDO descoberto, alem da contagem. Um fnv1a64 sobre as linhas relevantes descobertas, na ordem do arquivo, identifica QUAL responsabilidade segue descoberta. Tres regras distintas e nao intercambiaveis:\n\n  contagem maior  -> DEBT_INCREASED (divida nova)\n  contagem menor  -> DEBT_STALE (o registro precisa ser apertado)\n  contagem igual e conteudo diferente -> DEBT_CHANGED (troca)\n\nPrefira impressao digital de conteudo a intervalo literal de linhas: o intervalo muda a cada insercao acima e produz churn que nao significa nada, enquanto o conteudo e estavel sob deslocamento e muda exatamente quando a responsabilidade descoberta muda. Publique a impressao digital no proprio inventario, para que regenerar os registros seja mecanico e o diff da autoridade continue revisavel. E mantenha a excecao estreita aprovada retirando o arquivo da obrigacao inteira, para nao contabilizar o mesmo fato em duas autoridades."
+  },
+  "id": "B-6I6XOQWOTHSA",
+  "observed_at": "2026-09-14T00:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Com a catraca comparando somente contagem, a troca de N linhas descobertas herdadas por N linhas descobertas novas passou com exit 0. Com a impressao digital de conteudo acrescentada, a mesma troca passou a falhar com DEBT_CHANGED, distinta de INCREASED e de STALE, e a injecao que desliga a comparacao deixou o controle vermelho."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Um gate de cobertura que fixa, por arquivo, QUANTAS linhas relevantes seguem descobertas e exige igualdade parece fechar a entrada de divida nova. Nao fecha: remover N linhas descobertas herdadas e acrescentar N linhas descobertas NOVAS no mesmo arquivo mantem declared == found e o gate fica verde. Divida velha e trocada por divida nova sem nenhuma mudanca visivel da autoridade versionada."
+  },
+  "references": [],
+  "revision": {
+    "hash": "eafbd5692a5b720b278776da200bcee7b4db41e28cee585aef05a52acb1f21b6",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-14T01:10:39Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "gate de cobertura/divida",
+      "autoridade versionada de excecoes",
+      "catraca (ratchet) em CI"
+    ],
+    "conditions": [
+      "existe divida herdada grande demais para ser reparada na unidade corrente",
+      "a unidade precisa impedir divida NOVA sem exigir reparo total",
+      "a autoridade registra um numero por arquivo e o gate compara numeros"
+    ]
+  },
+  "status": "candidate",
+  "title": "Catraca de divida por contagem e contornavel: vincule a divida ao conteudo descoberto"
+}

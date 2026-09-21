@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-09-11T01:36:24Z",
+  "created_by": "amara",
+  "epistemic": "VALIDATED",
+  "from": "B-QJSEX7D2DP3K",
+  "id": "R-5C8EB940429953EE",
+  "oracle": "Task #651: as tres correcoes daquele caso (normalizar grafia, janela, contar por funcao) sao exatamente a classe de endurecimento lexico que reprovou em f8683d87 com 19 contraexemplos",
+  "to": "B-5K7O34R68OW6",
+  "type": "references"
+}

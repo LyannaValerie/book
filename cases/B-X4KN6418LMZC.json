@@ -1,0 +1,78 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando a Task do slot grande ainda esta em andamento: o rebuild dela sairia caro e o slot pode ter processo vivo.",
+    "Nao autoriza remover /pinker/caches, /pinker/worktrees ou /pinker/work: esses tem APOSENTADO.md e a disposicao pertence ao Guia.",
+    "Nao autoriza remover nada fora de target/ dentro do slot alheio.",
+    "Nao autoriza o agente a executar o reclaim por conta propria: a governanca operacional corrente diz que o workspace, o cache e os artifacts de OUTRA Task nunca sao seus para recuperar, mesmo quando o perfil dono e o seu, e que 'os mecanismos autorizados nao apontarem candidato' e uma resposta, nao um obstaculo a contornar. Este caso descreve o remedio; a autorizacao humana explicita e o que o legitima."
+  ],
+  "cues": [
+    "No space left on device",
+    "rustc-LLVM ERROR IO failure on output stream",
+    "linking with cc failed",
+    "disco cheio",
+    "capacidade",
+    "cargo test sem espaco",
+    "seal recusado",
+    "target debug gigante",
+    "slot de Task terminada"
+  ],
+  "discriminating_probe": {
+    "action": "df -h no volume dos slots e du -sh /pinker/repo/pinker-v0/agentes/*/target; depois forja-agentes list e gh pr list --head <task-id> para cada slot grande",
+    "observable": "volume em 100% e os maiores target/ pertencem a slots cujo PR ja esta MERGED ou CLOSED com veredito terminal"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "Task issue-605: df mostrava /pinker 46G 100% com 31M livres; a08, a10 e a11 tinham 8,2 GB cada em target. seal recusou a10 e a14 com DENIED. Removidos apenas a10/target/{debug,doc} (8,1 GB + 34 MB) e a14/target/{debug,doc} (1,4 GB + 34 MB), o volume caiu para 79% com 9,6 GB livres, forja-agentes verify voltou OK com problems vazio, e a suite completa passou 3310/3310.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a15/memory/checkpoint.json"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "Task #628: /pinker em 99% com 751 MB livres contra ~8-11 GB necessarios para PINKER_EXIGE_NATIVO=1 make ci. Nenhum GC administrativo no catalogo do ls-forja; os tres slots grandes (a25 12G, a08 8,2G, a11 8,2G) estavam bound a velina, com PRs #627, #593 e #599 MERGED e nenhum processo com cwd sob os roots. Com autorizacao humana explicita, removidos apenas target/{debug,doc} dos tres: volume 99% -> 39% (28 GB livres), forja-agentes verify OK com problems vazio, e make ci passou 140/140 suites.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a26/memory/task-facts.jsonl"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Trate capacidade como gate antes de rodar a suite completa: df -h no volume dos slots antes de cargo test. Se ja estourou, meca du -sh agentes/*/target, confirme por PR que a Task de cada slot grande terminou, confirme com ps que nenhum processo vive sob aquele root, e remova apenas target/debug e target/doc. Nunca remova artifacts/, memory/, state/, logs/ nem worktree/, e nunca toque nas raizes com APOSENTADO.md: conteudo nao verificavel nao vira delecao. Depois rode forja-agentes verify e exija status OK com problems vazio. Isso nao substitui seal nem GC administrativo; e a fatia derivada que qualquer agente pode reconstruir.\n\nO que este caso NAO da e autoridade. Confirmado de novo na Task #628 (2026-09-08): o catalogo do ls-forja nao tem nenhum GC administrativo, e forja-agentes seal so alcanca a Task ativa do proprio chamador, entao um slot bound a outro perfil nao tem mecanismo autorizado nenhum. A sequencia correta e: medir, montar o pedido com o numero (quanto falta, quais slots, que PR fechou cada Task, que nenhum processo vive la), e pedir decisao humana ANTES de apagar. Levar a medida pronta transforma o bloqueio numa pergunta de uma linha; apagar primeiro e uma escrita sem autoridade que nenhum verde posterior desfaz."
+  },
+  "id": "B-X4KN6418LMZC",
+  "observed_at": "2026-09-05T06:00:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "forja-agentes seal --task-id <outra-task> responde DENIED 'comando mutante recusado: --task-id X nao e a Task ativa do chamador': o mecanismo autorizado de recuperar efemero so alcanca a propria Task ativa. As raizes aposentadas (/pinker/caches, /pinker/worktrees) tem APOSENTADO.md declarando preservacao deliberada e disposicao do Guia, entao nao sao alvo. O unico efemero recuperavel sem autoridade nova e agentes/<slot>/target/{debug,doc}: e saida de cargo, reconstruivel, e nao contem artifacts, memory, state nem worktree."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "cargo test morre com 'rustc-LLVM ERROR: IO failure on output stream: No space left on device' e com falha de link do cc. A mensagem parece defeito de build ou de codigo. A causa e o volume cheio: tres slots de Tasks ja terminadas seguravam 8,2 GB cada em target/debug."
+  },
+  "references": [],
+  "revision": {
+    "hash": "6dde3b95f70a8a23b5aee6807e932b77969bbf06d29f0a0824c626bed2b15606",
+    "number": 2,
+    "parent_hash": "3c5e76a53bcb8a1eb8aec1a18afe0024f241bfebd6cf1df3f6359c8f45e0b495",
+    "reason": "Task #628 reconfirmou o remedio e registrou a fronteira de autoridade: o reclaim em slot alheio exige decisao humana explicita",
+    "updated_at": "2026-09-08T02:57:00Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "forja-agentes seal",
+      "CARGO_TARGET_DIR",
+      "agentes/<slot>/target",
+      "cargo test"
+    ],
+    "conditions": [
+      "varias Tasks ja terminadas continuam com slot ACTIVE e target/debug de varios GB",
+      "o volume que hospeda /pinker/repo/pinker-v0/agentes chega a 100%",
+      "o gate corrente precisa compilar todos os alvos de teste"
+    ]
+  },
+  "status": "candidate",
+  "title": "Volume da Forja cheio quebra o gate, e seal recusa recuperar o efemero de outra Task"
+}

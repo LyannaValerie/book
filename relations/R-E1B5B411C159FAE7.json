@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-09-21T01:37:24Z",
+  "created_by": "amara",
+  "epistemic": "OBSERVED",
+  "from": "B-Y0C3KOZHXAX3",
+  "id": "R-E1B5B411C159FAE7",
+  "oracle": "mesmo sintoma visivel (binary_commit != HEAD) por mecanismo oposto: la o build precede o commit, aqui o carimbo e perdido por reconstrucao com o worktree intocado",
+  "to": "B-BO1XA591JAZ2",
+  "type": "references"
+}

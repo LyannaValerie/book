@@ -1,0 +1,69 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao vale se as execucoes tem SHA diferentes: comparar commits distintos nao discrimina nada.",
+    "Nao vale para falha de assercao. Timeout e sinal sao ambientais; `assertion failed` no mesmo SHA que antes passou pede investigacao de corrida ou de estado compartilhado, nao rerun.",
+    "Nao use o rerun para evitar diagnostico. A causa nomeada precisa vir do log ANTES do rerun; rerodar porque o verde parece velho e o oposto desta pratica."
+  ],
+  "cues": [
+    "vermelho remoto",
+    "flake",
+    "timeout",
+    "nm",
+    "mesmo SHA",
+    "rerun",
+    "orcamento de reds",
+    "execucao duplicada",
+    "workflow reexecutado"
+  ],
+  "discriminating_probe": {
+    "action": "listar as execucoes do workflow filtrando pelo headSha exato e abrir o log da execucao verde procurando o nome do teste que falhou na vermelha",
+    "observable": "mesmo teste com `... ok` no mesmo SHA prova flake; ausencia dele, ou falha nas duas, devolve a suspeita para o diff"
+  },
+  "environment": null,
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "native_execution_failure case=u2-f05-t15-nm ... status=signal: 15 (SIGTERM) reason=timeout apos 20031 ms, enquanto o mesmo teste saiu ok na execucao anterior do mesmo commit",
+      "source": "file:/pinker/worktrees/tasks/issue-505-intrinsic-inventory/agentes/issue-505-intrinsic-inventory/memory/events.jsonl"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "run 33118602178 e 33120552814, mesmo SHA 8ae901e: o primeiro com t15 `ok` e make ci completo, o segundo vermelho por timeout de nm e verde apos rerun",
+    "text": "Antes de tratar um vermelho remoto como regressao, pergunte se existe outra execucao do MESMO SHA e o que ela diz sobre o teste que falhou. Se o mesmo teste passou naquele commit, voce tem contraexemplo direto e o rerun tem causa nomeada em vez de ser esperanca. Leia o modo de falha: timeout de ferramenta externa sob carga e `signal: 15` com `reason=timeout` nao sao asserção violada. E aproveite a execucao verde para responder a armadilha do `make`, que para no primeiro alvo: confirme no log dela que fmt-check, clippy e os checks de catalogo realmente rodaram, em vez de assumir."
+  },
+  "id": "B-EPYSTACF4LNX",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "A falha era `nm` levando SIGTERM por timeout de 20 s dentro do envelope de contencao, num teste de identidade de metodo que o diff nao tocava. O discriminador barato ja estava disponivel: uma execucao ANTERIOR do MESMO SHA. Nela o mesmo teste saiu `ok` e o `make ci` alcancou fmt-check, clippy, doc-check e nav-check. Isso fecha ao mesmo tempo as duas perguntas — a falha e ambiental, e os alvos que `make` esconde atras do primeiro fracasso ja tinham rodado verdes naquele commit. Rerun da execucao falha devolveu verde sem tocar em nada."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Editar o corpo da PR reexecutou o workflow e ele ficou VERMELHO no mesmo commit que ja tinha passado. A leitura natural e que a mudanca quebrou algo, e a reacao natural é mexer no codigo — que gastaria tentativa do orcamento por um defeito que nao existe."
+  },
+  "references": [],
+  "revision": {
+    "hash": "9017b05a9bc1559cdc1ca9ae435471dc1b06740fab1cfe6e7c10716ce198ec11",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-08-27T22:30:10Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "CI remoto",
+      "orcamento de tentativas vermelhas",
+      "gate de teste nativo"
+    ],
+    "conditions": [
+      "campanha com orcamento explicito de reds remotos",
+      "eventos que reexecutam o workflow sem mudar o commit, como editar o corpo da PR"
+    ]
+  },
+  "status": "candidate",
+  "title": "Vermelho remoto num SHA que ja tem execucao verde: a duplicata do mesmo SHA e o discriminador do flake"
+}

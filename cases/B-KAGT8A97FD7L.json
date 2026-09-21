@@ -1,0 +1,79 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando o simbolo previsto tem chamada real fora do corte: ai a previsao esta certa e a promocao e devida.",
+    "Nao autoriza deixar de promover um simbolo que o compilador exige; o criterio e o erro de privacidade, nao a preferencia por um numero menor."
+  ],
+  "cues": [
+    "unit_costs.json",
+    "exports",
+    "pub(super)",
+    "EXPnovo",
+    "inventario 601",
+    "decomposicao fisica",
+    "MATERIAL_SCOPE_FORK",
+    "orcamento de visibilidade",
+    "resolve_closure"
+  ],
+  "discriminating_probe": {
+    "action": "para cada simbolo da coluna exports, listar as ocorrencias do nome FORA da faixa movida e classificar cada linha em codigo executavel ou comentario, antes de promover qualquer visibilidade",
+    "observable": "o simbolo previsto nao tem nenhuma ocorrencia em codigo executavel fora do corte, e o crate compila sem warnings com ele privado"
+  },
+  "environment": {
+    "campaign": "#442",
+    "repo": "pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "VALIDATED",
+      "description": "unit_costs.json da unidade IR-1 declara new_pub_super 4 e exports [lower_const, new, lower_function, resolve_closure]",
+      "oracle": "leitura direta do artifact",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a13/artifacts/unit_costs.json"
+    },
+    {
+      "class": "VALIDATED",
+      "description": "recomposicao byte a byte do bloco movido: quatro hunks, exatamente as tres promocoes de visibilidade e o rewrap do rustfmt que elas forcaram; resolve_closure permaneceu privada",
+      "oracle": "diff do bloco extraido de e308eab:src/ir.rs contra src/ir/lowering.rs",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a23/artifacts/recomposicao.diff"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Trate a coluna exports como candidata a exposicao, nunca como especificacao nem como orcamento. Antes de promover, classifique cada ocorrencia do nome fora da faixa movida: comentario nao e chamada. O oraculo barato e o proprio compilador — mova primeiro com todo o corte privado, compile, e promova exatamente os simbolos que o erro E0603/E0624 nomear; o conjunto resultante e minimo por construcao e nao depende de contagem textual. Se o numero medido ficar ABAIXO do previsto, isso nao e desvio de escopo e nao dispara MATERIAL_SCOPE_FORK: o contrato proibe expansao material, nao economia. Registre a diferenca com a razao factual, porque a proxima unidade do mesmo arquivo herda a mesma coluna e o mesmo vies."
+  },
+  "id": "B-KAGT8A97FD7L",
+  "observed_at": "2026-09-07T18:17:16Z",
+  "observed_result": {
+    "class": "VALIDATED",
+    "oracle": "classificacao linha a linha das ocorrencias fora do span 3345-6827 de src/ir.rs em e308eab, mais cargo build --locked e cargo clippy --all-targets -- -D warnings com apenas tres pub(super)",
+    "text": "Task #621 (unidade IR-1 de src/ir.rs, repo pinker-v0, baseline e308eab). unit_costs.json previa new_pub_super = 4 com exports = [lower_const, new, lower_function, resolve_closure]. Medido no baseline: lower_const, new e lower_function tem chamada real em ir.lowering.programa-orquestracao; resolve_closure aparece so em tres comentarios (src/ir.rs:1766, :2150, :2165) e em nenhuma chamada. O corte foi entregue com tres pub(super), zero pub(crate), build e clippy -D warnings limpos, e make ci verde com 140 suites e 3362 testes."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "A coluna exports do unit_costs.json e a contagem EXPnovo do INVENTARIO-601.md sao produzidas por varredura textual do arquivo inteiro. Um simbolo do corte citado apenas em comentario fora da faixa movida entra na lista como se o pai o chamasse, e o inventario prescreve um pub(super) que o compilador nao pede. Quem trata a previsao como especificacao gasta uma exposicao a mais; quem a trata como orcamento gasta todas."
+  },
+  "references": [],
+  "revision": {
+    "hash": "c062ea2eb5c3a899af3d295b3a6065241d2546f33d01b9f950ebb493839bf325",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-07T18:17:46Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "artifacts de inventario da #601 (unit_costs.json, coluna exports)",
+      "unidades de decomposicao fisica da campanha #442",
+      "privacidade Rust pub(super)"
+    ],
+    "conditions": [
+      "a Task manda revalidar cada exposicao interna prevista pelo inventario",
+      "o contrato declara NEW_PUB_CRATE = 0 e trata expansao material como MATERIAL_SCOPE_FORK -> STOP",
+      "o simbolo do corte e citado em comentario de doc ou de codigo fora da faixa movida"
+    ]
+  },
+  "status": "candidate",
+  "title": "Coluna exports do unit_costs.json da #601 conta menção em comentário como chamada e superestima pub(super)"
+}

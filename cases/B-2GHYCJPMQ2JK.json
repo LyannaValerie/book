@@ -1,0 +1,69 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao se aplica quando o bloco movido nao contem mod aninhado: um `mod` unico de teste movido para arquivo proprio nao muda o significado de `super` para ninguem.",
+    "Nao confundir com falta de `pub(super)`: aquele erro e E0603 'is private' no sentido filho->pai; este e E0433 'undeclared' no sentido nome-nao-esta-em-escopo."
+  ],
+  "cues": [
+    "E0433 use of undeclared type",
+    "use super::* mod de teste",
+    "cfg(test) mod movido para arquivo",
+    "build verde teste vermelho",
+    "super muda de significado",
+    "pub use super::* ponte"
+  ],
+  "discriminating_probe": {
+    "action": "depois de mover mod de teste inline para arquivo filho, rodar cargo test --lib e nao apenas cargo build",
+    "observable": "erros E0433 em massa nos nomes que os testes importavam por use super::*"
+  },
+  "environment": {
+    "repository": "LyannaValerie/pinker-v0",
+    "toolchain": "rustc 1.78.0, edition 2021"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "PROBE_C' da Task issue-601: cargo build --bin pink verde, cargo test --lib com 'could not compile pinker-v0 (lib test) due to 215 previous errors'; depois de acrescentar `pub use super::*;` no topo de src/interpreter/tests.rs a suite de unidade voltou verde e o catalogo manteve 19 de 19 hashes preservados.",
+      "source": "file:/pinker/repo/pinker-v0/agentes/a13/memory/task.jsonl"
+    }
+  ],
+  "guidance": {
+    "class": "ASSERTED",
+    "text": "Ao mover um bloco de `#[cfg(test)] mod` inline para um arquivo filho, acrescente `pub use super::*;` no topo do arquivo filho — nao `use`, que nao reexporta. Isso reconstitui, com um nivel a mais, o mesmo conjunto de nomes que os mod aninhados enxergavam, e mantem o conteudo movido byte a byte identico, preservando o hash das regioes cartografadas. E trate `cargo build` como oraculo insuficiente para qualquer movimentacao que atravesse `#[cfg(test)]`: o gate minimo de um move desses e `cargo test --lib`. A alternativa de editar cada `use super::*` para `use super::super::*` funciona mas altera o conteudo movido e produz drift de hash desnecessario em toda regiao cartografada tocada."
+  },
+  "id": "B-2GHYCJPMQ2JK",
+  "observed_at": "2026-09-05T02:35:00Z",
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "Os mod movidos continuam escrevendo `use super::*`, mas `super` deixou de ser o modulo pai e passou a ser o modulo do arquivo novo. Em src/interpreter.rs, `mod X { use super::* }` via `interpreter`; em src/interpreter/tests.rs, o mesmo `mod X` ve `interpreter::tests`, que nao tem nada. Como o codigo movido esta atras de `#[cfg(test)]`, o alvo de build nem o compila: so o alvo de teste enxerga o erro."
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "Mover os 6 `#[cfg(test)] mod` de src/interpreter.rs para src/interpreter/tests.rs. `cargo build --bin pink` terminou verde e o catalogo da Trama sincronizou com 19 de 19 hashes preservados. O move parecia correto. `cargo test --lib` deu 215 erros E0433 'use of undeclared type RuntimeValue'."
+  },
+  "references": [
+    "git:03cbb12ede5a307bffc54b383b61dbd77a36c9d6"
+  ],
+  "revision": {
+    "hash": "06888396791144b9a24ad8528641e5ecd2ca1696180cf1cd8e06c1518b85cb29",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "created through semantic authoring",
+    "updated_at": "2026-09-05T02:54:35Z",
+    "updated_by": "amara"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "src/interpreter.rs",
+      "cargo build",
+      "cargo test --lib"
+    ],
+    "conditions": [
+      "arquivo grande tem varios `#[cfg(test)] mod X { use super::*; ... }` inline",
+      "a Task move esse bloco inteiro para src/<modulo>/tests.rs"
+    ]
+  },
+  "status": "candidate",
+  "title": "Mod de teste inline movido para arquivo filho: cargo build fica verde e cargo test quebra com 215 E0433"
+}

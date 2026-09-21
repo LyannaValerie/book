@@ -1,0 +1,82 @@
+{
+  "challenges": [],
+  "contraindications": [
+    "Nao vale para digito que algum artefato registra: em comandos kind=pinker o executable_sha256 e proveniencia consumida e deve continuar sendo calculado.",
+    "Nao remova a verify pre-spawn de execute_one: ela e a unica que cobre a janela real entre autorizacao e spawn.",
+    "Nao generalize para 'hash e caro': o custo so aparece porque o binario e grande e o perfil e debug; meca antes."
+  ],
+  "cues": [
+    "cpu de usuario sem syscall",
+    "sha256 debug lento",
+    "hash de executavel",
+    "evidencia sem consumidor",
+    "observe e verify",
+    "suite lenta",
+    "agent runner",
+    "openat repetido",
+    "binario grande"
+  ],
+  "discriminating_probe": {
+    "action": "strace -f -e trace=openat sobre o binario de teste e contar openat por executavel grande; multiplicar contagem x tamanho / vazao medida do sha256 em debug",
+    "observable": "se o produto bate com o wall medido do caso, o custo e digestao de binario e nao processo, fixture ou espera"
+  },
+  "environment": {
+    "baseline": "223dbfa121fe2f6bebed90e87f2a5f9b9be2d6ba",
+    "repository": "LyannaValerie/pinker-v0"
+  },
+  "evidence": [
+    {
+      "class": "OBSERVED",
+      "description": "contagem de openat por executavel, bytes digeridos e conta fechando por caso (ev-542-process-trace-summary)",
+      "source": "file:/pinker/artifacts/evidence-store/9f/9fa64d9e3ced6a899daae4f6e465bdca200c10d5163585ced0f14be15fdb9b42"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "mapa causal de custo com classificacao REQUIRED_BY_ORACLE/INCIDENTAL (ev-542-causal-cost-map)",
+      "source": "file:/pinker/artifacts/evidence-store/a5/a5177325cef5ffb4914c4272534cb21d95e70100b3bcc69ad016ed3e794967b0"
+    },
+    {
+      "class": "OBSERVED",
+      "description": "antes e depois no mesmo ambiente e mesmo target compilado (ev-542-before-after)",
+      "source": "file:/pinker/artifacts/evidence-store/77/779e54dbd322806d6de036749eb0c5574b7f4acbc1beabaabf0b7fb61615ee99"
+    }
+  ],
+  "guidance": {
+    "class": "VALIDATED",
+    "oracle": "o alvo cai de 90 755 ms para 5 248 ms com os mesmos 55 testes verdes, e as leituras do binario de git somem do strace (8 715,8 MB -> 94,4 MB digeridos)",
+    "text": "Quando um alvo process-heavy queima CPU de usuario sem syscall correspondente, conte quantas vezes o processo ABRE cada executavel grande e multiplique pelo tamanho e pela vazao do hash no perfil debug, em vez de procurar sleep, timeout ou fixture. Em src/agent.rs a autorizacao de executavel de sistema chamava ObservedExecutable::observe seguido de verify: duas leituras completas de /usr/bin/git (20,08 MB) por invocacao de git, 430 leituras por execucao do alvo, 8,63 GB a 28,88 MB/s = ~299 s dos 312 s. O digito nao era devolvido nem registrado em artefato algum e o unico consumidor era a propria verify, relendo o mesmo arquivo microssegundos depois, sem spawn no meio. Remover o digito onde ninguem o consome (extraindo a validacao de caminho para ObservedExecutable::resolve) derrubou o alvo de 90 755 ms para 5 248 ms preservando registro fechado, validacoes de caminho, a verify pre-spawn de todo comando delegado e executable_sha256 em validation.json."
+  },
+  "id": "B-IPQR01X72NTD",
+  "observed_at": null,
+  "observed_result": {
+    "class": "OBSERVED",
+    "text": "alvo agent_runner_tests de 90 755 ms para 5 248 ms (-94,2%), 55 testes preservados e um de regressao acrescentado, make ci verde"
+  },
+  "problem": {
+    "class": "OBSERVED",
+    "text": "agent_runner_tests gastava 90,8 s de wall e 312,4 s de CPU somada por caso sem que git, shell, filesystem ou fixture explicassem o tempo: strace -c mostrava 0,19 s de syscall contra 9,86 s de CPU de usuario num caso de 9,88 s."
+  },
+  "references": [],
+  "revision": {
+    "hash": "1b2805ba496468a1ac6d011ac8e6acce7d5925ad7bf41f7011e246d9988ad266",
+    "number": 1,
+    "parent_hash": null,
+    "reason": "Issue #542: decomposicao causal de agent_runner_tests no baseline pos-#544",
+    "updated_at": "2026-08-30T05:40:00Z",
+    "updated_by": "velina"
+  },
+  "schema_version": 1,
+  "scope": {
+    "components": [
+      "src/agent.rs",
+      "tests/agent_runner_tests.rs",
+      "pinker_sha256_contract"
+    ],
+    "conditions": [
+      "suite que invoca repetidamente executavel de sistema atraves do runner do agente",
+      "perfil debug, onde o sha256 puro roda a ~29 MB/s"
+    ]
+  },
+  "status": "candidate",
+  "title": "Custo dominante de suite process-heavy pode ser digito SHA-256 de binario grande que nenhum veredito consome"
+}
