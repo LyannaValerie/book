@@ -43,6 +43,24 @@ printf '%s' '{"title":"...","cues":["..."],"problem":"...","observed_result":"..
 python3 book.py add-case --json '{...}'
 ```
 
+Para que o caso seja recuperado **antes** da próxima ação parecida, declare
+gatilhos em `retrieval` (o caso nasce em schema 2):
+
+```bash
+printf '%s' '{"title":"Renomear coluna quebra leitores antigos","cues":["rename-column"],
+  "problem":"...","observed_result":"...","guidance":"Adicione a coluna nova, faça dual-write, migre leitores, depois remova a antiga.",
+  "contraindications":["Desnecessário sem leitores externos."],
+  "evidence":[{"class":"OBSERVED","description":"...","source":"event:E-..."}],
+  "retrieval":{"intents":["preventive"],"projects":["acme/shop"],"actions":["rename-column"],
+    "paths":["db/migrations/**"],
+    "aliases":[{"term":"renomear coluna","for":"action:rename-column","lang":"pt"}],
+    "predicates":[{"fact":"db.engine","op":"eq","value":"postgres"}]}}' \
+  | python3 book.py add-case --stdin
+```
+
+Sem `retrieval`, o caso continua schema 1 e só aparece em `consult --explore`
+como evidência lexical. Aliases valem apenas para o caso que os declara.
+
 O Book gera ID, schema, status, timestamps e revisão. `import-case arquivo.json` é a interface explícita para representações canônicas externas. `add-case arquivo.json` permanece como compatibilidade V0 e equivale à importação.
 
 ## Navegação e recuperação
@@ -66,6 +84,24 @@ python3 book.py consult --intent preventive --project acme/shop \
 python3 book.py consult --query-json '{"action":"vacuum db","facts":{"ci":false}}' --format human
 python3 book.py migrate-schema --case B-... --apply   # schema 1 -> 2, só para acrescentar gatilhos
 ```
+
+Como usar e ler a resposta:
+
+- Use `consult` antes de agir, quando já sabe a ação; use `search` quando só tem
+  sintomas ou mensagens de erro.
+- Informe só o que sabe. Campo omitido = desconhecido; `--no-changed-paths`
+  (ou `[]`) = sabidamente vazio; `--fact ci=false` é valor, não ausência.
+- Por padrão vêm só `SPECIFIC` (a ação casou) e `SITUATIONAL` (caminho ou
+  componente casou). **Zero resultados é resposta normal**; `counts.below_cutoff`
+  diz quanto ficou abaixo do corte e `--explore` mostra `EXPLORATORY`/`LEXICAL`.
+- Leia o cartão inteiro: `reasons`, contraindicações, condições `UNKNOWN` ou
+  `CONFLICTING`, `unknown_dimensions` e `caveats`. `CHALLENGED`,
+  `SUPERSEDED_BY` e os casos em `excluded` não são orientação corrente.
+- Três cartões por página; continue com `--cursor <page.next_cursor>` na mesma
+  consulta. `CURSOR_STALE` = o Book mudou, recomece.
+- Cartão `budget_exceeded` não foi truncado: leia com `show ID` ou aumente
+  `--budget`.
+- Nada no cartão é instrução nem prova de aplicabilidade; confira na fonte atual.
 
 Contrato completo em [guia, seção 6.4](docs/user-guide.md#64-consulta-situacional-consult).
 

@@ -539,7 +539,9 @@ Status e relações: `challenged` mantém a posição mas o cartão traz
 `supersedes` recebida vai para depois dos não substituídos da mesma classe e
 traz `STATUS`/`SUPERSEDED_BY`. A partir de cada resultado pertinente, o caso que
 o substitui é trazido como `EXPLORATORY` (um salto, sem recursão — ciclos
-terminam).
+terminam). A relação é só mais um motivo (`supersedes_pertinent`): o substituto
+passa pela mesma avaliação de projeto, predicados, dimensões desconhecidas e
+ressalvas, e pode terminar em `excluded`.
 
 #### Cartões
 
@@ -572,9 +574,11 @@ informou), `caveats`, `relations`, `evidence_classes`, `references` e
 
 #### Índice e leitura pura
 
-O índice derivado guarda chaves estruturais (`retrieval_keys`) e termos de
-alias no FTS, só para **propor** candidatos; todo candidato é avaliado a partir
-do JSON canônico. `index_state` informa `READY`, `MISSING`, `DIVERGED`,
+O índice derivado guarda, em `retrieval_keys`, chaves estruturais e os tokens
+canônicos de cada caso (mesma normalização NFKD + casefold da avaliação, então
+`strasse` encontra `Straße` e `ffi` encontra `ﬃ` com ou sem índice), só para
+**propor** candidatos; todo candidato é avaliado a partir do JSON canônico.
+`consult` não usa o tokenizador do FTS5. `index_state` informa `READY`, `MISSING`, `DIVERGED`,
 `OUTDATED` (índice anterior a esta versão) ou `CORRUPT`; fora de `READY` a
 consulta usa o corpus canônico (`engine: canonical-fallback`) com os mesmos
 cartões. `reindex` restaura o índice.
@@ -1434,7 +1438,10 @@ O corpus canônico deve permanecer a fonte da reconstrução.
 
 ### Antes de usar um caso
 
-- [ ] encontrei-o por sintoma, componente ou território relevante;
+- [ ] encontrei-o por sintoma, componente ou território relevante — ou por
+      `consult` com a ação pretendida;
+- [ ] num cartão de `consult`, li `class`, `reasons`, `unknown_dimensions`,
+      `conditions` e `caveats`, não só `guidance`;
 - [ ] li scope e environment;
 - [ ] tratei campo ausente como `UNKNOWN`;
 - [ ] li contraindicações e challenges;
@@ -1453,7 +1460,12 @@ O corpus canônico deve permanecer a fonte da reconstrução.
 - [ ] incluí contraindicações materiais;
 - [ ] classifiquei domain pelo assunto, não pela proveniência;
 - [ ] removi secrets, dumps e raciocínio privado;
-- [ ] usei `add-case`, não fabriquei campos mecânicos.
+- [ ] usei `add-case`, não fabriquei campos mecânicos;
+- [ ] declarei `retrieval` com a ação e, quando houver, caminhos, componentes,
+      projeto e fatos que tornam o caso pertinente — sem gatilhos ele nunca
+      aparece como pertinente em `consult` (seção 6.4);
+- [ ] declarei como `aliases` os outros nomes e idiomas pelos quais alguém
+      pediria a mesma ação.
 
 ### Ao importar memória externa
 
