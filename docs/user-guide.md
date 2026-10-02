@@ -396,6 +396,201 @@ referências, challenges e revisão.
 
 `show` não interpreta conteúdo e não afirma aplicabilidade.
 
+### 6.4 Consulta situacional: `consult`
+
+`search` responde "onde aparece esta palavra?". `consult` responde "o que o
+Book já registrou sobre **esta ação, nesta situação**, antes de eu agir?". É um
+modo novo e explícito: `search`, `list` e `show` mantêm saída e contrato.
+
+#### Situação (entrada)
+
+Todos os campos são opcionais, mas a consulta precisa declarar pelo menos um.
+**Campo ausente significa desconhecido.**
+
+| Campo | Tipo | Semântica |
+|---|---|---|
+| `text` | texto ≤ 512 | evidência lexical livre |
+| `intent` | `preventive` \| `diagnostic` \| `corroborative` | para que a orientação será usada |
+| `project` | `[a-z0-9][a-z0-9._/-]*`, sem distinção de caixa | projeto/repositório, ex. `lyannavalerie/book` |
+| `action` | texto → identificador | ação pretendida; `"Rename column"` vira `rename-column` |
+| `phase` | texto → identificador | fase genérica; o Book não conhece P0–P5 nem fluxos externos |
+| `planned_paths` | lista de caminhos | arquivos que a ação **vai** tocar |
+| `changed_paths` | lista de caminhos | arquivos **já** alterados (ex. diff) |
+| `components` | lista → identificadores | componentes livres; não são caminhos |
+| `facts` | objeto `nome → valor` | fatos estruturados: texto, número ou booleano |
+
+Distinções obrigatórias:
+
+- ausente (`changed_paths` omitido) = desconhecido;
+- `[]` = sabidamente vazio (diff vazio, ação sem arquivos);
+- `false` é um valor, não ausência; `null` é rejeitado — omita o fato;
+- `{"conflicting": [v1, v2]}` declara conflito explícito entre fontes.
+
+Caminhos são relativos à raiz do repositório, em POSIX: `./` e `//` são
+normalizados; caminho absoluto, `..`, `\`, `[]`, `{}` e espaços nas bordas são
+rejeitados; curingas não são aceitos em caminhos da consulta. Caminhos
+planejados e alterados são sinais distintos, e nenhum deles exige `git diff`.
+
+Pela CLI, por flags:
+
+```bash
+python3 book.py consult --intent preventive --project acme/shop \
+  --action "renomear coluna" \
+  --planned-path db/migrations/0042_rename.sql --no-changed-paths \
+  --fact db.engine=sqlite --fact ci=false
+```
+
+Ou pela representação JSON (exatamente uma fonte; misturar JSON e flags é
+`INPUT_AMBIGUOUS`):
+
+```bash
+python3 book.py consult --query-json '{"intent":"diagnostic","action":"vacuum db","facts":{"ci":true}}'
+python3 book.py consult --query-file situacao.json
+printf '%s' '{"components":["cache"]}' | python3 book.py consult --stdin
+```
+
+`--fact NOME=VALOR` interpreta `VALOR` como literal JSON quando possível
+(`false`, `3`, `"false"`), senão como texto. Repetir o mesmo `NOME` com valores
+diferentes declara conflito. `--no-planned-paths`, `--no-changed-paths` e
+`--no-components` declaram conjunto vazio.
+
+Exemplo diagnóstico — algo já falhou e o arquivo já mudou:
+
+```bash
+python3 book.py consult --intent diagnostic --action "vacuum db" \
+  --changed-path scripts/maintenance.sh --text "database is locked" --format human
+```
+
+#### Gatilhos do caso (`retrieval`)
+
+Gatilhos dizem **quando** recuperar um caso; nunca provam que ele se aplica.
+Vivem no campo `retrieval` do schema 2 (ver [modelo de dados](data-model.md)) e
+são separados de `scope`: `scope.components` continua texto livre e nunca vira
+catálogo de caminhos; `scope.conditions` continua prosa e é servido como
+`prose_unverified`, nunca convertido em predicado.
+
+```json
+"retrieval": {
+  "intents": ["preventive"],
+  "projects": ["acme/shop"],
+  "actions": ["rename-column"],
+  "phases": ["implement"],
+  "paths": ["db/migrations/**"],
+  "components": ["schema"],
+  "aliases": [
+    {"term": "renomear coluna", "for": "action:rename-column", "lang": "pt"},
+    {"term": "renombrar columna", "for": "action:rename-column", "lang": "es"}
+  ],
+  "predicates": [{"fact": "db.engine", "op": "eq", "value": "sqlite"}]
+}
+```
+
+- Padrões de caminho aceitam `*` e `?` dentro de um segmento e `**` como
+  segmento inteiro; `dir/` equivale a `dir/**`. Correspondência diferencia
+  maiúsculas.
+- Operadores de predicado: `eq`, `ne`, `in`, `not_in`, `lt`, `le`, `gt`, `ge`.
+  Comparação só entre tipos iguais (texto, número, booleano); tipos diferentes
+  dão `UNKNOWN`. Nada é avaliado como código.
+- Cada predicado resulta em `SATISFIED`, `CONTRADICTED`, `UNKNOWN` (fato não
+  informado) ou `CONFLICTING` (conflito declarado na consulta).
+- Aliases são **contextuais e versionados**: pertencem ao caso, só podem nomear
+  ações/componentes que o próprio caso declara e mudam por `revise`, com
+  revisão. Não há sinônimos globais: "git push" expande para
+  `publish-branch` apenas no caso que declarou isso. Paráfrases e outros idiomas
+  só são cobertos quando declarados; o Book não promete compreensão semântica.
+
+#### Classes de pertinência e corte
+
+| Classe | Quando |
+|---|---|
+| `SPECIFIC` | a ação casou (direto ou por alias) |
+| `SITUATIONAL` | caminho ou componente casou e o caso não declara ações |
+| `EXPLORATORY` | caminho/componente casou, mas o caso declara ações e a ação não casou ou não foi informada; ou o caso substitui (`supersedes`) um resultado pertinente |
+| `LEXICAL` | só evidência textual (`text`, palavras da ação/componentes, termos de alias) |
+
+Divergência de `phase` ou `intent` rebaixa `SPECIFIC → SITUATIONAL →
+EXPLORATORY`. Caminho isolado não comprova relevância para qualquer ação naquele
+arquivo. Projeto e fatos não criam candidatos; apenas qualificam.
+
+**Exclusão:** projeto incompatível ou predicado `CONTRADICTED` tira o caso dos
+resultados, qualquer que seja sua pontuação, e o lista em `excluded` com o
+motivo.
+
+**Corte:** por padrão só `SPECIFIC` e `SITUATIONAL` (`cutoff: "pertinent"`).
+`--explore` inclui `EXPLORATORY` e `LEXICAL`. Zero pertinentes é resposta
+válida; `counts.below_cutoff` informa quantos ficaram abaixo do corte. O limiar
+do score legado de `search` não é usado.
+
+#### Ordenação
+
+```text
+classe → não substituído antes de substituído → pontos estruturais
+       → evidência lexical → ID (desempate estável)
+```
+
+Pontos ordinais: ação 8, caminho alterado 4, caminho planejado 4,
+componente 3, fase 2, projeto 2, cada predicado satisfeito 2, intenção 1;
+termo de alias no texto soma 3 à evidência lexical. **Score não é
+probabilidade**, e popularidade, acessos e utilidade (`use`) não entram na
+ordenação.
+
+Status e relações: `challenged` mantém a posição mas o cartão traz
+`CHALLENGED` com as contestações; `superseded`/`historical` ou aresta
+`supersedes` recebida vai para depois dos não substituídos da mesma classe e
+traz `STATUS`/`SUPERSEDED_BY`. A partir de cada resultado pertinente, o caso que
+o substitui é trazido como `EXPLORATORY` (um salto, sem recursão — ciclos
+terminam).
+
+#### Cartões
+
+Cada cartão contém `id`, `title`, `revision` (`hash`, `number`), `status`,
+`class`, `use` (intenção da consulta, intenções do caso e `MATCH`/`MISMATCH`/
+`UNKNOWN`), `reasons` (sinais concretos, incluindo expansões por alias),
+`guidance` (claim canônico com sua classe epistemológica), todas as
+`contraindications`, `conditions` (`satisfied`, `unknown`, `conflicting`,
+`prose_unverified`), `unknown_dimensions` (gatilhos do caso que a consulta não
+informou), `caveats`, `relations`, `evidence_classes`, `references` e
+`full_case`. Os campos são copiados do caso; nada é resumido nem gerado.
+
+`--format human` imprime a mesma página em texto; o JSON é o contrato estável.
+
+#### Paginação, continuação e orçamento
+
+- `--page-size` (padrão 3, máximo 50).
+- `page.next_cursor` continua a mesma consulta (`--cursor`). A ordem é total e
+  determinística, então páginas sucessivas não duplicam nem omitem candidatos.
+- Se a consulta ou o corte mudar: `CURSOR_QUERY_MISMATCH`. Se o acervo
+  (casos, catálogo, relações) mudar: `CURSOR_STALE` — refaça a consulta da
+  primeira página.
+- `--budget N` (padrão 8000, faixa 256..200000) limita a página em **caracteres
+  do JSON compacto de cada cartão** (`sort_keys`, sem escape ASCII). Cartões
+  entram inteiros ou não entram: nenhuma orientação é truncada e nenhuma
+  contraindicação é removida. Se nem o primeiro cartão couber, ele vira um
+  marcador `budget_exceeded: true` com `card_chars` e `full_case`;
+  `budget.exhausted` e `page.next_cursor` indicam como continuar.
+- A consulta não é ecoada na resposta, apenas `query_digest`.
+
+#### Índice e leitura pura
+
+O índice derivado guarda chaves estruturais (`retrieval_keys`) e termos de
+alias no FTS, só para **propor** candidatos; todo candidato é avaliado a partir
+do JSON canônico. `index_state` informa `READY`, `MISSING`, `DIVERGED`,
+`OUTDATED` (índice anterior a esta versão) ou `CORRUPT`; fora de `READY` a
+consulta usa o corpus canônico (`engine: canonical-fallback`) com os mesmos
+cartões. `reindex` restaura o índice.
+
+`consult` não altera casos nem migra a fonte. Com `--task`, registra um evento
+`SEARCH` de acesso (como `search`), nunca utilidade.
+
+#### Limitações
+
+- Sem embeddings, tradução ou sinônimos globais; vocabulário depende de aliases
+  declarados.
+- Casos schema 1 não têm gatilhos: aparecem só como `LEXICAL` com `--explore`.
+  Gatilhos não são inferidos retroativamente.
+- Mapear fases de outro sistema (ex. P0–P5) para `phase` é responsabilidade do
+  chamador.
+
 ## 7. Criar conhecimento com `add-case`
 
 `add-case` é autoria. O usuário fornece significado; o Book gera estrutura
@@ -474,8 +669,11 @@ Campos semânticos aceitos:
 ```text
 title, cues, scope, observed_at, environment, problem,
 discriminating_probe, observed_result, guidance, contraindications,
-evidence, references, domain, views, synthetic, author
+evidence, references, domain, views, synthetic, author, retrieval
 ```
+
+`retrieval` é opcional: com ele o caso nasce em schema 2 com gatilhos de
+recuperação (seção 6.4); sem ele, continua schema 1.
 
 Campos desconhecidos falham fechado. O payload não deve conter `id`,
 `schema_version`, `status`, `revision`, timestamps de revisão ou `challenges`.
@@ -1096,6 +1294,30 @@ Executa a migração explícita suportada para dados do spike V0. Rode `verify`
 antes e depois, mantenha o Git limpo ou revisável e nunca reescreva dados
 silenciosamente para apenas obter verde.
 
+### 18.6 Migração de schema 1 → 2
+
+Casos schema 1 continuam válidos e consultáveis; migrar só é necessário para
+acrescentar gatilhos (`revise` com `retrieval` num caso schema 1 falha com
+`SCHEMA_MIGRATION_REQUIRED`).
+
+```bash
+python3 book.py migrate-schema --case B-...            # dry run
+python3 book.py migrate-schema --case B-... --apply
+python3 book.py migrate-schema --all                   # dry run do acervo
+```
+
+`--case` (repetível) ou `--all` é obrigatório; sem `--apply` nada é escrito.
+Cada caso passa pelo mesmo caminho protegido de `revise`: compare-and-swap da
+revisão, intenção durável, escrita idempotente e evento `CASE_REVISE`. O caso
+ganha `schema_version: 2`, `retrieval: null` (desconhecido — nenhum gatilho é
+inferido) e uma nova revisão encadeada; ID, referências, challenges e todos os
+demais campos ficam idênticos, ou a migração falha com `MIGRATION_DATA_LOSS`.
+Repetir é seguro: casos já em schema 2 aparecem em `already_current`. Depois,
+acrescente gatilhos com `revise`.
+
+Não migre o acervo compartilhado inteiro só para demonstração; migre os casos
+que vão receber gatilhos.
+
 ## 19. Concorrência
 
 O Book usa escrita atômica, locks mínimos e CAS por revision hash.
@@ -1177,7 +1399,20 @@ para enganar a validação.
 ### `SCHEMA_INVALID` ou schema futuro
 
 Confira campos aceitos e versão da ferramenta. Leitor antigo falha fechado para
-schema futuro; atualize/migre explicitamente.
+schema futuro; atualize/migre explicitamente. Ferramentas anteriores à 1.2.0
+recusam casos schema 2 com `SCHEMA_FUTURE_UNSUPPORTED`.
+
+### `SCHEMA_MIGRATION_REQUIRED`
+
+O caso é schema 1 e a escrita inclui `retrieval`. Rode `migrate-schema --case
+ID --apply` e repita a revisão com a nova revisão.
+
+### `QUERY_INVALID`, `CURSOR_*`
+
+`QUERY_INVALID`: a situação tem campo desconhecido, tipo errado, caminho
+ambíguo, `null` em fato ou limite fora da faixa; `details` lista o permitido.
+`CURSOR_INVALID`, `CURSOR_QUERY_MISMATCH` e `CURSOR_STALE`: refaça a consulta
+sem `--cursor`. Todos saem com exit code 2.
 
 ### Resolver `UNAVAILABLE`
 

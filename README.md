@@ -57,6 +57,18 @@ python3 book.py references B-7K4M2Q9R6T3V
 python3 book.py resolve book:B-7K4M2Q9R6T3V
 ```
 
+Consulta situacional antes de agir — ação, projeto, fase, caminhos planejados ou
+alterados, componentes e fatos — com cartões classificados e explicados:
+
+```bash
+python3 book.py consult --intent preventive --project acme/shop \
+  --action "renomear coluna" --planned-path db/migrations/0042.sql --no-changed-paths
+python3 book.py consult --query-json '{"action":"vacuum db","facts":{"ci":false}}' --format human
+python3 book.py migrate-schema --case B-... --apply   # schema 1 -> 2, só para acrescentar gatilhos
+```
+
+Contrato completo em [guia, seção 6.4](docs/user-guide.md#64-consulta-situacional-consult).
+
 Views são projeções de facetas; alterar uma view com `facet set` não altera o ID do caso.
 
 ## Relações e autoridades

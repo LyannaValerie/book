@@ -6,6 +6,29 @@ O schema 1 preserva `title`, `cues`, `scope`, `observed_at`, `environment`, `pro
 
 Claims e evidências distinguem `OBSERVED`, `ASSERTED` e `VALIDATED`. `VALIDATED` exige oráculo explícito. Leitura seguida de sucesso não demonstra causalidade.
 
+### Schema 2: gatilhos de recuperação
+
+Schema 2 é o schema 1 acrescido do campo obrigatório `retrieval`: `null`
+(desconhecido) ou objeto com campos opcionais `intents`, `projects`, `actions`,
+`phases`, `paths`, `components`, `aliases` e `predicates`. Campo ausente
+significa que o caso não declara nada naquela dimensão; listas vazias são
+rejeitadas. Gatilhos dizem quando recuperar, não que o caso se aplica.
+
+- `projects`: identificadores `[a-z0-9][a-z0-9._/-]*` (caixa normalizada).
+- `actions`, `phases`, `components`: texto normalizado para identificador
+  (`Rename column` → `rename-column`); colisões após normalização são rejeitadas.
+- `paths`: padrões relativos POSIX com `*`, `?` e `**` de segmento inteiro;
+  absoluto, `..`, `\`, `[]` e `{}` são rejeitados.
+- `aliases`: `{term, for: "action:<id>"|"component:<id>", lang?}`; o alvo precisa
+  estar declarado no próprio caso. Versionados pela revisão do caso.
+- `predicates`: `{fact, op, value}` com `op` em `eq ne in not_in lt le gt ge`.
+
+`scope` permanece separado: `scope.components` é texto e `scope.conditions` é
+prosa não verificada. Casos sem gatilhos continuam schema 1; `add-case` só
+produz schema 2 quando o payload traz `retrieval`. A migração 1 → 2 é explícita
+(`migrate-schema`) e não infere gatilhos. Detalhes de consulta, classes e
+ordenação: [guia, seção 6.4](user-guide.md#64-consulta-situacional-consult).
+
 Facetas vivem em `catalog/` para permitir múltiplas views e mudanças de território sem alterar identidade nem duplicar casos.
 
 ## Relation
