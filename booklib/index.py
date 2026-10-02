@@ -15,7 +15,7 @@ from .views import case_views
 from . import retrieval, v0
 
 #: Bumped when the derived tables change; an index without it is OUTDATED.
-RETRIEVAL_INDEX_VERSION = "1"
+RETRIEVAL_INDEX_VERSION = "2"
 
 
 def index_path(root: Path) -> Path:
@@ -81,11 +81,13 @@ def candidate_ids(root: Path, tokens: set[str]) -> set[str] | None:
         if db is not None: db.close()
 
 
-def consult_candidates(root: Path, tokens: set[str], keys: list[tuple[str, str]]) -> tuple[set[str] | None, str]:
+def consult_candidates(root: Path, keys: list[tuple[str, str]]) -> tuple[set[str] | None, str]:
     """Candidate superset for situational retrieval, or ``None`` with the reason to fall back.
 
     The index only proposes; every candidate is evaluated from canonical JSON,
-    so a usable index and the fallback must return the same cards.
+    so a usable index and the fallback must return the same cards. Lexical
+    candidates come from canonical tokens, not from FTS5's own tokenizer,
+    which folds differently (``Straße``, ``ﬃ``).
     """
     path = index_path(root)
     if not path.exists(): return None, "MISSING"
@@ -94,11 +96,8 @@ def consult_candidates(root: Path, tokens: set[str], keys: list[tuple[str, str]]
         db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
         metadata = dict(db.execute("SELECT key,value FROM metadata"))
         if metadata.get("corpus_signature") != corpus_signature(root): return None, "DIVERGED"
-        if metadata.get("fts5") != "true" or metadata.get("retrieval_index") != RETRIEVAL_INDEX_VERSION: return None, "OUTDATED"
+        if metadata.get("retrieval_index") != RETRIEVAL_INDEX_VERSION: return None, "OUTDATED"
         found: set[str] = set()
-        if tokens:
-            query = " OR ".join('"' + token.replace('"', '""') + '"' for token in sorted(tokens))
-            found |= {row[0] for row in db.execute("SELECT id FROM case_fts WHERE case_fts MATCH ?", (query,))}
         for kind, value in keys:
             found |= {row[0] for row in db.execute("SELECT case_id FROM retrieval_keys WHERE kind=? AND value=?", (kind, value))}
         return found, "READY"

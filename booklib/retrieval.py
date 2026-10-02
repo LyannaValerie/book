@@ -219,10 +219,20 @@ def case_triggers(case: dict[str, Any]) -> dict[str, Any]:
     return normalized_triggers(case.get("retrieval"))
 
 
+def lexical_tokens(case: dict[str, Any]) -> set[str]:
+    """Every canonical token a lexical or alias-text signal can match."""
+    return set(v0.normalize_tokens(" ".join([*v0.searchable_fields(case).values(), alias_text(case)])))
+
+
 def index_keys(case: dict[str, Any]) -> list[tuple[str, str]]:
-    """Structural keys a derived index may use to propose candidates."""
+    """Keys a derived index may use to propose candidates.
+
+    Tokens come from the same normalisation the evaluation uses (NFKD +
+    casefold), so the index can never drop a candidate the fallback would keep.
+    """
     triggers = case_triggers(case)
-    keys = {("action", item) for item in triggers.get("actions", [])}
+    keys = {("token", token) for token in lexical_tokens(case)}
+    keys |= {("action", item) for item in triggers.get("actions", [])}
     keys |= {("component", item) for item in triggers.get("components", [])}
     keys |= {(alias["dimension"], alias["slug"]) for alias in triggers.get("aliases", [])}
     if triggers.get("paths"):
@@ -298,7 +308,7 @@ def query_tokens(query: dict[str, Any]) -> set[str]:
 
 
 def query_keys(query: dict[str, Any]) -> list[tuple[str, str]]:
-    keys = set()
+    keys = {("token", token) for token in query_tokens(query)}
     if "action" in query:
         keys.add(("action", query["action"]))
     keys |= {("component", item) for item in query.get("components", [])}
@@ -352,7 +362,9 @@ def match_action(query: dict[str, Any], triggers: dict[str, Any]) -> dict[str, A
     return None
 
 
-def evaluate(case: dict[str, Any], query: dict[str, Any], tokens: set[str]) -> dict[str, Any] | None:
+def evaluate(case: dict[str, Any], query: dict[str, Any], tokens: set[str], via: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    """Classify one case. ``via`` is a relation that recovered it: one more
+    reason, never a dispensation from project, conditions or unknowns."""
     triggers = case_triggers(case)
     reasons: list[dict[str, Any]] = []
     unknown: list[str] = []
@@ -438,11 +450,15 @@ def evaluate(case: dict[str, Any], query: dict[str, Any], tokens: set[str]) -> d
         rank = 2 if "actions" in triggers else 1
     elif lexical:
         rank = 3
+    elif via is not None:
+        rank = 2
     else:
         return None
     if demotions and rank < 2:
         rank += 1
     reasons.extend(demotions)
+    if via is not None:
+        reasons.append(via)
     return {
         "id": case["id"],
         "class": CLASSES[rank],
@@ -556,7 +572,7 @@ def consult(root: Path, raw_query: Any, *, explore: bool = False, page_size: int
     offset = decode_cursor(cursor, query_digest, state) if cursor is not None else 0
 
     tokens = query_tokens(query)
-    candidate_ids, index_state = consult_candidates(root, tokens, query_keys(query))
+    candidate_ids, index_state = consult_candidates(root, query_keys(query))
     if candidate_ids is None:
         corpus = {case["id"]: case for case in v0.load_corpus(root)}
     else:
@@ -584,9 +600,10 @@ def consult(root: Path, raw_query: Any, *, explore: bool = False, page_size: int
             if not path.exists():
                 continue
             # Every case with a signal of its own is already evaluated (the
-            # index proposes a superset), so this one is surfaced only by the edge.
+            # index proposes a superset), so this one is surfaced by the edge
+            # alone — and still goes through the full evaluation.
             corpus[newer] = v0.load_case_file(path)
-            evaluations[newer] = {"id": newer, "class": "EXPLORATORY", "points": 0, "lexical": 0, "reasons": [reason], "excluded": [], "unknown": [], "conditions": {"satisfied": [], "unknown": [], "conflicting": []}, "use": {"query_intent": query.get("intent"), "case_intents": case_triggers(corpus[newer]).get("intents")}}
+            evaluations[newer] = evaluate(corpus[newer], query, tokens, via=reason)
 
     excluded = sorted((e for e in evaluations.values() if e["excluded"]), key=lambda e: e["id"])
     ranked = sorted((e for e in evaluations.values() if not e["excluded"]), key=lambda e: rank_key(corpus[e["id"]], e, superseded_by))
