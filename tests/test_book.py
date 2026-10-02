@@ -159,7 +159,7 @@ class BookCliTests(unittest.TestCase):
         code, result = self.cli("add-case", str(self.write_json("invalid.json", invalid)))
         self.assertEqual((code, result["error"]), (2, "SCHEMA_INVALID"))
         future = valid_draft()
-        future["schema_version"] = 2
+        future["schema_version"] = 3  # 2 is supported since retrieval triggers
         code, result = self.cli("add-case", str(self.write_json("future.json", future)))
         self.assertEqual((code, result["error"]), (2, "SCHEMA_FUTURE_UNSUPPORTED"))
         boolean = valid_draft()
@@ -171,7 +171,7 @@ class BookCliTests(unittest.TestCase):
         (self.root / "cases").mkdir(parents=True)
         (self.root / "cases" / "broken.json").write_text("{", encoding="utf-8")
         future = book_v0.prepare_new_case(valid_draft())
-        future["schema_version"] = 2
+        future["schema_version"] = 3  # 2 is supported since retrieval triggers
         future["revision"]["hash"] = book_v0.revision_hash(future)
         (self.root / "cases" / f"{future['id']}.json").write_text(json.dumps(future), encoding="utf-8")
         code, result = self.cli("verify")

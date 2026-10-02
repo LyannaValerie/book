@@ -18,6 +18,7 @@ SEMANTIC_FIELDS = {
     "title", "cues", "scope", "observed_at", "environment", "problem",
     "discriminating_probe", "observed_result", "guidance", "contraindications",
     "evidence", "references", "domain", "views", "synthetic", "author",
+    "retrieval",
 }
 
 
@@ -67,6 +68,11 @@ def semantic_to_draft(payload: Any, *, actor: str = "author", now: str | None = 
         "challenges": [],
         "revision": {"updated_at": timestamp, "updated_by": author, "reason": "created through semantic authoring"},
     }
+    if "retrieval" in data:
+        # Declaring triggers is what opts a new case into schema 2; without
+        # them the case stays schema 1, readable by earlier tools.
+        draft["schema_version"] = v0.LATEST_SCHEMA_VERSION
+        draft["retrieval"] = data["retrieval"]
     facets = {
         "case_id": draft["id"],
         "domain": data.get("domain", "Uncategorized"),

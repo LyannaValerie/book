@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from .core import BookError, atomic_write, read_json
+from .core import BookError, atomic_write, read_json, utc_now
 from .events import classify_log, load_events, log_path, validate_events
 from .index import check_index
 from .ladders import validate_ladder
@@ -138,6 +138,61 @@ def migrate_v0(root: Path) -> dict[str, Any]:
         path = facet_path(root, case["id"])
         if not path.exists(): atomic_write(path, infer_facets(case)); created.append(str(path.relative_to(root)))
     return {"ok": True, "operation": "migrate-v0", "case_schema_rewritten": False, "created_overlays": created}
+
+
+MIGRATION_REASON = "schema migration 1->2: retrieval added as null (UNKNOWN); no trigger inferred"
+
+
+def migrate_schema(root: Path, case_ids: list[str] | None, *, apply: bool, actor: str, task_id: str | None = None, require_task: bool = False, now: str | None = None) -> dict[str, Any]:
+    """Explicit, repeatable schema 1 -> 2 migration of chosen cases.
+
+    Each case moves through ``revise``'s protected path: compare-and-swap on the
+    current revision, durable intent, idempotent write and event. Nothing is
+    inferred: ``retrieval`` becomes null (UNKNOWN) and every other semantic
+    field must come out byte-identical. Without ``apply`` it only reports.
+    """
+    from . import mutation, tasks
+    tasks.require_association(root, task_id, require=require_task, allow_finished=True)
+    corpus = {case["id"]: case for case in v0.load_corpus(root)}
+    targets = sorted(corpus) if case_ids is None else sorted(set(case_ids))
+    for case_id in targets:
+        if case_id not in corpus: raise BookError("CASE_NOT_FOUND", f"case {case_id} not found")
+    pending = [case_id for case_id in targets if corpus[case_id]["schema_version"] == 1]
+    current = [case_id for case_id in targets if corpus[case_id]["schema_version"] == v0.LATEST_SCHEMA_VERSION]
+    result: dict[str, Any] = {"ok": True, "operation": "migrate-schema", "to": v0.LATEST_SCHEMA_VERSION, "dry_run": not apply, "already_current": current}
+    if not apply:
+        return {**result, "would_migrate": pending}
+    migrated = []
+    for case_id in pending:
+        expected = corpus[case_id]["revision"]["hash"]
+        updated_at = now or utc_now()
+
+        def plan(case_id: str = case_id, expected: str = expected, updated_at: str = updated_at) -> dict[str, Any]:
+            case = v0.find_case(root, case_id)
+            v0.require_current_revision(case, expected)
+            if case["schema_version"] != 1:
+                raise BookError("MIGRATION_NOT_APPLICABLE", f"case {case_id} is no longer schema 1")
+            before = {key: value for key, value in case.items() if key not in {"schema_version", "revision"}}
+            case["schema_version"] = v0.LATEST_SCHEMA_VERSION
+            case["retrieval"] = None
+            v0.next_revision(case, updated_at=updated_at, updated_by=actor, reason=MIGRATION_REASON)
+            v0.validate_case(case)
+            if any(case[key] != value for key, value in before.items()):
+                raise BookError("MIGRATION_DATA_LOSS", f"migration would alter case {case_id}")
+            return {
+                "writes": [{"path": f"cases/{case_id}.json", "value": case, "parent": expected}],
+                "event": {"summary": case_id, "data": {"case_id": case_id, "revision": case["revision"]["hash"]}},
+                "result": {"ok": True, "operation": "migrate-schema", "id": case_id, "revision": case["revision"]["hash"], "parent_revision": expected, "schema_version": v0.LATEST_SCHEMA_VERSION},
+            }
+
+        migrated.append(mutation.guarded(
+            root, kind="case_revise", event_kind="CASE_REVISE", task_id=task_id,
+            require_task=require_task, operation_id=None,
+            request={"case_id": case_id, "expected": expected, "migration": "schema-2", "reason": MIGRATION_REASON},
+            store_lock=lambda: v0.exclusive_book_lock(root),
+            plan=plan,
+        ))
+    return {**result, "migrated": migrated}
 
 
 def gc_candidates(root: Path) -> dict[str, Any]:
