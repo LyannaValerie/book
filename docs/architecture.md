@@ -11,6 +11,8 @@ Book é experiência, evidência e orientação histórica. Não é autoridade f
 - `authoring.py`: payload semântico, TTY e mecânica de criação.
 - `v0.py`: Case Store schema 1 preservado, CAS, validação e escrita atômica.
 - `views.py` e `search.py`: navegação por facetas e busca lexical determinística.
+- `retrieval.py`: gatilhos do schema 2, consulta situacional (`consult`),
+  classes de pertinência, ordenação, cartões, cursor e orçamento.
 - `relations.py` e `references.py`: grafo tipado e resolvers por namespace.
 - `tasks.py`, `events.py` e `metrics.py`: contexto operacional curto, vínculo
   opcional `external_task_ref`, fatos append-only e projeções de custo. O vínculo
@@ -18,8 +20,10 @@ Book é experiência, evidência e orientação histórica. Não é autoridade f
 - `retention.py`: decisão explícita entre criar, revisar, desafiar ou não escrever.
 - `paths.py`: projeções derivadas de traces; nunca execução.
 - `ladders.py`: procedimentos ramificados explicitamente promovidos.
-- `index.py`: SQLite/FTS descartável.
-- `maintenance.py`: verify, doctor, migração overlay e GC somente consultivo.
+- `index.py`: SQLite/FTS descartável; `retrieval_keys` propõe candidatos
+  estruturais, avaliados sempre no JSON canônico.
+- `maintenance.py`: verify, doctor, migração overlay, migração explícita de
+  schema 1 → 2 e GC somente consultivo.
 
 ## Persistência
 

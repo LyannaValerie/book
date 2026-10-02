@@ -21,7 +21,10 @@ from typing import Any
 
 
 TOOL_VERSION = "0.1.0"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 1  # default for cases without retrieval triggers
+# Schema 2 is schema 1 plus the required ``retrieval`` field (null = UNKNOWN).
+LATEST_SCHEMA_VERSION = 2
+SUPPORTED_SCHEMA_VERSIONS = (1, 2)
 CONTENT_TRUST = "UNTRUSTED_DATA"
 
 
@@ -66,7 +69,7 @@ CASE_FIELDS = {
     "challenges",
     "revision",
 }
-EDITABLE_FIELDS = CASE_FIELDS - {"id", "schema_version", "challenges", "revision"}
+EDITABLE_FIELDS = (CASE_FIELDS | {"retrieval"}) - {"id", "schema_version", "challenges", "revision"}
 REVISION_DRAFT_FIELDS = {"updated_at", "updated_by", "reason"}
 REVISION_FIELDS = REVISION_DRAFT_FIELDS | {"number", "parent_hash", "hash"}
 CHALLENGE_FIELDS = {
@@ -90,6 +93,10 @@ SECRET_PATTERNS = (
     ),
 )
 SENSITIVE_KEY_RE = re.compile(r"(?:secret|token|password|credential|private[_-]?key)", re.I)
+
+
+def case_fields(schema_version: Any) -> set[str]:
+    return CASE_FIELDS | {"retrieval"} if schema_version == 2 and type(schema_version) is int else CASE_FIELDS
 
 
 class BookError(Exception):
@@ -298,9 +305,11 @@ def validate_revision(value: Any, case: dict[str, Any]) -> None:
 
 def validate_case(case: Any) -> dict[str, Any]:
     case = require_object(case, "case")
-    require_exact_fields(case, CASE_FIELDS, "case")
-    if type(case["schema_version"]) is not int or case["schema_version"] != SCHEMA_VERSION:
-        code = "SCHEMA_FUTURE_UNSUPPORTED" if isinstance(case["schema_version"], int) and case["schema_version"] > SCHEMA_VERSION else "SCHEMA_UNSUPPORTED"
+    if type(case.get("schema_version")) is int and case["schema_version"] == 1 and "retrieval" in case:
+        raise BookError("SCHEMA_MIGRATION_REQUIRED", "retrieval requires schema_version 2; run migrate-schema first")
+    require_exact_fields(case, case_fields(case.get("schema_version")), "case")
+    if type(case["schema_version"]) is not int or case["schema_version"] not in SUPPORTED_SCHEMA_VERSIONS:
+        code = "SCHEMA_FUTURE_UNSUPPORTED" if isinstance(case["schema_version"], int) and case["schema_version"] > LATEST_SCHEMA_VERSION else "SCHEMA_UNSUPPORTED"
         raise BookError(code, f"unsupported schema_version {case['schema_version']!r}")
     if not isinstance(case["id"], str) or not CASE_ID_RE.fullmatch(case["id"]):
         raise BookError("CASE_ID_INVALID", "id must match B-[A-Z0-9]{12}")
@@ -328,6 +337,9 @@ def validate_case(case: Any) -> dict[str, Any]:
         challenge_ids.add(challenge["id"])
     if case["status"] == "challenged" and not case["challenges"]:
         raise BookError("SCHEMA_INVALID", "challenged status requires at least one challenge")
+    if case["schema_version"] == 2:
+        from .retrieval import validate_retrieval
+        validate_retrieval(case["retrieval"])
     validate_revision(case["revision"], case)
     return case
 
@@ -473,7 +485,7 @@ def set_revision(
 
 def prepare_new_case(draft: Any) -> dict[str, Any]:
     case = require_object(copy.deepcopy(draft), "case draft")
-    require_exact_fields(case, CASE_FIELDS, "case draft")
+    require_exact_fields(case, case_fields(case.get("schema_version")), "case draft")
     revision = require_object(case["revision"], "case draft.revision")
     require_exact_fields(revision, REVISION_DRAFT_FIELDS, "case draft.revision")
     if case["challenges"] != []:
