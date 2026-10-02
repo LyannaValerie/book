@@ -17,11 +17,12 @@ from .core import BookError, atomic_write, loads_json, read_json, utc_now
 from .events import append_event
 from .index import reindex
 from .ladders import add_ladder, list_ladders, show_ladder
-from .maintenance import doctor, gc_candidates, migrate_v0, verify
+from .maintenance import doctor, gc_candidates, migrate_schema, migrate_v0, verify
 from .paths import explore, mark_path, search_paths
 from .references import resolve
 from .relations import add_relation, references
 from . import mutation
+from . import retrieval
 from .retention import assess as retention_assess, record as retention_record, status as retention_status
 from .search import search_cases
 from .tasks import add_missing, add_state, begin, finish, load_task, note_loaded, receipt, set_next_probe, validate as validate_task
@@ -68,6 +69,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--operation-id", help="identity of this mutation, for safe retry")
     commands = parser.add_subparsers(dest="command")
     search = commands.add_parser("search"); search.add_argument("query"); search.add_argument("--within"); search.add_argument("--limit", type=int, default=50)
+    consult = commands.add_parser("consult", help="situational retrieval: classified, explained cards for an intended action")
+    consult.add_argument("--query-json", dest="json_payload", help="full situation as JSON"); consult.add_argument("--query-file", dest="input", type=Path); consult.add_argument("--stdin", action="store_true")
+    consult.add_argument("--text"); consult.add_argument("--intent", choices=retrieval.INTENTS); consult.add_argument("--project"); consult.add_argument("--action"); consult.add_argument("--phase")
+    consult.add_argument("--planned-path", action="append"); consult.add_argument("--changed-path", action="append"); consult.add_argument("--component", action="append")
+    consult.add_argument("--no-planned-paths", action="store_true", help="planned paths are known to be none"); consult.add_argument("--no-changed-paths", action="store_true", help="changed paths are known to be none (e.g. empty diff)"); consult.add_argument("--no-components", action="store_true", help="components are known to be none")
+    consult.add_argument("--fact", action="append", metavar="NAME=VALUE", help="VALUE is a JSON literal when it parses as one, else text; repeating NAME with different values declares a conflict")
+    consult.add_argument("--explore", action="store_true", help="also list EXPLORATORY and LEXICAL candidates"); consult.add_argument("--page-size", type=int, default=retrieval.DEFAULT_PAGE_SIZE); consult.add_argument("--budget", type=int, default=retrieval.DEFAULT_BUDGET, help="characters of compact JSON per page of cards"); consult.add_argument("--cursor"); consult.add_argument("--format", choices=("json", "human"), default="json")
     listing = commands.add_parser("list"); listing.add_argument("view", nargs="?"); listing.add_argument("--limit", type=int, default=100)
     show = commands.add_parser("show"); show.add_argument("identifier"); show.add_argument("--metadata", action="store_true")
     add = commands.add_parser("add-case"); add_payload_options(add, positional=True); add.add_argument("--allow-similar", action="store_true")
@@ -101,6 +109,7 @@ def build_parser() -> argparse.ArgumentParser:
     path = commands.add_parser("path"); ps = path.add_subparsers(dest="path_command", required=True); psearch = ps.add_parser("search"); psearch.add_argument("query", nargs="?", default=""); psearch.add_argument("--success", nargs="?", const=""); psearch.add_argument("--domain"); psearch.add_argument("--limit",type=int,default=50); pm = ps.add_parser("mark"); pm.add_argument("id"); pm.add_argument("--status", required=True); pm.add_argument("--reason", required=True); pm.add_argument("--evidence"); pe = ps.add_parser("explore"); pe.add_argument("--primary", required=True); pe.add_argument("--candidate", required=True); pe.add_argument("--budget", type=int, required=True)
     ladder = commands.add_parser("ladder"); ls = ladder.add_subparsers(dest="ladder_command", required=True); la = ls.add_parser("add"); add_payload_options(la); ls.add_parser("list"); lshow = ls.add_parser("show"); lshow.add_argument("id")
     commands.add_parser("verify"); commands.add_parser("doctor"); commands.add_parser("reindex"); commands.add_parser("migrate-v0")
+    migrate = commands.add_parser("migrate-schema", help="explicit schema 1 -> 2 migration (dry run unless --apply)"); migrate_target = migrate.add_mutually_exclusive_group(required=True); migrate_target.add_argument("--case", action="append", dest="cases"); migrate_target.add_argument("--all", action="store_true"); migrate.add_argument("--apply", action="store_true")
     gc = commands.add_parser("gc"); gcs = gc.add_subparsers(dest="gc_command", required=True); gcs.add_parser("candidates")
     return parser
 
@@ -111,10 +120,40 @@ def _record_access(root: Path, task_id: str | None, kind: str, result: Any, data
     append_event(root, kind, task_id=task_id, summary=summary, data=data)
 
 
+def situation_from(args: argparse.Namespace) -> Any:
+    flags = {"text": args.text, "intent": args.intent, "project": args.project, "action": args.action, "phase": args.phase}
+    query: dict[str, Any] = {key: value for key, value in flags.items() if value is not None}
+    for field, values, none in (("planned_paths", args.planned_path, args.no_planned_paths), ("changed_paths", args.changed_path, args.no_changed_paths), ("components", args.component, args.no_components)):
+        if values and none: raise BookError("INPUT_AMBIGUOUS", f"{field}: values and the known-empty flag are mutually exclusive")
+        if values is not None: query[field] = values
+        elif none: query[field] = []
+    if args.fact:
+        facts: dict[str, list[Any]] = {}
+        for item in args.fact:
+            name, sep, raw = item.partition("=")
+            if not sep: raise BookError("QUERY_INVALID", f"--fact {item!r} must be NAME=VALUE")
+            try: value = json.loads(raw)
+            except ValueError: value = raw
+            # Type checks (null, objects, lists) are parse_query's job; here only dedupe by JSON form.
+            seen = facts.setdefault(name, [])
+            if json.dumps(value) not in {json.dumps(old) for old in seen}: seen.append(value)
+        query["facts"] = {name: values[0] if len(values) == 1 else {"conflicting": values} for name, values in facts.items()}
+    structured = any(getattr(args, key, None) for key in ("stdin", "json_payload", "input"))
+    if structured:
+        if query: raise BookError("INPUT_AMBIGUOUS", "use either a JSON situation or field flags, not both")
+        return payload_from(args)
+    return query
+
+
 def dispatch(args: argparse.Namespace) -> tuple[Any, int]:
     root = args.book
     if args.command == "search":
         result = search_cases(root, args.query, args.within,limit=max(1,min(args.limit,500))); _record_access(root,args.task,"SEARCH",result,{"query":args.query,"result_count":result["count"]},args.query); note_loaded(root,args.task,[item["id"] for item in result["results"]]); return result,0
+    if args.command == "consult":
+        result = retrieval.consult(root, situation_from(args), explore=args.explore, page_size=args.page_size, budget=args.budget, cursor=args.cursor)
+        _record_access(root, args.task, "SEARCH", result, {"query": "consult:" + result["query_digest"][:16], "result_count": result["total"]}, "consult")
+        note_loaded(root, args.task, [card["id"] for card in result["cards"]])
+        return result, 0
     if args.command == "list":
         result=list_view(root,args.view,limit=max(1,min(args.limit,500))); _record_access(root,args.task,"LIST",result,{"view":args.view or "/","result_count":result["count"]},args.view or "/"); return result,0
     if args.command == "show":
@@ -197,6 +236,7 @@ def dispatch(args: argparse.Namespace) -> tuple[Any, int]:
     if args.command == "doctor": return doctor(root),0
     if args.command == "reindex": return reindex(root),0
     if args.command == "migrate-v0": return migrate_v0(root),0
+    if args.command == "migrate-schema": return migrate_schema(root, None if args.all else args.cases, apply=args.apply, actor=args.actor, task_id=args.task, require_task=args.require_task),0
     if args.command == "gc": return gc_candidates(root),0
     raise BookError("COMMAND_REQUIRED","a command is required")
 
@@ -206,7 +246,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.version: emit({"tool_version":TOOL_VERSION,"schema_version":CASE_SCHEMA_VERSION,"case_schema_version":CASE_SCHEMA_VERSION,"content_trust":CONTENT_TRUST}); return 0
     if not args.command: parser.error("a command is required")
     try:
-        result,status=dispatch(args); emit(result); return status
+        result,status=dispatch(args)
+        if args.command == "consult" and args.format == "human": sys.stdout.write(retrieval.render_human(result))
+        else: emit(result)
+        return status
     except (BookError,v0.BookError) as exc:
         error={"ok":False,"error":exc.code,"message":exc.message}
         if exc.details is not None:error["details"]=exc.details
